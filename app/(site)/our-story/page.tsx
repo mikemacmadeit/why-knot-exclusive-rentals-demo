@@ -7,7 +7,8 @@ const baseUrl = getSiteBaseUrl();
 const canonical = `${baseUrl}/our-story`;
 const ogImage = siteConfig.seo.defaultOgImage;
 
-export const dynamic = "force-static";
+/** Dynamic so CSP nonces from middleware match inline scripts (GA / Next). */
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Our Story",

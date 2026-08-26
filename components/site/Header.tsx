@@ -15,8 +15,6 @@ import BookingModal from "@/components/site/BookingModal";
 import { getPublicPhone } from "@/lib/seo/public-contact";
 import { SiteDockNav } from "@/components/site/SiteDockNav";
 import { SiteDesktopNav } from "@/components/site/SiteDesktopNav";
-import { isPlatformDevBannerEnabled } from "@/config/site";
-
 function documentHasAdminSessionCookie(): boolean {
   if (typeof document === "undefined") return false;
   return /(?:^|;\s*)admin_session=/.test(document.cookie);
@@ -29,7 +27,8 @@ function documentHasAdminSessionCookie(): boolean {
 export function Header({ adminSessionCookiePresent = false }: { adminSessionCookiePresent?: boolean }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const bannerOffset = isPlatformDevBannerEnabled();
+  /** Full-bleed dark heroes — no white spacer above the floating nav. */
+  const isFullBleedHero = isHome || pathname === "/our-story";
   const [scrolled, setScrolled] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(() =>
@@ -94,15 +93,14 @@ export function Header({ adminSessionCookiePresent = false }: { adminSessionCook
     return () => document.removeEventListener("click", close);
   }, [accountOpen]);
 
-  const overlay = isHome && !scrolled;
+  /** Glass nav over dark full-bleed heroes (home + our story). */
+  const overlay = isFullBleedHero && !scrolled;
 
   return (
     <>
       <div
         className={cn(
-          "pointer-events-none fixed inset-x-0 z-50 px-3 sm:px-4 lg:px-5",
-          "transition-[top] duration-300",
-          bannerOffset ? "top-10" : "top-3"
+          "pointer-events-none fixed inset-x-0 top-3 z-50 px-3 sm:px-4 lg:px-5",
         )}
       >
         <header
@@ -216,7 +214,7 @@ export function Header({ adminSessionCookiePresent = false }: { adminSessionCook
           </div>
         </header>
       </div>
-      {!isHome ? <div className="h-32 shrink-0" aria-hidden /> : null}
+      {!isFullBleedHero ? <div className="h-32 shrink-0" aria-hidden /> : null}
 
       {/* Mobile-only dock nav */}
       <SiteDockNav />

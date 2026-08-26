@@ -30,7 +30,11 @@ export function WakeFleetScroll() {
           {homepageCopy.fleet.h2}
         </h2>
         <p className="mt-3 text-base text-brand-muted sm:text-lg">
-          {homepageCopy.fleet.intro}
+          <span className="font-bold text-brand-dark">Party barges</span>,{" "}
+          <span className="font-bold text-brand-dark">wakesurf charters</span>, and{" "}
+          <span className="font-bold text-brand-dark">luxury pontoons</span> — three completely
+          different days on the water. Every Tahoe boat rental includes a full tank of gas, water
+          toys, coolers, and safety gear — so the price you see is the price you pay.
         </p>
       </div>
 

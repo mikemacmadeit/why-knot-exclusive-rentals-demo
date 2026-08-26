@@ -2,7 +2,7 @@
 
 import { isPlatformDevBannerEnabled, siteConfig } from "@/config/site";
 
-/** Non-production identity strip showing the active customer site. */
+/** Non-production identity strip showing the active customer site. Opt-in via env. */
 export function PlatformDevBanner() {
   if (!isPlatformDevBannerEnabled()) return null;
   const isDemo = siteConfig.tenantId.includes("demo");

@@ -2,19 +2,11 @@
 
 import Image from "next/image";
 import { cn, getDisplayImageUrl } from "@/lib/utils";
-import { bundlePresets, type BundleId, type BundlePreset } from "@/content/bundle-presets";
-import { siteConfig } from "@/config/site";
+import { bundlePresets, getBundleHeroImage, type BundlePreset } from "@/content/bundle-presets";
 import type { ExperienceItem } from "./types";
 
-/** Same heroes as BundleChooser — keep Book Now visually aligned with /experiences. */
-const PACKAGE_HEROES: Record<BundleId, string> = {
-  "half-day": siteConfig.media.welcome,
-  "full-day": siteConfig.media.boats,
-  "all-in": siteConfig.media.hero,
-};
-
 function packageHero(bundle: BundlePreset): string {
-  return PACKAGE_HEROES[bundle.id] ?? siteConfig.media.galleryFallback;
+  return getBundleHeroImage(bundle.id);
 }
 
 function packageHoursLabel(bundle: BundlePreset): string {

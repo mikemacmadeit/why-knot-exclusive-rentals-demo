@@ -5,6 +5,7 @@ import { useBookingModal } from "@/components/site/BookingModalContext";
 import { analytics } from "@/lib/analytics";
 import { getPublicPhone } from "@/lib/seo/public-contact";
 import { CtaCard } from "@/components/ui/cta-card";
+import { LinkPreview } from "@/components/ui/link-preview";
 
 const copy = homepageCopy.finale;
 
@@ -25,7 +26,44 @@ export function WakeFinale() {
         <CtaCard
           eyebrow={copy.eyebrow}
           title={copy.h2}
-          description={copy.body}
+          description={
+            <>
+              <LinkPreview
+                url="/experiences/pontoon"
+                isStatic
+                imageSrc="/photos/wakebusters/party-barge.jpg"
+                width={240}
+                height={150}
+                className="font-bold text-brand-dark"
+              >
+                Party barge
+              </LinkPreview>
+              ,{" "}
+              <LinkPreview
+                url="/experiences/watersports"
+                isStatic
+                imageSrc="/photos/wakebusters/wakesurf.jpg"
+                width={240}
+                height={150}
+                className="font-bold text-brand-dark"
+              >
+                wakesurf charter
+              </LinkPreview>
+              , or{" "}
+              <LinkPreview
+                url="/experiences/sunset"
+                isStatic
+                imageSrc="/photos/wakebusters/tritoon.jpg"
+                width={240}
+                height={150}
+                className="font-bold text-brand-dark"
+              >
+                luxury tritoon
+              </LinkPreview>{" "}
+              — reserve your day on Lake Tahoe with a captain who knows the water. Gas and toys
+              included, no hidden fees.
+            </>
+          }
           primaryLabel={copy.primaryCta}
           onPrimaryClick={() => {
             analytics.bookCtaClick("finale", "home");

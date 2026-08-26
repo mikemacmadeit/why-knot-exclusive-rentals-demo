@@ -9,9 +9,24 @@ import { homepageCopy } from "@/content/homepage";
 import { BookingCTA } from "@/components/site/BookingCTA";
 import { LipScrollZoominAnimation } from "@/components/ui/lip-scroll-zoomin-animation";
 import { LayeredText } from "@/components/ui/layered-text";
-import { FoundersPhotos } from "@/components/site/FoundersPhotos";
+import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 
 const WATER_PHOTO = "/photos/wakebusters/tahoe-aerial.jpg";
+
+const FOUNDERS = [
+  {
+    id: 1,
+    name: "Jarod Minghini",
+    designation: "Founder · Captain",
+    image: "/photos/wakebusters/founder-wakesurf.jpg",
+  },
+  {
+    id: 2,
+    name: "Bobby Minghini",
+    designation: "Founder · Captain",
+    image: "/photos/wakebusters/founder-portrait.jpg",
+  },
+];
 
 const STORY_LAYERED_LINES = [
   { top: "\u00A0", bottom: "BROTHERS" },
@@ -56,80 +71,84 @@ function SectionEyebrow({ children }: { children: ReactNode }) {
 
 export function OurStoryPageClient() {
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="min-h-screen w-full bg-brand-dark">
       <LipScrollZoominAnimation
         title={homepageCopy.story.h2}
         watermark="TAHOE"
         posterSrc="/photos/wakebusters/tahoe-shoreline.jpg"
         imageAlt={homepageCopy.story.imageAlt}
+        className="bg-brand-dark"
         firstSlide={
-          <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-2 text-center sm:px-4">
+          <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl flex-col items-center justify-center px-2 text-center sm:px-4">
             <h1 className="sr-only">{homepageCopy.story.h2}</h1>
             <LayeredText
               lines={STORY_LAYERED_LINES}
-              className="font-display py-6 sm:py-8 md:py-10"
+              className="font-display shrink-0 !py-0"
               color="#7dd3fc"
               activeColor="#ff6b2b"
-              fontSize="68px"
-              fontSizeMd="34px"
-              lineHeight={56}
-              lineHeightMd={34}
+              fontSize="96px"
+              fontSizeMd="44px"
+              lineHeight={82}
+              lineHeightMd={44}
+              offset={48}
+              offsetMd={22}
             />
-            <p className="mt-2 max-w-3xl text-xs font-bold uppercase leading-relaxed tracking-wider text-white/90 sm:text-sm md:text-base">
-              We&apos;re Jarod and Bobby Minghini — Tahoe locals who grew up skiing this mountain in
-              winter and living on this lake every summer. Ten years of{" "}
-              <span className="text-[#7dd3fc] font-black">Lake Tahoe boat rentals</span> from a
-              family-owned crew. One flat rate. No hidden fuel charges.{" "}
-              <span className="text-[#7dd3fc] font-black">USCG-certified captains</span> who know
-              every cove from Emerald Bay to Camp Richardson.
-            </p>
           </div>
         }
-        outroTitle={
-          <>
-            Not an app.{" "}
-            <span className="text-brand-primary font-black">A real crew</span> on a real lake.
-          </>
-        }
-        outroSubtitle={
-          <>
-            Finest boats, everything included, honest prices, and cove knowledge no booking widget
-            can fake. From{" "}
-            <span className="text-brand-primary font-black">Emerald Bay</span> to Camp Richardson,
-            we know where the day wants to go.
-          </>
-        }
-      />
+        outroSlide={
+          <div
+            id="crew"
+            className="mx-auto flex w-full max-w-5xl scroll-mt-28 flex-col items-center px-2 text-center sm:px-4"
+          >
+            <div className="mb-6 inline-flex items-center gap-3">
+              <span className="h-px w-8 bg-brand-secondary" aria-hidden />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-secondary">
+                Why we exist
+              </p>
+            </div>
 
-      <section className="section-padding bg-brand-bg" aria-labelledby="why-we-exist-heading">
-        <div className="container-wide px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto">
-            <FadeIn>
-              <SectionEyebrow>Why we exist</SectionEyebrow>
-              <h2
-                id="why-we-exist-heading"
-                className="font-display text-3xl sm:text-4xl lg:text-[2.65rem] font-bold text-brand-dark tracking-tight leading-[1.15]"
-              >
-                {brand.companyName} exists for one reason: give every guest the best possible day
-                on the water.
-              </h2>
-            </FadeIn>
+            <div className="mb-8 flex flex-col items-center pt-8 sm:mb-10 sm:pt-10">
+              <AnimatedTooltip
+                items={FOUNDERS}
+                className="justify-center"
+                avatarClassName="h-28 w-28 border-[3px] sm:h-36 sm:w-36 lg:h-44 lg:w-44"
+                itemClassName="-mr-6 sm:-mr-8 lg:-mr-10"
+              />
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
+                Jarod &amp; Bobby · Founders
+              </p>
+            </div>
 
-            <FadeIn delay={0.05} className="mt-8 space-y-6 text-base sm:text-lg text-brand-muted leading-relaxed">
+            <h2 className="max-w-2xl font-display text-3xl font-bold leading-[1.15] tracking-tight text-brand-dark sm:text-4xl lg:text-[2.65rem]">
+              {brand.companyName} exists for one reason: give every guest the best possible day on
+              the water.
+            </h2>
+            <div className="mt-8 max-w-2xl space-y-6 text-base leading-relaxed text-brand-muted sm:text-lg">
               <p>
                 Ten years of Lake Tahoe boat rentals from a family-owned crew who actually grew up
                 on this water. One flat rate. No hidden fuel charges. USCG-certified captains who
                 know every cove from Emerald Bay to Camp Richardson.
               </p>
               <p>
-                Not an app. A real crew on a real lake. Finest boats, everything included, honest
-                prices, and cove knowledge no booking widget can fake. From Emerald Bay to Camp
-                Richardson, we know where the day wants to go.
+                A real crew on a real lake. Finest boats, everything included, honest prices, and
+                cove knowledge no booking widget can fake. From Emerald Bay to Camp Richardson, we
+                know where the day wants to go.
               </p>
-            </FadeIn>
+              <p>
+                Bachelorettes to board meetings. Birthdays, weddings, corporate outings, 4th of July
+                chaos — groups of 2 to 40+, with single boats or the full fleet running together.
+              </p>
+            </div>
+
+            <Link
+              href="/experiences"
+              className="mt-10 inline-flex items-center justify-center rounded-xl bg-brand-secondary px-6 py-3.5 text-sm font-bold text-white transition-transform duration-200 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary focus-visible:ring-offset-2"
+            >
+              See the fleet
+            </Link>
           </div>
-        </div>
-      </section>
+        }
+      />
 
       <section className="relative overflow-hidden bg-brand-dark" aria-labelledby="crew-lake-heading">
         <div className="absolute inset-0" aria-hidden>
@@ -152,7 +171,7 @@ export function OurStoryPageClient() {
                   id="crew-lake-heading"
                   className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight"
                 >
-                  Not an app. A real crew on a real lake.
+                  A real crew on a real lake.
                 </h2>
               </FadeIn>
 
@@ -167,53 +186,6 @@ export function OurStoryPageClient() {
                   cove is empty on a Saturday, where the wake is cleanest at 9 a.m., and exactly how
                   long you&apos;ve got before the wind comes up.
                 </p>
-              </FadeIn>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="crew"
-        className="relative scroll-mt-28 bg-white"
-        aria-labelledby="crew-heading"
-      >
-        <div className="section-padding">
-          <div className="container-wide px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.45 }}
-              >
-                <FoundersPhotos showCaptions sizes="(max-width: 1024px) 50vw, 28vw" />
-              </motion.div>
-
-              <FadeIn delay={0.05} className="max-w-md">
-                <SectionEyebrow>Who we are</SectionEyebrow>
-                <h2
-                  id="crew-heading"
-                  className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-brand-dark tracking-tight leading-[1.15]"
-                >
-                  Jarod and Bobby Minghini
-                </h2>
-                <p className="mt-5 text-base sm:text-lg text-brand-muted leading-relaxed">
-                  Tahoe locals who grew up skiing this mountain in winter and living on this lake
-                  every summer. After ten years on the water, we still show up for one job: your best
-                  day on Tahoe.
-                </p>
-                <p className="mt-5 text-base sm:text-lg text-brand-muted leading-relaxed">
-                  Bachelorettes to board meetings. Birthdays, weddings, corporate outings, 4th of July
-                  chaos — groups of 2 to 40+, with single boats or the full fleet running together.
-                </p>
-
-                <Link
-                  href="/experiences"
-                  className="mt-8 inline-flex items-center justify-center rounded-xl bg-brand-secondary px-6 py-3.5 text-sm font-bold text-white transition-transform duration-200 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary focus-visible:ring-offset-2"
-                >
-                  See the fleet
-                </Link>
               </FadeIn>
             </div>
           </div>

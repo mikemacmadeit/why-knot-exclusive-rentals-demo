@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { PlatformDevBanner } from "@/components/site/PlatformDevBanner";
 import { NavProgress } from "@/components/site/NavProgress";
 import { BookingModalProvider } from "@/components/site/BookingModalContext";
 import { BookingPreload } from "@/components/site/BookingPreload";
@@ -48,7 +47,6 @@ function SiteChromeInner({
       <BookingPreload />
       <NavProgress />
       <div className="min-h-screen flex flex-col">
-        <PlatformDevBanner />
         <Header adminSessionCookiePresent={adminSessionCookiePresent} />
         <main
           className={cn(

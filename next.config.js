@@ -42,6 +42,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
       { protocol: 'https', hostname: 'storage.googleapis.com' },
+      // Microlink screenshot API (LinkPreview non-static mode)
+      { protocol: 'https', hostname: 'api.microlink.io' },
       // Add the current customer's FIREBASE_STORAGE_BUCKET host when onboarding.
       { protocol: 'https', hostname: 'slipstack-platform-dev.appspot.com' },
       { protocol: 'https', hostname: 'slipstack-platform-dev.firebasestorage.app' },

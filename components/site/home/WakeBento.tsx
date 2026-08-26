@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { homepageCopy } from "@/content/homepage";
 import { cn } from "@/lib/utils";
+import { LinkPreview } from "@/components/ui/link-preview";
 import {
   AnchorIcon,
   FerryIcon,
@@ -18,7 +20,7 @@ type CardTone = "photo" | "lifted" | "liftedOrange" | "teal" | "orange";
 const reasons: {
   icon: typeof GaugeIcon;
   title: string;
-  body: string;
+  body: ReactNode;
   tone: CardTone;
   span?: string;
 }[] = [
@@ -32,7 +34,44 @@ const reasons: {
   {
     icon: TallShipIcon,
     title: "Premium fleet",
-    body: "Bennington tritoons, Mastercraft wakesurf boats, and custom double-decker party barges.",
+    body: (
+      <>
+        Bennington{" "}
+        <LinkPreview
+          url="/experiences/sunset"
+          isStatic
+          imageSrc="/photos/wakebusters/tritoon.jpg"
+          width={220}
+          height={140}
+          className="font-bold text-white decoration-white/40 hover:decoration-white"
+        >
+          tritoons
+        </LinkPreview>
+        , Mastercraft{" "}
+        <LinkPreview
+          url="/experiences/watersports"
+          isStatic
+          imageSrc="/photos/wakebusters/wakesurf.jpg"
+          width={220}
+          height={140}
+          className="font-bold text-white decoration-white/40 hover:decoration-white"
+        >
+          wakesurf boats
+        </LinkPreview>
+        , and custom double-decker{" "}
+        <LinkPreview
+          url="/experiences/pontoon"
+          isStatic
+          imageSrc="/photos/wakebusters/party-barge.jpg"
+          width={220}
+          height={140}
+          className="font-bold text-white decoration-white/40 hover:decoration-white"
+        >
+          party barges
+        </LinkPreview>
+        .
+      </>
+    ),
     tone: "orange",
   },
   {

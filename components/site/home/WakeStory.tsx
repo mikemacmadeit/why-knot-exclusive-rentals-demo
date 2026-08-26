@@ -5,6 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 import { brand } from "@/content/brand";
 import { homepageCopy } from "@/content/homepage";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
+import { LinkPreview } from "@/components/ui/link-preview";
 
 const founders = [
   {
@@ -58,11 +59,33 @@ export function WakeStory() {
           </p>
 
           <h3 className="mt-6 font-display text-lg font-extrabold text-brand-dark">
-            {homepageCopy.story.notAnApp}
+            {homepageCopy.story.crewLine}
           </h3>
           <p className="mt-2 text-base leading-relaxed text-brand-muted sm:text-lg">
             Finest boats, everything included, honest prices, and cove knowledge no booking widget
-            can fake. From Emerald Bay to Camp Richardson, we know where the day wants to go.
+            can fake. From{" "}
+            <LinkPreview
+              url="/experiences/watersports"
+              isStatic
+              imageSrc="/photos/wakebusters/gallery-2.jpg"
+              width={240}
+              height={150}
+              className="font-bold text-brand-dark"
+            >
+              Emerald Bay
+            </LinkPreview>{" "}
+            to{" "}
+            <LinkPreview
+              url="/experiences/pontoon"
+              isStatic
+              imageSrc="/photos/wakebusters/party-crew.jpg"
+              width={240}
+              height={150}
+              className="font-bold text-brand-dark"
+            >
+              Camp Richardson
+            </LinkPreview>
+            , we know where the day wants to go.
           </p>
 
           <h3 className="mt-6 font-display text-lg font-extrabold text-brand-dark">
@@ -70,7 +93,18 @@ export function WakeStory() {
           </h3>
           <p className="mt-2 text-base leading-relaxed text-brand-muted sm:text-lg">
             Birthdays, weddings, corporate outings, 4th of July chaos — groups of 2 to 40+, with
-            single boats or the full fleet running together.
+            single{" "}
+            <LinkPreview
+              url="/experiences/sunset"
+              isStatic
+              imageSrc="/photos/wakebusters/tritoon.jpg"
+              width={240}
+              height={150}
+              className="font-bold text-brand-dark"
+            >
+              boats
+            </LinkPreview>{" "}
+            or the full fleet running together.
           </p>
 
           <Link

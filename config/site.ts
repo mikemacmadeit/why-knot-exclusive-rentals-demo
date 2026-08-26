@@ -81,7 +81,7 @@ export const siteConfig: SiteConfig = {
   },
 
   social: {
-    instagram: "",
+    instagram: "https://www.instagram.com/tahoewakebusters/",
     facebook: "",
     youtube: "",
     tiktok: "",
@@ -222,9 +222,8 @@ export function emailSubjectSuffix(): string {
 }
 
 export function isPlatformDevBannerEnabled(): boolean {
-  if (process.env.NEXT_PUBLIC_SHOW_PLATFORM_BANNER === "0") return false;
-  if (process.env.NEXT_PUBLIC_SHOW_PLATFORM_BANNER === "1") return true;
-  return process.env.NODE_ENV !== "production";
+  // Opt-in only — keep public pages and sales demos free of the identity strip.
+  return process.env.NEXT_PUBLIC_SHOW_PLATFORM_BANNER === "1";
 }
 
 /** Inline CSS variables so Tailwind `brand.*` tokens follow this customer theme. */

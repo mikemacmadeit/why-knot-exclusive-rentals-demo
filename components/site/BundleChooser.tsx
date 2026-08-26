@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import { bundlePresets, type BundlePreset, type BundleId } from "@/content/bundle-presets";
+import { bundlePresets, getBundleHeroImage, type BundlePreset } from "@/content/bundle-presets";
 import {
   FOUNDING_ANGLER_LABEL,
   FOUNDING_ANGLER_RATE_ACTIVE,
@@ -12,13 +12,6 @@ import {
 import { useBookingModal } from "@/components/site/BookingModalContext";
 import { cn, getDisplayImageUrl } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
-
-const PACKAGE_HEROES: Record<BundleId, string> = {
-  "half-day": siteConfig.media.welcome,
-  "full-day": siteConfig.media.boats,
-  "all-in": siteConfig.media.hero,
-};
-
 type ListingPayload = {
   slug: string;
   title?: string;
@@ -30,7 +23,7 @@ type ListingPayload = {
 };
 
 function packageHero(bundle: BundlePreset): string {
-  return PACKAGE_HEROES[bundle.id] ?? siteConfig.media.galleryFallback;
+  return getBundleHeroImage(bundle.id);
 }
 
 /**

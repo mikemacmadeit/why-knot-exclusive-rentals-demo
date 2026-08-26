@@ -10,6 +10,10 @@ interface LayeredTextProps {
   fontSizeMd?: string;
   lineHeight?: number;
   lineHeightMd?: number;
+  /** Horizontal stagger per line (desktop). */
+  offset?: number;
+  /** Horizontal stagger per line (mobile). */
+  offsetMd?: number;
   className?: string;
   /** Resting text color (CSS color). */
   color?: string;
@@ -31,6 +35,8 @@ export function LayeredText({
   fontSizeMd = "36px",
   lineHeight = 60,
   lineHeightMd = 35,
+  offset = 35,
+  offsetMd = 20,
   className = "",
   color,
   activeColor = "#ff6b2b",
@@ -43,7 +49,7 @@ export function LayeredText({
 
   const activeLineHeight = isDesktop ? lineHeight : lineHeightMd;
   const activeFontSize = isDesktop ? fontSize : fontSizeMd;
-  const baseOffset = isDesktop ? 35 : 20;
+  const baseOffset = isDesktop ? offset : offsetMd;
   const centerIndex = Math.floor(lines.length / 2);
 
   useEffect(() => {

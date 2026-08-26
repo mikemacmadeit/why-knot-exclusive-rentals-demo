@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Facebook, Instagram } from "lucide-react";
+import { Facebook, Instagram, Music2, Youtube } from "lucide-react";
 import { brand } from "@/content/brand";
 import {
   getMarinaMeetNote,
@@ -11,6 +11,7 @@ import {
   getVerifiedHours,
 } from "@/lib/seo/public-contact";
 import { hasFeature } from "@/lib/plan";
+import { SocialTooltip, type SocialItem } from "@/components/ui/social-media";
 
 const tape = (
   <svg xmlns="http://www.w3.org/2000/svg" width="95" height="80" viewBox="0 0 95 80" fill="none" aria-hidden>
@@ -54,11 +55,8 @@ export function FooterTapedDesign() {
     ...(hasFeature("blogStudio") ? [{ href: "/blog", label: "Blog" }] : []),
   ];
 
-  const socialLinks = [
-    { href: brand.socials.instagram, label: "Instagram", icon: Instagram },
-    { href: brand.socials.facebook, label: "Facebook", icon: Facebook },
-  ].filter((s) => {
-    const u = (s.href ?? "").trim();
+  const isUsableSocialUrl = (href: string | undefined) => {
+    const u = (href ?? "").trim();
     if (!u) return false;
     try {
       const parsed = new URL(u);
@@ -66,7 +64,40 @@ export function FooterTapedDesign() {
     } catch {
       return false;
     }
-  });
+  };
+
+  const socialLinks: SocialItem[] = (
+    [
+      {
+        href: brand.socials.instagram,
+        ariaLabel: "Instagram",
+        tooltip: "Instagram",
+        icon: Instagram,
+        color: "#E4405F",
+      },
+      {
+        href: brand.socials.facebook,
+        ariaLabel: "Facebook",
+        tooltip: "Facebook",
+        icon: Facebook,
+        color: "#1877F2",
+      },
+      {
+        href: brand.socials.youtube,
+        ariaLabel: "YouTube",
+        tooltip: "YouTube",
+        icon: Youtube,
+        color: "#FF0000",
+      },
+      {
+        href: brand.socials.tiktok,
+        ariaLabel: "TikTok",
+        tooltip: "TikTok",
+        icon: Music2,
+        color: "#010101",
+      },
+    ] satisfies Array<SocialItem>
+  ).filter((s) => isUsableSocialUrl(s.href));
 
   return (
     <footer className="bg-brand-dark px-4 py-8 text-white sm:px-6 lg:px-8" role="contentinfo">
@@ -152,20 +183,7 @@ export function FooterTapedDesign() {
         </div>
 
         {socialLinks.length > 0 ? (
-          <div className="flex items-center gap-4">
-            {socialLinks.map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.label}
-                className="text-white/80 transition-colors hover:text-brand-primary"
-              >
-                <s.icon className="h-5 w-5" />
-              </a>
-            ))}
-          </div>
+          <SocialTooltip items={socialLinks} className="gap-3" />
         ) : null}
       </div>
     </footer>

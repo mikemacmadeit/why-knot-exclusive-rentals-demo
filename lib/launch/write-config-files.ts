@@ -30,11 +30,9 @@ export function emailSubjectSuffix(): string {
   return \` – \${siteConfig.company.name}\`;
 }
 
-/** Dev identity bar. Off in production unless explicitly enabled. */
+/** Dev identity bar. Opt-in only via NEXT_PUBLIC_SHOW_PLATFORM_BANNER=1. */
 export function isPlatformDevBannerEnabled(): boolean {
-  if (process.env.NEXT_PUBLIC_SHOW_PLATFORM_BANNER === "0") return false;
-  if (process.env.NEXT_PUBLIC_SHOW_PLATFORM_BANNER === "1") return true;
-  return process.env.NODE_ENV !== "production";
+  return process.env.NEXT_PUBLIC_SHOW_PLATFORM_BANNER === "1";
 }
 
 /** Inline CSS variables so Tailwind \`brand.*\` tokens follow this customer theme. */

@@ -12,8 +12,21 @@ import {
   getActiveCatalogRateCents,
   STANDARD_RATE_CENTS,
 } from "@/content/catalog-pricing";
+import { getExperienceBySlug } from "@/content/experiences";
 
 export type BundleId = "half-day" | "full-day" | "all-in";
+
+/** Fleet hero for package cards — aligned with /experiences listing images. */
+const BUNDLE_HERO_EXPERIENCE: Record<BundleId, string> = {
+  "half-day": "pontoon",
+  "full-day": "watersports",
+  "all-in": "sunset",
+};
+
+export function getBundleHeroImage(bundleId: BundleId): string {
+  const exp = getExperienceBySlug(BUNDLE_HERO_EXPERIENCE[bundleId]);
+  return exp?.heroImage ?? siteConfig.media.galleryFallback;
+}
 
 export type BundleCharterOption = {
   experienceSlug: "pontoon" | "watersports";

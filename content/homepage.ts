@@ -44,7 +44,7 @@ export const homepageCopy = {
     h2: "Brothers. Locals. Lake Obsessed.",
     imageAlt:
       "Snow-dusted Sierra mountains above turquoise Lake Tahoe shoreline under a clear sky",
-    notAnApp: "Not an app. A real crew on a real lake.",
+    crewLine: "A real crew on a real lake.",
     occasions: "Bachelorettes to board meetings.",
   },
   howItWorks: {

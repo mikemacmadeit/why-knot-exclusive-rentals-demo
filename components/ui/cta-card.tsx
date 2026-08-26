@@ -10,7 +10,7 @@ interface CtaCardProps extends React.HTMLAttributes<HTMLDivElement> {
   imageAlt: string;
   eyebrow: string;
   title: string;
-  description: string;
+  description: string | React.ReactNode;
   primaryLabel: string;
   onPrimaryClick?: () => void;
   secondaryLabel?: string;

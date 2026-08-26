@@ -19,6 +19,8 @@ export interface LipScrollZoominAnimationProps {
   subtitle?: React.ReactNode;
   /** When set, replaces the default title + subtitle block on the first slide. */
   firstSlide?: React.ReactNode;
+  /** When set, replaces the default title + subtitle block on the outro slide. */
+  outroSlide?: React.ReactNode;
   outroTitle?: React.ReactNode;
   outroSubtitle?: React.ReactNode;
   watermark?: string;
@@ -40,6 +42,7 @@ export function LipScrollZoominAnimation({
     </>
   ),
   firstSlide,
+  outroSlide,
   outroTitle = (
     <>
       THE JOURNEY <span className="text-brand-primary font-black">CONTINUES.</span>
@@ -148,7 +151,7 @@ export function LipScrollZoominAnimation({
       >
         <div
           ref={pinRef}
-          className="motion-section__pin relative sticky top-0 flex h-screen w-full select-none items-center justify-center overflow-hidden bg-white"
+          className="motion-section__pin relative flex h-screen w-full select-none items-center justify-center overflow-hidden bg-white"
         >
           <div className="pointer-events-none absolute left-[10px] top-[10px] z-30 h-4 w-4 text-black sm:h-5 sm:w-5">
             <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 10 10" fill="none" className="h-full w-full">
@@ -241,15 +244,17 @@ export function LipScrollZoominAnimation({
         </div>
       </div>
 
-      <section className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center bg-white px-6 py-12 text-black select-none md:px-12 lg:px-16">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-2 text-center sm:px-4">
-          <h2 className="mb-6 select-none font-display text-[10vw] font-black uppercase leading-[0.88] tracking-[-0.04em] text-black sm:text-[8vw] md:text-[6.5rem] lg:text-[7.8rem]">
-            {outroTitle}
-          </h2>
-          <p className="max-w-3xl text-xs font-bold uppercase leading-relaxed tracking-wider text-black opacity-90 sm:text-sm md:text-base">
-            {outroSubtitle}
-          </p>
-        </div>
+      <section className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center bg-white px-6 py-20 text-black select-none md:px-12 md:py-28 lg:px-16">
+        {outroSlide ?? (
+          <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-2 text-center sm:px-4">
+            <h2 className="mb-6 select-none font-display text-[10vw] font-black uppercase leading-[0.88] tracking-[-0.04em] text-black sm:text-[8vw] md:text-[6.5rem] lg:text-[7.8rem]">
+              {outroTitle}
+            </h2>
+            <p className="max-w-3xl text-xs font-bold uppercase leading-relaxed tracking-wider text-black opacity-90 sm:text-sm md:text-base">
+              {outroSubtitle}
+            </p>
+          </div>
+        )}
       </section>
 
       <style

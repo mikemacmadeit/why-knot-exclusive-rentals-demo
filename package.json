@@ -22,12 +22,14 @@
     "test:launch": "node --import tsx --test lib/launch/__tests__/launch-packet.test.ts",
     "seed:blog": "node scripts/seed-blog-posts.mjs",
     "postinstall": "node scripts/postinstall-next.js",
-    "prepare": "husky"
+    "prepare": "node scripts/prepare-husky.js"
   },
   "dependencies": {
     "@netlify/functions": "^5.1.2",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-avatar": "^1.2.6",
+    "@radix-ui/react-hover-card": "^1.1.23",
+    "@radix-ui/react-label": "^2.1.15",
     "@radix-ui/react-navigation-menu": "^1.2.22",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
@@ -48,6 +50,7 @@
     "motion": "^13.1.1",
     "next": "^14.2.18",
     "qrcode": "^1.5.4",
+    "qss": "^3.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "stripe": "^17.0.0",

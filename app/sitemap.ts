@@ -9,6 +9,7 @@ import {
 } from "@/lib/booking/get-sitemap-data";
 import { SEO_SITEMAP_PATHS } from "@/lib/seo/paths";
 import { getSiteBaseUrl } from "@/config/site";
+import { shouldBlockSearchIndexing } from "@/lib/seo/block-search-indexing";
 import { hasFeature } from "@/lib/plan";
 
 
@@ -83,6 +84,8 @@ function addEntry(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (shouldBlockSearchIndexing()) return [];
+
   const deduped = new Map<string, SitemapEntry>();
 
   for (const path of staticPaths) {

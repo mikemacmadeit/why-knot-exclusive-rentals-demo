@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getSiteBaseUrl, siteConfig } from "@/config/site";
 import { brand } from "@/content/brand";
+import { publicRobotsMetadata } from "@/lib/seo/block-search-indexing";
 
 export function siteBaseUrl(): string {
   return getSiteBaseUrl();
@@ -45,7 +46,7 @@ export function buildSeoMetadata(input: SeoPageMetaInput): Metadata {
       description: input.description,
       images: [image],
     },
-    robots: { index: true, follow: true },
+    robots: publicRobotsMetadata(),
   };
 }
 

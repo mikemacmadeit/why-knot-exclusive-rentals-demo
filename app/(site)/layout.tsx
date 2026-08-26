@@ -7,6 +7,7 @@ import { CommercialPageSchema } from "@/components/site/CommercialPageSchema";
 import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/admin-auth-constants";
 import { buildLocalBusinessJsonLd } from "@/lib/seo/public-contact";
 import { getSiteBaseUrl, siteConfig } from "@/config/site";
+import { publicRobotsMetadata } from "@/lib/seo/block-search-indexing";
 
 const baseUrl = getSiteBaseUrl();
 
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: [siteConfig.seo.defaultOgImage],
   },
-  robots: "index, follow",
+  robots: publicRobotsMetadata(),
 };
 
 function localBusinessJsonLd() {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { brand } from "@/content/brand";
 import { getSiteBaseUrl } from "@/config/site";
+import { publicRobotsMetadata } from "@/lib/seo/block-search-indexing";
 
 
 const baseUrl = getSiteBaseUrl();
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: { canonical: `${baseUrl}/blog` },
-  robots: "index, follow",
+  robots: publicRobotsMetadata(),
 };
 
 export default function BlogLayout({

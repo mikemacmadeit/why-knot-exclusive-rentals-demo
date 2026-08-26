@@ -20,6 +20,7 @@ import { Clock, Anchor, ArrowLeft, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReadingProgress } from "@/components/site/ReadingProgress";
 import { getSiteBaseUrl } from "@/config/site";
+import { publicRobotsMetadata, shouldBlockSearchIndexing } from "@/lib/seo/block-search-indexing";
 
 const baseUrl = getSiteBaseUrl();
 
@@ -55,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         images: ogImage ? [{ url: ogImage, alt: staticPost.imageAlt ?? staticPost.title }] : undefined,
       },
       alternates: { canonical },
-      robots: "index, follow",
+      robots: publicRobotsMetadata(),
     };
   }
   const firestorePost = await getPublishedPostBySlug(slug);
@@ -75,8 +76,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = String(descRaw).slice(0, 160);
     const canonicalUrl = seo?.canonicalUrl?.trim();
     const canonical = canonicalUrl && canonicalUrl.length > 0 ? canonicalUrl : `${baseUrl}/blog/${firestorePost.slug}`;
-    const index = seo?.robotsIndex !== false;
-    const follow = seo?.robotsFollow !== false;
+    const index = !shouldBlockSearchIndexing() && seo?.robotsIndex !== false;
+    const follow = !shouldBlockSearchIndexing() && seo?.robotsFollow !== false;
     const robots = `${index ? "index" : "noindex"}, ${follow ? "follow" : "nofollow"}`;
     const cover = firestorePost.coverImage as { url?: string } | null;
     const ogImage = cover?.url;
@@ -115,7 +116,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         images: [{ url: ogImage, alt: cmsSeed.coverImage.alt }],
       },
       alternates: { canonical },
-      robots: `${seo.robotsIndex ? "index" : "noindex"}, ${seo.robotsFollow ? "follow" : "nofollow"}`,
+      robots: shouldBlockSearchIndexing()
+        ? publicRobotsMetadata()
+        : `${seo.robotsIndex ? "index" : "noindex"}, ${seo.robotsFollow ? "follow" : "nofollow"}`,
     };
   }
   return { title: "The Dock" };

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isAdminPublicPath } from "@/lib/admin-public-paths";
 import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/admin-auth-constants";
+import { shouldBlockSearchIndexing, X_ROBOTS_NOINDEX } from "@/lib/seo/block-search-indexing";
 
 function isAdminProtectedPath(pathname: string): boolean {
   return (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) && !isAdminPublicPath(pathname);
@@ -92,6 +93,9 @@ export async function middleware(request: NextRequest) {
   if (isAdminPublicPath(pathname)) {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     res.headers.set("Content-Security-Policy", csp);
+    if (shouldBlockSearchIndexing()) {
+      res.headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+    }
     return res;
   }
 
@@ -120,6 +124,9 @@ export async function middleware(request: NextRequest) {
 
   const res = NextResponse.next({ request: { headers: requestHeaders } });
   res.headers.set("Content-Security-Policy", csp);
+  if (shouldBlockSearchIndexing()) {
+    res.headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+  }
   return res;
 }
 

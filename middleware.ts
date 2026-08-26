@@ -3,6 +3,12 @@ import type { NextRequest } from "next/server";
 import { isAdminPublicPath } from "@/lib/admin-public-paths";
 import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/admin-auth-constants";
 import { shouldBlockSearchIndexing, X_ROBOTS_NOINDEX } from "@/lib/seo/block-search-indexing";
+import {
+  demoAccessCookieOptions,
+  demoAccessPathExcluded,
+  getDemoAccessKey,
+  hasValidDemoAccess,
+} from "@/lib/seo/demo-access-gate";
 
 function isAdminProtectedPath(pathname: string): boolean {
   return (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) && !isAdminPublicPath(pathname);
@@ -81,6 +87,27 @@ async function verifyAdminCookieSignature(request: NextRequest): Promise<boolean
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  const demoAccessKey = getDemoAccessKey();
+  if (demoAccessKey && !demoAccessPathExcluded(pathname)) {
+    const accessParam = request.nextUrl.searchParams.get("access");
+    if (accessParam === demoAccessKey) {
+      const clean = new URL(pathname || "/", request.url);
+      const res = NextResponse.redirect(clean);
+      res.cookies.set(demoAccessCookieOptions(demoAccessKey));
+      if (shouldBlockSearchIndexing()) {
+        res.headers.set("X-Robots-Tag", X_ROBOTS_NOINDEX);
+      }
+      return res;
+    }
+    if (!hasValidDemoAccess(request, demoAccessKey)) {
+      return new NextResponse("Not Found", {
+        status: 404,
+        headers: shouldBlockSearchIndexing() ? { "X-Robots-Tag": X_ROBOTS_NOINDEX } : undefined,
+      });
+    }
+  }
+
   const requestHeaders = new Headers(request.headers);
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const csp = buildCsp(nonce);

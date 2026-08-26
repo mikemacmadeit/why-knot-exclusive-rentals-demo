@@ -88,6 +88,12 @@ async function verifyAdminCookieSignature(request: NextRequest): Promise<boolean
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  if (pathname === "/login" || pathname.startsWith("/login/")) {
+    const target = new URL("/admin/login", request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target);
+  }
+
   const demoAccessKey = getDemoAccessKey();
   if (demoAccessKey && !demoAccessPathExcluded(pathname)) {
     const accessParam = request.nextUrl.searchParams.get("access");

@@ -11,6 +11,7 @@ export function getDemoAccessKey(): string | null {
 }
 
 export function demoAccessPathExcluded(pathname: string): boolean {
+  const p = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
   return (
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
@@ -18,7 +19,10 @@ export function demoAccessPathExcluded(pathname: string): boolean {
     pathname.endsWith(".svg") ||
     pathname.endsWith(".png") ||
     pathname.endsWith(".jpg") ||
-    pathname.endsWith(".webp")
+    pathname.endsWith(".webp") ||
+    p === "/login" ||
+    p.startsWith("/admin") ||
+    p.startsWith("/api/admin")
   );
 }
 

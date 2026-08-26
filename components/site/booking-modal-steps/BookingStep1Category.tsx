@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { cn, getDisplayImageUrl } from "@/lib/utils";
-import { bundlePresets, getBundleHeroImage, type BundlePreset } from "@/content/bundle-presets";
+import { bundlePresets, getBundleHeroImage, type BundleId, type BundlePreset } from "@/content/bundle-presets";
 import type { ExperienceItem } from "./types";
 
 function packageHero(bundle: BundlePreset): string {

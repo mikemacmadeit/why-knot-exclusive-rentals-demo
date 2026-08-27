@@ -14,6 +14,8 @@
  *   to fail closed on Redis errors for those routes only.
  * - When Redis is not configured in production, most rate-limited endpoints return 503; post-payment routes use
  *   `checkRateLimitPostPayment` and fall back to in-memory limiting instead.
+ * - Pitch demos (`DEMO_PITCH_SITE=1`) also fall back to in-memory limiting without Redis so calendar/slots
+ *   work on Netlify without Upstash (same soft-dep policy as deploy-health-check).
  *
  * **Which function for which routes (do not swap casually):**
  * `checkRateLimit` — general mutations; `checkRateLimitSensitiveMutation` — create-hold / create-payment-intent /
@@ -372,6 +374,11 @@ type RateLimitCoreOpts = {
   postPaymentAllowMemoryWithoutRedis?: boolean;
 };
 
+function isDemoPitchSite(): boolean {
+  const v = process.env.DEMO_PITCH_SITE?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 async function checkRateLimitCore(kind: RateLimitKind, key: string, opts?: RateLimitCoreOpts): Promise<RateLimitResult> {
   const redis = getRedisConfig();
   const isProduction = process.env.NODE_ENV === "production";
@@ -381,8 +388,10 @@ async function checkRateLimitCore(kind: RateLimitKind, key: string, opts?: RateL
       : process.env.RATE_LIMIT_DEGRADED_USE_MEMORY === "1";
   const windowStart = Math.floor(Date.now() / WINDOW_MS) * WINDOW_MS;
   const redisKey = redis ? redisKeyFor(kind, key, windowStart) : null;
+  const allowMemoryWithoutRedis =
+    opts?.postPaymentAllowMemoryWithoutRedis === true || isDemoPitchSite();
 
-  if (isProduction && !redis && !opts?.postPaymentAllowMemoryWithoutRedis) {
+  if (isProduction && !redis && !allowMemoryWithoutRedis) {
     return rateLimitBlockedProductionNoRedis();
   }
 

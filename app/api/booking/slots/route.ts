@@ -131,6 +131,12 @@ export async function GET(request: NextRequest) {
     }
     const rl = await checkRateLimitPublicRead(getClientKey(request));
     if (!rl.allowed) {
+      if (rl.serverError) {
+        return NextResponse.json(
+          { error: "Rate limit service temporarily unavailable. Please try again shortly." },
+          { status: 503, headers: { "Retry-After": "60" } }
+        );
+      }
       const retryAfter = rl.retryAfterMs ? Math.ceil(rl.retryAfterMs / 1000) : 60;
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },

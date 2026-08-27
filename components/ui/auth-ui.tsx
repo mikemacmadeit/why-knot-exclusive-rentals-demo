@@ -28,6 +28,7 @@ export function Typewriter({
   delay = 1500,
   className,
 }: TypewriterProps) {
+  const [mounted, setMounted] = useState(false);
   const [displayText, setDisplayText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -37,7 +38,11 @@ export function Typewriter({
   const currentText = textArray[textArrayIndex] || "";
 
   useEffect(() => {
-    if (!currentText) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !currentText) return;
 
     const timeout = setTimeout(
       () => {
@@ -72,11 +77,14 @@ export function Typewriter({
     delay,
     displayText,
     textArray.length,
+    mounted,
   ]);
 
+  const staticText = textArray[0] || "";
+
   return (
-    <span className={className}>
-      {displayText}
+    <span className={className} suppressHydrationWarning>
+      {mounted ? displayText : staticText}
       <span className="animate-pulse">{cursor}</span>
     </span>
   );

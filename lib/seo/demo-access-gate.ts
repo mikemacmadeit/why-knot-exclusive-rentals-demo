@@ -16,10 +16,10 @@ export function demoAccessPathExcluded(pathname: string): boolean {
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
     pathname.startsWith("/favicon") ||
-    pathname.endsWith(".svg") ||
-    pathname.endsWith(".png") ||
-    pathname.endsWith(".jpg") ||
-    pathname.endsWith(".webp") ||
+    pathname === "/site.webmanifest" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    /\.(svg|png|jpe?g|webp|gif|ico|json|webmanifest|woff2?|ttf|eot|txt|xml|map)$/i.test(pathname) ||
     p === "/login" ||
     p.startsWith("/admin") ||
     p.startsWith("/api/admin")

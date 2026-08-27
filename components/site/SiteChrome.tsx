@@ -17,19 +17,35 @@ function SiteChromeInner({
   adminSessionCookiePresent?: boolean;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const isAdmin = pathname?.startsWith("/admin");
-  /** Minimal chrome: no sticky CTA bar or extra bottom spacer (stepper controls need clear tap targets). */
+
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
+  return (
+    <PublicSiteChrome adminSessionCookiePresent={adminSessionCookiePresent}>
+      {children}
+    </PublicSiteChrome>
+  );
+}
+
+/** Marketing / waiver chrome — uses search params (must not wrap admin routes or Suspense flashes header/footer). */
+function PublicSiteChrome({
+  children,
+  adminSessionCookiePresent = false,
+}: {
+  children: React.ReactNode;
+  adminSessionCookiePresent?: boolean;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isWaiverSigning = pathname?.startsWith("/waiver/sign") ?? false;
   const isWaiverSuccess = pathname === "/waiver/sign/success";
   const isKiosk =
     isWaiverSigning &&
     !isWaiverSuccess &&
     searchParams.get("mode") === "kiosk";
-
-  if (isAdmin) {
-    return <>{children}</>;
-  }
 
   if (isKiosk) {
     return (

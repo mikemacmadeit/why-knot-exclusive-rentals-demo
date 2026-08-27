@@ -16,6 +16,12 @@ describe("demoAccessPathExcluded", () => {
     assert.equal(demoAccessPathExcluded("/login"), true);
   });
 
+  it("allows static public assets through the demo gate", () => {
+    assert.equal(demoAccessPathExcluded("/site.webmanifest"), true);
+    assert.equal(demoAccessPathExcluded("/brand/logo.svg"), true);
+    assert.equal(demoAccessPathExcluded("/photos/wakebusters/party-barge.jpg"), true);
+  });
+
   it("still gates public marketing pages", () => {
     assert.equal(demoAccessPathExcluded("/"), false);
     assert.equal(demoAccessPathExcluded("/experiences/pontoon"), false);

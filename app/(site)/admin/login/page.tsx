@@ -261,7 +261,7 @@ export default function AdminLoginPage() {
         )}
 
         <p className="text-center text-sm text-brand-muted">
-          <Link href="/" className="text-brand-primary hover:underline">
+          <Link href="/" prefetch={false} className="text-brand-primary hover:underline">
             Back to site
           </Link>
         </p>

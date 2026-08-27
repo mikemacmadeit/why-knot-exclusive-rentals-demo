@@ -1,16 +1,27 @@
 import { brand } from "@/content/brand";
+import { siteConfig } from "@/config/site";
 import { bookingEnv } from "./env";
 
-export const EMAIL_NAVY = "#04244a";
-export const EMAIL_TEAL = "#14b6dc";
-export const EMAIL_ACCENT = "#f27a0a";
-export const EMAIL_HEADER_GRADIENT = `linear-gradient(135deg, ${EMAIL_NAVY} 0%, ${EMAIL_TEAL} 50%, ${EMAIL_ACCENT} 100%)`;
+const theme = siteConfig.theme;
+
+/** Solid brand palette for transactional emails (no gradients — email clients mangle them). */
+export const EMAIL_NAVY = theme.darkColor || "#0a1628";
+export const EMAIL_LIGHT_BLUE = theme.primaryColor || "#00b4d8";
+export const EMAIL_ORANGE = theme.secondaryColor || "#ff6b2b";
+export const EMAIL_WHITE = "#ffffff";
+export const EMAIL_BLACK = theme.textColor || "#1a2535";
+export const EMAIL_BG = theme.backgroundColor || "#f7f9fc";
+
+/** @deprecated Use EMAIL_LIGHT_BLUE */
+export const EMAIL_TEAL = EMAIL_LIGHT_BLUE;
+/** @deprecated Use EMAIL_ORANGE */
+export const EMAIL_ACCENT = EMAIL_ORANGE;
 
 /**
- * Square lockup display size. Gmail iOS often ignores CSS max-width and uses the HTML
- * width/height attributes. Keep this small enough for a ~320px phone after side padding.
+ * Logo display width. Gmail iOS often ignores CSS max-width and uses HTML width.
+ * Keep narrow enough for ~320px phones after side padding. Height stays auto.
  */
-export const EMAIL_LOGO_PX = 160;
+export const EMAIL_LOGO_WIDTH_PX = 200;
 
 export function getEmailLogoUrl(): string {
   const base = bookingEnv.appBaseUrl.replace(/\/$/, "");
@@ -22,20 +33,38 @@ export function getEmailLogoUrl(): string {
 
 export function renderEmailLogoImg(): string {
   const src = getEmailLogoUrl();
-  const px = EMAIL_LOGO_PX;
+  const w = EMAIL_LOGO_WIDTH_PX;
   const alt = brand.companyName.replace(/"/g, "&quot;");
-  return `<table role="presentation" align="center" width="${px}" border="0" cellspacing="0" cellpadding="0" class="email-logo-wrap" style="width:${px}px;margin:0 auto;">
+  return `<table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" class="email-logo-wrap" style="margin:0 auto;">
   <tr>
     <td align="center" style="padding:0;font-size:0;line-height:0;">
-      <img src="${src}" alt="${alt}" width="${px}" height="${px}" class="email-logo" style="display:block;border:0;outline:none;text-decoration:none;width:${px}px;height:${px}px;-ms-interpolation-mode:bicubic;" />
+      <img src="${src}" alt="${alt}" width="${w}" class="email-logo" style="display:block;border:0;outline:none;text-decoration:none;width:${w}px;max-width:100%;height:auto;-ms-interpolation-mode:bicubic;" />
     </td>
   </tr>
 </table>`;
 }
 
-/** Header cell: navy bgcolor so Gmail still shows a dark bar when it strips CSS gradients. */
+/**
+ * Header: solid navy field with orange top accent + teal bottom accent, white subtitle.
+ * Matches site theme tokens; no CSS gradients.
+ */
 export function renderEmailHeaderCell(subtitleHtml: string): string {
-  return `<td align="center" bgcolor="${EMAIL_NAVY}" style="background-color:${EMAIL_NAVY};background:${EMAIL_HEADER_GRADIENT};padding:20px 16px;text-align:center;">${renderEmailLogoImg()}<p style="margin:10px 0 0;font-size:14px;line-height:1.4;color:#ffffff;">${subtitleHtml}</p></td>`;
+  return `<td align="center" bgcolor="${EMAIL_NAVY}" style="padding:0;background-color:${EMAIL_NAVY};">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td bgcolor="${EMAIL_ORANGE}" height="4" style="height:4px;line-height:4px;font-size:0;background-color:${EMAIL_ORANGE};">&nbsp;</td>
+    </tr>
+    <tr>
+      <td align="center" bgcolor="${EMAIL_NAVY}" style="background-color:${EMAIL_NAVY};padding:28px 24px 22px;text-align:center;">
+        ${renderEmailLogoImg()}
+        <p style="margin:14px 0 0;font-size:13px;letter-spacing:0.04em;line-height:1.4;color:${EMAIL_WHITE};">${subtitleHtml}</p>
+      </td>
+    </tr>
+    <tr>
+      <td bgcolor="${EMAIL_LIGHT_BLUE}" height="4" style="height:4px;line-height:4px;font-size:0;background-color:${EMAIL_LIGHT_BLUE};">&nbsp;</td>
+    </tr>
+  </table>
+</td>`;
 }
 
-export const EMAIL_HEAD_EXTRAS = `<meta name="x-apple-disable-message-reformatting"><style type="text/css">@media only screen and (max-width:480px){.email-logo-wrap{width:140px!important;}.email-logo{width:140px!important;height:140px!important;}}</style>`;
+export const EMAIL_HEAD_EXTRAS = `<meta name="x-apple-disable-message-reformatting"><style type="text/css">@media only screen and (max-width:480px){.email-logo{width:168px!important;}}</style>`;

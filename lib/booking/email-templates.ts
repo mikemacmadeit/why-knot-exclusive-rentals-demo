@@ -6,7 +6,14 @@
 import { brand } from "@/content/brand";
 import { fromOperatorNoteAuthorLabel, operatorNoteAuthorFirstName } from "@/lib/admin/operator-notes";
 import { bookingEnv } from "./env";
-import { EMAIL_HEAD_EXTRAS, renderEmailHeaderCell } from "./email-brand";
+import {
+  EMAIL_BG,
+  EMAIL_HEAD_EXTRAS,
+  EMAIL_LIGHT_BLUE,
+  EMAIL_NAVY,
+  EMAIL_WHITE,
+  renderEmailHeaderCell,
+} from "./email-brand";
 import { DEFAULT_CANCELLATION_POLICY } from "./cancellation-policy";
 import { formatMoney } from "./format-money";
 import type { Booking, BookingStripe } from "./types";
@@ -24,24 +31,17 @@ import {
   renderEmailLogisticsHtml,
   type ExperienceEmailLogistics,
 } from "./experience-email-logistics";
-
-/** @deprecated Use isDepositMode from deposit-mode.ts. Kept for Brevo template params. */
-export function isDepositFromBookingStripe(booking: Booking): boolean {
-  return isDepositMode(booking);
-}
-
-/** Absolute URL for the ${brand.companyName} email logo (used in all transactional emails). */
-function getEmailLogoUrl(): string {
-  const base = bookingEnv.appBaseUrl.replace(/\/$/, "");
-  return `${base}${brand.logoEmailPath}`;
-}
-
 import {
   buildReminder1WeekHtml,
   buildReminder24hHtml,
   buildReminderDayOfHtml,
   getReminderSubject,
 } from "./reminder-emails";
+
+/** @deprecated Use isDepositMode from deposit-mode.ts. Kept for Brevo template params. */
+export function isDepositFromBookingStripe(booking: Booking): boolean {
+  return isDepositMode(booking);
+}
 
 export type EmailTemplateId =
   | "booking_confirmation"
@@ -111,15 +111,11 @@ export const EMAIL_TEMPLATES: EmailTemplateMeta[] = [
   },
 ];
 
-const PRIMARY_COLOR = "#14b6dc";
-const DARK_COLOR = "#04244a";
-const ORANGE_COLOR = "#f27a0a";
-const MUTED_COLOR = "#1a5a7a";
-const BG_LIGHT = "#e8f6fa";
-const EMAIL_CARD = `max-width: 560px; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(4,36,74,0.08);`;
-
-/** Header gradient: navy → teal → orange. */
-const HEADER_GRADIENT = `linear-gradient(135deg, ${DARK_COLOR} 0%, ${PRIMARY_COLOR} 50%, ${ORANGE_COLOR} 100%)`;
+const PRIMARY_COLOR = EMAIL_LIGHT_BLUE;
+const DARK_COLOR = EMAIL_NAVY;
+const MUTED_COLOR = "#7a8899";
+const BG_LIGHT = EMAIL_BG;
+const EMAIL_CARD = `max-width: 560px; background: ${EMAIL_WHITE}; border-radius: 16px; box-shadow: 0 4px 24px rgba(10,22,40,0.08);`;
 
 /**
  * Render booking confirmation HTML (beautiful, email-client safe).
@@ -215,13 +211,10 @@ export function renderBookingConfirmationHtml(booking: Booking, context: Booking
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: ${BG_LIGHT};">
     <tr>
       <td align="center" style="padding: 32px 16px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,28,48,0.08); overflow: hidden;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 560px; background: ${EMAIL_WHITE}; border-radius: 16px; box-shadow: 0 4px 24px rgba(10,22,40,0.08); overflow: hidden;">
           <!-- Header -->
           <tr>
-            <td style="background: ${HEADER_GRADIENT}; padding: 28px 32px; text-align: center;">
-              <img src="${getEmailLogoUrl()}" alt="${brand.companyName}" width="260" height="72" style="max-width: 260px; height: auto; display: block; margin: 0 auto;" />
-              <p style="margin: 6px 0 0; font-size: 14px; color: rgba(255,255,255,0.9);">${isDeposit ? "Booking confirmed (deposit received)" : "Booking confirmed (full payment)"}</p>
-            </td>
+            ${renderEmailHeaderCell(isDeposit ? "Booking confirmed (deposit received)" : "Booking confirmed (full payment)")}
           </tr>
           <!-- Body -->
           <tr>

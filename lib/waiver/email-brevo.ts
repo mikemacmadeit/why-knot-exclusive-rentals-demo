@@ -5,33 +5,25 @@
 
 import { brand } from "@/content/brand";
 import { getNoreplyEmail, getSenderName } from "@/config/site";
+import {
+  EMAIL_BG,
+  EMAIL_NAVY,
+  renderEmailHeaderCell,
+} from "@/lib/booking/email-brand";
 import { bookingEnv } from "@/lib/booking/env";
 import type { WaiverEmailAdapter, WaiverInviteParams, WaiverReminderParams } from "./email-adapter";
 import { getDefaultTokenExpiryDays } from "./tokens";
 
 const BREVO_API_BASE = "https://api.brevo.com/v3";
-const PRIMARY = "#50bdba";
-const DARK = "#001c30";
-const PINK = "#f27a0a"; /* Brand secondary – logo orange logo */
-const BG = "#f0fafb";
+const DARK = EMAIL_NAVY;
+const BG = EMAIL_BG;
 
-/** Header gradient: navy → teal → pink to match logo orange logo palette. */
-const HEADER_GRADIENT = `linear-gradient(135deg, ${DARK} 0%, ${PRIMARY} 50%, ${PINK} 100%)`;
-
-function getEmailLogoUrl(): string {
-  const base = bookingEnv.appBaseUrl.replace(/\/$/, "");
-  return `${base}${brand.logoEmailPath}`;
-}
-
-/** Header block matching booking emails: logo orange logo + subtitle on gradient. */
+/** Header block matching booking emails: solid navy + accent bars. */
 function waiverEmailHeader(subtitle: string): string {
   return `
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto 24px;background:${HEADER_GRADIENT};border-radius:16px 16px 0 0;overflow:hidden;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto 24px;border-radius:16px 16px 0 0;overflow:hidden;">
     <tr>
-      <td style="padding:24px 28px;text-align:center;">
-        <img src="${getEmailLogoUrl()}" alt="${brand.companyName}" width="260" height="72" style="max-width:260px;height:auto;display:block;margin:0 auto;" />
-        <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">${subtitle}</p>
-      </td>
+      ${renderEmailHeaderCell(subtitle)}
     </tr>
   </table>`;
 }

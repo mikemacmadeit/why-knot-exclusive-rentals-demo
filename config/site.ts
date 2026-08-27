@@ -59,7 +59,8 @@ export const siteConfig: SiteConfig = {
     logoNavbar: "/brand/logo-navbar-white.png",
     logoHover: "/brand/logo-light.png",
     logoDark: "/brand/logo-dark.png",
-    logoEmail: "/brand/logo.png",
+    /** White lockup for dark navy email headers */
+    logoEmail: "/brand/logo-navbar-white.png",
     logoHero: "/brand/logo-light.png",
     logoHeroHover: "/brand/logo-light.png",
     logoAlt: "Tahoe Wakebusters",

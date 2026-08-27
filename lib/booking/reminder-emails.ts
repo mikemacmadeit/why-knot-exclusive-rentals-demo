@@ -4,7 +4,13 @@
  */
 
 import { brand } from "@/content/brand";
-import { bookingEnv } from "./env";
+import {
+  EMAIL_BG,
+  EMAIL_LIGHT_BLUE,
+  EMAIL_NAVY,
+  EMAIL_WHITE,
+  renderEmailHeaderCell,
+} from "./email-brand";
 import {
   renderEmailLogisticsHtml,
   type ExperienceEmailLogistics,
@@ -30,23 +36,14 @@ export interface BookingReminderParams {
   logistics?: ExperienceEmailLogistics;
 }
 
-const PRIMARY = "#14b6dc";
-const DARK = "#04244a";
-const ORANGE = "#f27a0a";
-const MUTED = "#1a5a7a";
-const BG = "#e8f6fa";
+const PRIMARY = EMAIL_LIGHT_BLUE;
+const DARK = EMAIL_NAVY;
+const MUTED = "#7a8899";
+const BG = EMAIL_BG;
 
-/** Header gradient: navy → teal → orange. */
-const HEADER_GRADIENT = `linear-gradient(135deg, ${DARK} 0%, ${PRIMARY} 50%, ${ORANGE} 100%)`;
-
-function getEmailLogoUrl(): string {
-  const base = bookingEnv.appBaseUrl.replace(/\/$/, "");
-  return `${base}${brand.logoEmailPath}`;
-}
-
-/** Header row with ${brand.companyName} logo and subtitle. */
+/** Header row with logo and subtitle (solid navy + accent bars). */
 function reminderHeaderHtml(subtitle: string): string {
-  return `<td style="background: ${HEADER_GRADIENT}; padding: 24px 28px; text-align: center;"><img src="${getEmailLogoUrl()}" alt="${brand.companyName}" width="260" height="72" style="max-width:260px;height:auto;display:block;margin:0 auto;" /><p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.9);">${subtitle}</p></td>`;
+  return renderEmailHeaderCell(subtitle);
 }
 
 function escapeHtml(s: string): string {
@@ -96,7 +93,7 @@ function whatToBringHtml(whatToBring?: string[]): string {
 }
 
 const BASE_STYLES = `margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background-color:${BG};`;
-const CONTAINER = `max-width:560px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,28,48,0.08);overflow:hidden;`;
+const CONTAINER = `max-width:560px;margin:0 auto;background:${EMAIL_WHITE};border-radius:16px;box-shadow:0 4px 24px rgba(10,22,40,0.08);overflow:hidden;`;
 
 export function buildReminder1WeekHtml(params: BookingReminderParams): string {
   const waiverBlock = params.waiverSigningUrl

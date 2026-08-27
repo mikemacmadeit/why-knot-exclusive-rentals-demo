@@ -1,16 +1,21 @@
 /**
  * Admin roles for this customer deployment.
- * Super Admin = first email in ADMIN_EMAIL (or PLATFORM_ADMIN_EMAIL).
+ * Super Admin = any email listed in ADMIN_EMAIL (or PLATFORM_ADMIN_EMAIL), comma-separated.
  * Operators and captains live in Firestore `adminTeam`.
  */
 
-export function getSuperAdminEmail(): string {
+/** Parsed Super Admin allowlist from env (lowercased). */
+export function getSuperAdminEmails(): string[] {
   const raw = process.env.ADMIN_EMAIL?.trim() || process.env.PLATFORM_ADMIN_EMAIL?.trim() || "";
-  const first = raw
+  return raw
     .split(",")
     .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)[0];
-  return first ?? "";
+    .filter(Boolean);
+}
+
+/** Primary Super Admin (first entry) — used for display / “locked” team row. */
+export function getSuperAdminEmail(): string {
+  return getSuperAdminEmails()[0] ?? "";
 }
 
 /** Display name for the configured Super Admin (env override optional). */
@@ -70,9 +75,9 @@ export function normalizeAdminEmail(email: string | null | undefined): string {
 }
 
 export function isSuperAdminEmail(email: string | null | undefined): boolean {
-  const superEmail = getSuperAdminEmail();
-  if (!superEmail) return false;
-  return normalizeAdminEmail(email) === superEmail;
+  const normalized = normalizeAdminEmail(email);
+  if (!normalized) return false;
+  return getSuperAdminEmails().includes(normalized);
 }
 
 export function isAdminRole(value: unknown): value is AdminRole {

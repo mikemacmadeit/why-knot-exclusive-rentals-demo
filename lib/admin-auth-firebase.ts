@@ -3,9 +3,9 @@
  * Client signs in with Firebase (email/password), sends ID token to /api/admin/session;
  * server creates a session cookie and verifies it on protected routes.
  *
- * Super Admin is the first address in ADMIN_EMAIL (or PLATFORM_ADMIN_EMAIL).
+ * Super Admin is any address listed in ADMIN_EMAIL (or PLATFORM_ADMIN_EMAIL), comma-separated.
  * Operators and captains are invited via Firestore `adminTeam` — they are not granted
- * access merely by appearing in ADMIN_EMAIL.
+ * access merely by appearing outside that allowlist / team store.
  */
 
 import "server-only";
@@ -31,7 +31,7 @@ const SESSION_EXPIRES_MS = 5 * 24 * 60 * 60 * 1000;
 export const FIREBASE_SETUP_HINT =
   "Set FIREBASE_SERVICE_ACCOUNT_JSON_PATH to your service account JSON path (Firebase Console → Project settings → Service accounts → Generate new private key), or set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY. Restart the dev server.";
 
-/** ADMIN_EMAIL must be set so admin is considered configured. Only the first email is Super Admin; teammates use Team invites. */
+/** ADMIN_EMAIL must be set so admin is considered configured. Every listed email is Super Admin; teammates use Team invites. */
 export function getAllowedAdminEmails(): string[] {
   const raw = process.env.ADMIN_EMAIL?.trim() || process.env.PLATFORM_ADMIN_EMAIL?.trim();
   if (!raw) return [];

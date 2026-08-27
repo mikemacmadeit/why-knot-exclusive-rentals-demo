@@ -13,13 +13,14 @@ describe("admin roles", () => {
     assert.equal(normalizeAdminEmail("  A@B.Com "), "a@b.com");
   });
 
-  it("treats ADMIN_EMAIL first entry as super admin", () => {
+  it("treats every ADMIN_EMAIL entry as super admin", () => {
     const prev = process.env.ADMIN_EMAIL;
     process.env.ADMIN_EMAIL = "owner@example.com, other@example.com";
     try {
       assert.equal(getSuperAdminEmail(), "owner@example.com");
       assert.equal(isSuperAdminEmail("owner@example.com"), true);
-      assert.equal(isSuperAdminEmail("other@example.com"), false);
+      assert.equal(isSuperAdminEmail("other@example.com"), true);
+      assert.equal(isSuperAdminEmail("outsider@example.com"), false);
     } finally {
       if (prev == null) delete process.env.ADMIN_EMAIL;
       else process.env.ADMIN_EMAIL = prev;

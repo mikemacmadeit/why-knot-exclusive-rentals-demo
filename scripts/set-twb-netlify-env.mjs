@@ -53,7 +53,7 @@ const WEB = {
   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "twb-demo-2026.firebasestorage.app",
   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "385993027589",
   NEXT_PUBLIC_FIREBASE_APP_ID: "1:385993027589:web:4e71aaf47e300030a5ac6c",
-  ADMIN_EMAIL: "usalandspecialist@gmail.com",
+  ADMIN_EMAIL: "usalandspecialist@gmail.com,tahoewakebusters@gmail.com",
   CONTACT_EMAIL: "tahoewakebusters@gmail.com",
   APP_BASE_URL: SITE_URL,
   NEXT_PUBLIC_SITE_URL: SITE_URL,

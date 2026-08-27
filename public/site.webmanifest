@@ -1,10 +1,10 @@
 {
-  "name": "Boat Rental Company",
-  "short_name": "Boat Rentals",
+  "name": "Why Knot Exclusive Rentals",
+  "short_name": "Why Knot",
   "icons": [
-    { "src": "/brand/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "/brand/logo.png", "sizes": "any", "type": "image/png" }
   ],
-  "theme_color": "#04244a",
-  "background_color": "#04244a",
+  "theme_color": "#044d60",
+  "background_color": "#044d60",
   "display": "standalone"
 }

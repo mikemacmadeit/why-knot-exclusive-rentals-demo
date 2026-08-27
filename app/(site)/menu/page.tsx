@@ -40,7 +40,7 @@ const pageLinks = [
     href: "/experiences",
     label: "Charters",
     icon: Compass,
-    description: "Party barge, wakesurf charter, and luxury tritoon",
+    description: "Boat rental, fishing charter, and sandbar & snorkel",
   },
   {
     href: OUR_BOAT_PATH,

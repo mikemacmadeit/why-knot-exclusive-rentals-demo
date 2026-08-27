@@ -179,12 +179,12 @@ interface AuthUIProps {
 
 const defaultContent: Required<AuthContentProps> = {
   image: {
-    src: "/photos/wakebusters/tahoe-shoreline.jpg",
-    alt: "Snow-dusted Sierra peaks above Lake Tahoe shoreline",
+    src: "/photos/whyknot/hero.jpg",
+    alt: "Florida Keys water near Tavernier",
   },
   quote: {
-    text: "Welcome back. The lake is waiting.",
-    author: "Tahoe Wakebusters",
+    text: "Welcome back. The Keys are waiting.",
+    author: "Why Knot Exclusive Rentals",
   },
 };
 

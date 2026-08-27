@@ -7,9 +7,9 @@ import { ParallaxScrolling } from "@/components/ui/parallax-scrolling";
 import { BookingCTA } from "@/components/site/BookingCTA";
 import { useBookingModal } from "@/components/site/BookingModalContext";
 
-const LAYER_FAR = "/photos/wakebusters/lake.jpg";
-const LAYER_MID = "/photos/wakebusters/hero.jpg";
-const LAYER_NEAR = "/photos/wakebusters/wakesurf.jpg";
+const LAYER_FAR = "/photos/whyknot/hero.jpg";
+const LAYER_MID = "/photos/whyknot/sandbar-contender.jpg";
+const LAYER_NEAR = "/photos/whyknot/bougie-girl.jpg";
 
 /**
  * Full-bleed parallax homepage hero — matches Wakebusters sales mock:
@@ -64,15 +64,14 @@ export function HeroParallax() {
                 <h1 className="max-w-4xl font-display text-[clamp(2.1rem,6.5vw,4.75rem)] font-bold leading-[1.05] tracking-tight text-white">
                   <span className="block">Your Perfect Day on</span>
                   <span className="block">
-                    <span className="text-brand-primary">Lake Tahoe</span>
+                    <span className="text-brand-primary">the Florida Keys</span>
                     <span className="text-white"> Starts</span>
                   </span>
                   <span className="block">Here</span>
                 </h1>
 
                 <p className="mt-5 max-w-xl text-sm text-white/80 sm:mt-6 sm:text-base lg:text-lg">
-                  Party barges · wakesurf charters · luxury tritoons — gas &amp; toys included.
-                  Departing Tahoe Keys Marina.
+                  Boat rentals · fishing charters · sandbar &amp; snorkel. Departing Tavernier Creek.
                 </p>
 
                 <div className="mt-7 max-w-md sm:mt-8 lg:mt-10">
@@ -123,7 +122,7 @@ export function HeroParallax() {
           <p className="absolute bottom-5 left-5 z-30 text-[10px] font-medium uppercase tracking-[0.2em] text-white/45 sm:left-8 lg:left-14">
             {brand.companyName}
             <span className="mx-2 text-white/25">·</span>
-            South Lake Tahoe
+            Tavernier, FL
           </p>
         </div>
       </section>

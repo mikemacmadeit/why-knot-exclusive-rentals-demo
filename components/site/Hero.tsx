@@ -15,10 +15,10 @@ import { useBookingModal } from "./BookingModalContext";
 const HERO_IMAGE = siteConfig.media.hero;
 
 const bullets = [
-  "Party barges · Wakesurf · Tritoons",
-  "Gas & toys included",
-  "Tahoe Keys Marina",
-  "USCG captains available",
+  "Boat rentals · Fishing · Sandbar",
+  "USCG licensed captains",
+  "Tavernier Creek",
+  "Explore the Keys your way",
 ];
 
 export function Hero() {
@@ -114,7 +114,7 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={skipEntrance ? { duration: 0 } : { duration: 0.45, delay: 0.18 }}
             >
-              {brand.tagline} Party barges, wakesurf charters, and luxury tritoons on Lake Tahoe — book online.
+              {brand.tagline}
             </motion.p>
           </motion.div>
 

@@ -1,20 +1,12 @@
 "use client";
 
 import { motion } from "motion/react";
+import { Star } from "lucide-react";
 import TestimonialMarquee from "@/components/ui/marquee-01";
 import { testimonials } from "@/content/testimonials";
 import { homepageCopy } from "@/content/homepage";
+import { location, reviewCountLabel } from "@/content/location";
 
-const reviews = testimonials.map((t) => ({
-  name: t.author,
-  username: t.when ?? "Guest",
-  body: t.quote,
-}));
-
-/**
- * Full-width dual-row testimonial marquee — shadcnspace marquee-01,
- * wired to real Wakebusters Yelp reviews (initials, no fake headshots).
- */
 export function WakeMarquee() {
   return (
     <section
@@ -36,12 +28,26 @@ export function WakeMarquee() {
           <h2 className="mt-5 font-display text-xl font-bold tracking-tighter text-brand-dark sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">
             {homepageCopy.reviews.h2}
           </h2>
-          <p className="mt-5 text-sm text-brand-muted sm:text-base">{homepageCopy.reviews.stats}</p>
+          <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand-dark sm:text-base">
+            <span className="inline-flex gap-0.5" aria-hidden>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+              ))}
+            </span>
+            {location.rating}.0 · {reviewCountLabel()}
+          </p>
+          <p className="mt-2 text-sm text-brand-muted sm:text-base">{homepageCopy.reviews.stats}</p>
         </motion.div>
       </div>
 
       <div className="mt-10 w-full">
-        <TestimonialMarquee reviews={reviews} />
+        <TestimonialMarquee
+          reviews={testimonials.map((t) => ({
+            name: t.author,
+            username: t.when ?? "Guest",
+            body: t.quote,
+          }))}
+        />
       </div>
     </section>
   );

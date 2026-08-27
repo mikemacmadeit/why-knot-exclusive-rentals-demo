@@ -3,6 +3,7 @@ import { getDb, getFirestoreExports, getFirebaseApp } from "@/lib/booking/fireba
 import { bookingEnv } from "@/lib/booking/env";
 import { randomBytes } from "crypto";
 import { isSuperAdminEmail, isTeamInviteRole, normalizeAdminEmail, type AdminRole } from "@/lib/admin/roles";
+import { getAdminTeamTenantId, teamMemberBelongsToThisSite } from "@/lib/admin/team-tenant";
 
 export const ADMIN_TEAM_COLLECTION = "adminTeam";
 
@@ -16,6 +17,7 @@ export type AdminTeamMemberRecord = {
   invitedBy: string;
   invitedAt: string | null;
   updatedAt: string | null;
+  tenantId: string | null;
 };
 
 function teamDocId(email: string): string {
@@ -43,9 +45,12 @@ export async function getTeamMember(email: string): Promise<AdminTeamMemberRecor
     invitedBy?: string;
     invitedAt?: unknown;
     updatedAt?: unknown;
+    tenantId?: string;
   };
   if (!isTeamInviteRole(data.role)) return null;
   if (data.status !== "active" && data.status !== "disabled") return null;
+  const tenantId = typeof data.tenantId === "string" && data.tenantId.trim() ? data.tenantId.trim() : null;
+  if (!teamMemberBelongsToThisSite(tenantId)) return null;
   return {
     email: normalizeAdminEmail(data.email) || normalized,
     name: typeof data.name === "string" && data.name.trim() ? data.name.trim() : normalized,
@@ -54,6 +59,7 @@ export async function getTeamMember(email: string): Promise<AdminTeamMemberRecor
     invitedBy: typeof data.invitedBy === "string" ? data.invitedBy : "",
     invitedAt: toIso(data.invitedAt),
     updatedAt: toIso(data.updatedAt),
+    tenantId,
   };
 }
 
@@ -112,6 +118,7 @@ export async function upsertTeamInvite(opts: {
     role: opts.role,
     status: "active" as const,
     invitedBy: normalizeAdminEmail(opts.invitedBy),
+    tenantId: getAdminTeamTenantId(),
     updatedAt: now,
     ...(existing.exists ? {} : { invitedAt: now }),
   };
@@ -124,6 +131,7 @@ export async function upsertTeamInvite(opts: {
     invitedBy: record.invitedBy,
     invitedAt: existing.exists ? toIso(existing.data()?.invitedAt) : new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    tenantId: record.tenantId,
   };
 }
 

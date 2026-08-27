@@ -1,1 +1,1 @@
-export { FooterTapedDesign as Footer } from "@/components/ui/footer-taped-design";
+export { FooterWordmark as Footer } from "@/components/ui/footer-wordmark";

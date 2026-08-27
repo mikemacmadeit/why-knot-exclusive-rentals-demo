@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Marquee } from "@/components/ui/marquee-01-utils/marquee";
+import { Star } from "lucide-react";
 import { testimonials } from "@/content/testimonials";
 
 export type MarqueeReview = {
@@ -34,7 +35,7 @@ const ReviewCard = ({
   body,
 }: MarqueeReview) => {
   return (
-    <Card className="relative h-full min-h-[10.5rem] w-72 cursor-default overflow-hidden border-brand-dark/10 bg-white p-4 shadow-none sm:w-80">
+    <Card className="relative h-full min-h-[11rem] w-80 cursor-default overflow-hidden border-brand-dark/10 bg-white p-4 shadow-none sm:w-96">
       <CardContent className="flex flex-col gap-2 p-0">
         <div className="flex flex-row items-center gap-2">
           <Avatar className="h-8 w-8">
@@ -46,7 +47,12 @@ const ReviewCard = ({
             <p className="text-xs font-medium text-brand-muted">{username}</p>
           </div>
         </div>
-        <p className="line-clamp-4 text-sm leading-relaxed text-brand-dark/85">{body}</p>
+        <div className="flex gap-0.5" aria-hidden>
+          {Array.from({ length: 5 }).map((_, j) => (
+            <Star key={j} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+          ))}
+        </div>
+        <p className="line-clamp-5 text-sm leading-relaxed text-brand-dark/85">{body}</p>
       </CardContent>
     </Card>
   );
@@ -62,12 +68,12 @@ export default function TestimonialMarquee({
 
   return (
     <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
-      <Marquee pauseOnHover className="[--duration:28s]">
+      <Marquee pauseOnHover className="[--duration:96s]">
         {firstRow.map((review, i) => (
           <ReviewCard key={`${review.name}-${i}`} {...review} />
         ))}
       </Marquee>
-      <Marquee reverse pauseOnHover className="[--duration:32s]">
+      <Marquee reverse pauseOnHover className="[--duration:112s]">
         {secondRow.map((review, i) => (
           <ReviewCard key={`${review.name}-${i}`} {...review} />
         ))}

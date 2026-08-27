@@ -32,7 +32,7 @@ export function SocialStoriesBar({ className }: { className?: string }) {
           className="mt-0.5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-dark hover:text-brand-primary"
         >
           <Instagram className="h-4 w-4" aria-hidden />
-          @tahoewakebusters
+          {socialStoriesProfile.name}
         </Link>
       </div>
     </div>

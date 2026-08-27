@@ -58,9 +58,9 @@ export function TrustRow({
         </span>
       </span>
       <span className={sep} aria-hidden>·</span>
-      <span>South Lake Tahoe crew</span>
+      <span>Florida Keys crew</span>
       <span className={sep} aria-hidden>·</span>
-      <span>Captain fees separate</span>
+      <span>USCG captains</span>
     </div>
   );
 }

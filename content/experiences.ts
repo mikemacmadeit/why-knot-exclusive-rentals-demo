@@ -1,6 +1,11 @@
 /**
- * Fleet packages for Tahoe Wakebusters demo.
- * Firestore slugs remain `pontoon` / `watersports` for seed compatibility.
+ * Fleet packages for Why Knot Exclusive Rentals demo (Florida Keys).
+ * Firestore slugs remain `pontoon` / `watersports` / `sunset` for seed compatibility.
+ *
+ * Mapping:
+ * - pontoon → Boat Rental (bareboat / be your own captain)
+ * - watersports → Fishing Charters
+ * - sunset → Luxury Sandbar & Snorkel (Bougie Girl / Sea Fox)
  */
 
 import { siteConfig } from "@/config/site";
@@ -30,49 +35,47 @@ export interface Experience {
   imageAlt?: string;
 }
 
-const partyHalf = getActiveCatalogRateCents("half");
-const partyFull = getActiveCatalogRateCents("full");
+const rentalRate = getActiveCatalogRateCents("half");
+const fishingRate = getActiveCatalogRateCents("full");
+const sandbarRate = getActiveCatalogRateCents("half");
 
 export const experiences: Experience[] = [
   {
     slug: "pontoon",
     title: siteConfig.catalog.halfDay.title,
     shortDescription:
-      "The double decker that made us famous. Two waterslides off the top deck, a full BBQ grill, and enough room for the whole crew to spread out. This is the boat people book for 4th of July, bachelorette parties, and birthdays they'll still be talking about in five years.",
+      "Be your own captain. Explore the Florida Keys at your own pace — sandbars, sightseeing, or a lazy day on the water with family and friends.",
     description:
-      "The double decker that made us famous. Two waterslides off the top deck, a full BBQ grill, and enough room for the whole crew to spread out. This is the boat people book for 4th of July, bachelorette parties, and birthdays they'll still be talking about in five years. Full tank of gas, water toys, coolers, and safety gear included. Captain required — captain fees paid separately.",
+      "Choose a boat rental to explore the water at your own pace. Perfect for sandbar trips, sightseeing, or simply spending a great day on the ocean with family and friends. We confirm dock details in Tavernier after you book. Captain optional if you’d rather not drive.",
     highlights: [
-      "Full tank of gas included",
-      "Dual waterslides & top deck",
-      "BBQ grill & coolers",
-      "Water toys, floaties & tubes",
-      "Premium Bluetooth stereo",
-      "Life jackets & safety gear",
+      "Be your own captain (or add a USCG captain)",
+      "Explore at your own pace",
+      "Sandbar, sightseeing, or island hopping",
+      "Safety gear included",
+      "Depart Tavernier Creek",
+      "Customized around your group",
     ],
-    duration: "4 or 8 hours",
+    duration: "Half or full day",
     durationMinutes: 240,
-    capacity: "Up to 13 guests",
-    heroImage: "/photos/wakebusters/party-barge.jpg",
+    capacity: "Private group",
+    heroImage: "/photos/whyknot/boat-day.png",
     gallery: [
-      "/photos/wakebusters/party-barge.jpg",
-      "/photos/wakebusters/hero-slides.jpg",
-      "/photos/wakebusters/party-crew.jpg",
-      "/photos/wakebusters/wedding.jpg",
+      "/photos/whyknot/boat-day.png",
+      "/photos/whyknot/gallery-4.jpg",
     ],
-    pricingNote: `Half day (4 hrs) from ${formatUsdFromCents(partyHalf)} · Full day (8 hrs) from ${formatUsdFromCents(partyFull)}. Captain fees paid separately.`,
-    fromPriceCents: partyHalf,
-    ctaLabel: "BOOK PARTY BARGE",
+    pricingNote: `Demo sample from ${formatUsdFromCents(rentalRate)}. Confirm live rates with Why Knot before go-live.`,
+    fromPriceCents: rentalRate,
+    ctaLabel: "BOOK BOAT RENTAL",
     bookCtaLabel: "Book now",
-    badge: "Most Popular",
-    imageAlt: "Double decker party barge rental with waterslides on Lake Tahoe",
+    imageAlt: "Why Knot Exclusive Rentals boat rental in the Florida Keys",
     faqs: [
       {
         q: "Do I need a captain?",
-        a: "Yes. Every charter runs with a USCG-certified captain. Captain fees are quoted separately and confirmed before you book.",
+        a: "No — boat rentals are set up so you can be your own captain. If you’d rather relax, we can add a USCG-licensed captain.",
       },
       {
-        q: "Is gas included?",
-        a: "Yes — every rental includes a full tank of gas. No surprise fuel charges at checkout.",
+        q: "Where do we launch?",
+        a: "We operate out of Tavernier, Florida Keys (Tavernier Creek). Exact dock details come after you book.",
       },
     ],
   },
@@ -80,35 +83,39 @@ export const experiences: Experience[] = [
     slug: "watersports",
     title: siteConfig.catalog.fullDay.title,
     shortDescription:
-      "A Mastercraft NXT built to throw a clean wake, loaded with boards for every skill level. Whether you've surfed a hundred sessions or you're standing up for the first time, our captains put you in the right spot on the lake and coach you into the wave.",
+      "Offshore mahi, reef & wreck snapper and grouper, or light-tackle backcountry. Every fishing trip is customized to the conditions and your experience level.",
     description:
-      "A Mastercraft NXT built to throw a clean wake, loaded with boards for every skill level. Whether you've surfed a hundred sessions or you're standing up for the first time, our captains put you in the right spot on the lake and coach you into the wave. Full tank of gas included. Captain required — captain fees paid separately.",
+      "From deep offshore waters to the reefs, wrecks, and shallow backcountry of the Florida Keys, we offer fishing charters for every type of angler. Chase mahi offshore, drop lines on the reef for snapper and grouper, or explore mangroves and flats on light tackle. USCG-licensed captains, local knowledge, and a trip plan built around the bite.",
     highlights: [
-      "Mastercraft NXT wakesurf boat",
-      "Multiple wakesurf boards & wakeboards",
-      "Skis and tubes included",
-      "Full tank of gas",
-      "Life jackets & safety gear",
+      "Offshore, reef & wreck, or backcountry",
+      "USCG-licensed captain included",
+      "Customized to conditions & skill level",
+      "Gear and local knowledge provided",
+      "All experience levels welcome",
+      "Best shot at quality fish",
     ],
-    duration: "2–8 hours",
-    durationMinutes: 120,
-    capacity: "Up to 10 guests",
-    heroImage: "/photos/wakebusters/wakesurf.jpg",
+    duration: "Half or full day",
+    durationMinutes: 240,
+    capacity: "Private charter",
+    heroImage: "/photos/whyknot/catch-swordfish.jpg",
     gallery: [
-      "/photos/wakebusters/wakesurf.jpg",
-      "/photos/wakebusters/wakesurf-2.jpg",
-      "/photos/wakebusters/gallery-2.jpg",
-      "/photos/wakebusters/sunset.jpg",
+      "/photos/whyknot/catch-swordfish.jpg",
+      "/photos/whyknot/gallery-3.jpg",
+      "/photos/whyknot/gallery-6.jpg",
+      "/photos/whyknot/catch-snapper.jpg",
+      "/photos/whyknot/catch-lobsters.jpg",
+      "/photos/whyknot/catch-barracuda.jpg",
     ],
-    pricingNote: "From $800 (2 hrs) · Half day $1,500 · Full day $2,500. Captain fees paid separately.",
-    fromPriceCents: 80_000,
-    ctaLabel: "BOOK WAKESURF",
+    pricingNote: `Demo sample from ${formatUsdFromCents(fishingRate)}. Captain included. Confirm live rates before go-live.`,
+    fromPriceCents: fishingRate,
+    ctaLabel: "BOOK FISHING CHARTER",
     bookCtaLabel: "Book now",
-    imageAlt: "Mastercraft NXT wakeboard boat rental on Lake Tahoe",
+    badge: "Most Popular",
+    imageAlt: "Fishing charter with Why Knot Exclusive Rentals in the Florida Keys",
     faqs: [
       {
-        q: "Are boards included?",
-        a: "Yes. Wakesurf boards, wakeboards, water skis, and towable tubes are included with the charter.",
+        q: "What kind of fishing do you run?",
+        a: "Offshore, reef & wreck, and backcountry. We match the trip to weather, season, and what you want to catch.",
       },
     ],
   },
@@ -116,35 +123,36 @@ export const experiences: Experience[] = [
     slug: "sunset",
     title: siteConfig.catalog.allIn.title,
     shortDescription:
-      "Our Bennington tritoon is the pontoon boat rental for people who want Lake Tahoe at its most beautiful — Emerald Bay, Sand Harbor, the quiet coves most visitors never find. Comfortable enough for grandparents, quick enough to pull a tube.",
+      "The Bougie Girl experience — designed for comfort, not just getting you there. Sandbar, snorkel, coastline cruise, with a captain handling every detail.",
     description:
-      "Our Bennington tritoon is the pontoon boat rental for people who want Lake Tahoe at its most beautiful — Emerald Bay, Sand Harbor, the quiet coves most visitors never find. Comfortable enough for grandparents, quick enough to pull a tube. Full tank of gas, water toys, and safety gear included. Captain required — captain fees paid separately.",
+      "Escape to crystal-clear Florida Keys water aboard premium charter boats built for comfort and style. Relax at the sandbar, snorkel vibrant reefs, cruise the coastline, or enjoy time with family and friends. Spacious seating, high-end amenities, and experienced captains. Ask about The Bougie Girl or the Sea Fox 26.8 Commander.",
     highlights: [
-      "Full tank of gas included",
-      "Tube & water toys",
-      "Coolers & Bluetooth stereo",
-      "Comfortable seating for 12",
-      "Life jackets & safety gear",
+      "Luxury sandbar & snorkel",
+      "Captain included — sit back and enjoy",
+      "Snorkeling gear provided",
+      "The Bougie Girl & Sea Fox 26.8 Commander",
+      "Customized to your group",
+      "Stress-free Keys day",
     ],
-    duration: "4–8 hours",
+    duration: "Half or full day",
     durationMinutes: 240,
-    capacity: "Up to 12 guests",
-    heroImage: "/photos/wakebusters/tritoon.jpg",
+    capacity: "Private group",
+    heroImage: "/photos/whyknot/sandbar-cheers.jpg",
     gallery: [
-      "/photos/wakebusters/tritoon.jpg",
-      "/photos/wakebusters/tritoon-slide.jpg",
-      "/photos/wakebusters/lake.jpg",
-      "/photos/wakebusters/sunset.jpg",
+      "/photos/whyknot/sandbar-cheers.jpg",
+      "/photos/whyknot/bougie-girl.jpg",
+      "/photos/whyknot/gallery-2.jpg",
+      "/photos/whyknot/sandbar-contender.jpg",
     ],
-    pricingNote: "Half day from $1,100 · 6 hrs (Mon–Thu) $1,500 · Full day $1,900. Captain fees paid separately.",
-    fromPriceCents: 110_000,
-    ctaLabel: "BOOK TRITOON",
+    pricingNote: `Demo sample from ${formatUsdFromCents(sandbarRate)}. Captain included. Confirm live rates before go-live.`,
+    fromPriceCents: sandbarRate,
+    ctaLabel: "BOOK SANDBAR & SNORKEL",
     bookCtaLabel: "Book now",
-    imageAlt: "Luxury Bennington tritoon pontoon boat rental Lake Tahoe",
+    imageAlt: "The Bougie Girl luxury sandbar and snorkel charter in the Florida Keys",
     faqs: [
       {
-        q: "Where do we launch?",
-        a: "All rentals depart from Tahoe Keys Marina in South Lake Tahoe. Arrive 20 minutes early for parking and loading.",
+        q: "Which boats?",
+        a: "Luxury sandbar and snorkel trips run on The Bougie Girl and the Sea Fox 26.8 Commander. We’ll match the boat to your group when you book.",
       },
     ],
   },
@@ -153,13 +161,13 @@ export const experiences: Experience[] = [
 export function getExperienceBySlug(slug: string): Experience | undefined {
   const s = (slug ?? "").toLowerCase().trim();
   if (!s) return undefined;
-  if (s === "pontoon" || s === "nasty-half-day" || s === "half-day" || s === "party-barge") {
+  if (s === "pontoon" || s === "nasty-half-day" || s === "half-day" || s === "party-barge" || s === "boat-rental") {
     return experiences.find((e) => e.slug === "pontoon");
   }
-  if (s === "watersports" || s === "nasty-full-day" || s === "full-day" || s === "wakesurf") {
+  if (s === "watersports" || s === "nasty-full-day" || s === "full-day" || s === "wakesurf" || s === "fishing") {
     return experiences.find((e) => e.slug === "watersports");
   }
-  if (s === "sunset" || s === "tritoon" || s === "all-in") {
+  if (s === "sunset" || s === "tritoon" || s === "all-in" || s === "sandbar") {
     return experiences.find((e) => e.slug === "sunset");
   }
   return experiences.find((e) => e.slug === s);

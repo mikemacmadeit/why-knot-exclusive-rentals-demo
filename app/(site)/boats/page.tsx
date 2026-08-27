@@ -57,7 +57,7 @@ export default async function BoatsHubPage() {
             Our Fleet
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-white/90 sm:text-xl">
-            Party barge, wakesurf charter, and luxury tritoon — every rental includes a USCG-certified captain.
+            Boat rental, fishing charter, and luxury sandbar &amp; snorkel — captained trips include a USCG-licensed captain.
           </p>
         </div>
       </section>

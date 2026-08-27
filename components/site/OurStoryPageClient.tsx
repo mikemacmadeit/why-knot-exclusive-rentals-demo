@@ -11,31 +11,26 @@ import { LipScrollZoominAnimation } from "@/components/ui/lip-scroll-zoomin-anim
 import { LayeredText } from "@/components/ui/layered-text";
 import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 
-const WATER_PHOTO = "/photos/wakebusters/tahoe-aerial.jpg";
+const WATER_PHOTO = "/photos/whyknot/bougie-girl.jpg";
 
 const FOUNDERS = [
   {
     id: 1,
-    name: "Jarod Minghini",
-    designation: "Founder · Captain",
-    image: "/photos/wakebusters/founder-wakesurf.jpg",
-  },
-  {
-    id: 2,
-    name: "Bobby Minghini",
-    designation: "Founder · Captain",
-    image: "/photos/wakebusters/founder-portrait.jpg",
+    name: "Captain Braxton Black",
+    designation: "Captain · Keys local",
+    image: "/photos/whyknot/gallery-4.jpg",
   },
 ];
 
 const STORY_LAYERED_LINES = [
-  { top: "\u00A0", bottom: "BROTHERS" },
-  { top: "BROTHERS", bottom: "LOCALS" },
-  { top: "LOCALS", bottom: "MAKE" },
-  { top: "MAKE", bottom: "WAKES" },
-  { top: "WAKES", bottom: "CREATE" },
-  { top: "CREATE", bottom: "MEMORIES" },
-  { top: "MEMORIES", bottom: "\u00A0" },
+  { top: "\u00A0", bottom: "KEYS" },
+  { top: "KEYS", bottom: "LOCAL" },
+  { top: "LOCAL", bottom: "WHY" },
+  { top: "WHY", bottom: "KNOT" },
+  { top: "KNOT", bottom: "EXPLORE" },
+  { top: "EXPLORE", bottom: "YOUR" },
+  { top: "YOUR", bottom: "WAY" },
+  { top: "WAY", bottom: "\u00A0" },
 ];
 
 function FadeIn({
@@ -74,8 +69,8 @@ export function OurStoryPageClient() {
     <div className="min-h-screen w-full bg-brand-dark">
       <LipScrollZoominAnimation
         title={homepageCopy.story.h2}
-        watermark="TAHOE"
-        posterSrc="/photos/wakebusters/tahoe-shoreline.jpg"
+        watermark="KEYS"
+        posterSrc="/photos/whyknot/bougie-girl.jpg"
         imageAlt={homepageCopy.story.imageAlt}
         className="bg-brand-dark"
         firstSlide={
@@ -115,7 +110,7 @@ export function OurStoryPageClient() {
                 itemClassName="-mr-6 sm:-mr-8 lg:-mr-10"
               />
               <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted">
-                Jarod &amp; Bobby · Founders
+                Captain Braxton Black · Why Knot
               </p>
             </div>
 
@@ -125,18 +120,18 @@ export function OurStoryPageClient() {
             </h2>
             <div className="mt-8 max-w-2xl space-y-6 text-base leading-relaxed text-brand-muted sm:text-lg">
               <p>
-                Ten years of Lake Tahoe boat rentals from a family-owned crew who actually grew up
-                on this water. One flat rate. No hidden fuel charges. USCG-certified captains who
-                know every cove from Emerald Bay to Camp Richardson.
+                Why Knot Exclusive Rentals is your go-to for unforgettable days on the water in the
+                Florida Keys. Whether you want a relaxing day in the sun, a fishing adventure, a
+                snorkeling getaway, or a sunset cruise, we’ll help you design the trip.
               </p>
               <p>
-                A real crew on a real lake. Finest boats, everything included, honest prices, and
-                cove knowledge no booking widget can fake. From Emerald Bay to Camp Richardson, we
-                know where the day wants to go.
+                Captain Braxton Black is a true local waterman — as skilled at the helm as he is at
+                creating a fun, relaxed vibe. From the catch of the day to hidden spots you won’t
+                find on a map, you’ll feel at home on the water.
               </p>
               <p>
-                Bachelorettes to board meetings. Birthdays, weddings, corporate outings, 4th of July
-                chaos — groups of 2 to 40+, with single boats or the full fleet running together.
+                From quick day escapes to customized private charters, we provide the boats, the
+                expertise, and the flexibility. All you need to do is show up.
               </p>
             </div>
 
@@ -171,20 +166,19 @@ export function OurStoryPageClient() {
                   id="crew-lake-heading"
                   className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight"
                 >
-                  A real crew on a real lake.
+                  A real crew on real Keys water.
                 </h2>
               </FadeIn>
 
               <FadeIn delay={0.08} className="lg:col-span-7 space-y-6 text-base sm:text-lg text-white/75 leading-relaxed">
                 <p>
-                  Finest boats, everything included, honest prices, and cove knowledge no booking
-                  widget can fake. From Emerald Bay to Camp Richardson, we know where the day wants
-                  to go.
+                  Boats, captains, and local knowledge so you can focus on the day. From Tavernier
+                  Creek we run fishing, sandbar, snorkel, and boat rentals — customized around what
+                  you want to do.
                 </p>
                 <p>
-                  Every charter runs with a USCG-certified captain — Tahoe locals who know which
-                  cove is empty on a Saturday, where the wake is cleanest at 9 a.m., and exactly how
-                  long you&apos;ve got before the wind comes up.
+                  Captained trips include a USCG-licensed captain. Prefer to drive? Rent the boat
+                  and explore at your own pace. Either way, we make the Keys easy.
                 </p>
               </FadeIn>
             </div>
@@ -199,11 +193,11 @@ export function OurStoryPageClient() {
               id="close-heading"
               className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-brand-dark tracking-tight"
             >
-              Ready to Book Your Lake Tahoe Boat Rental?
+              Ready to Book Your Florida Keys Trip?
             </h2>
             <p className="mt-5 text-base sm:text-lg text-brand-muted leading-relaxed">
-              Party barge, wakesurf charter, or luxury tritoon — reserve your day on Lake Tahoe with
-              a captain who knows the water. Gas and toys included, no hidden fees.
+              Boat rental, fishing charter, or luxury sandbar &amp; snorkel — reserve with Why Knot
+              Exclusive Rentals in Tavernier.
             </p>
             <div className="mt-8 flex justify-center">
               <BookingCTA

@@ -10,7 +10,7 @@ import { brand } from "@/content/brand";
 import { homepageCopy } from "@/content/homepage";
 
 /**
- * Contained fleet showcase — heading + three boat cards, not full-bleed.
+ * Fleet + pricing cards. Bottom fade uses brand tokens so it bleeds into In the Keys.
  */
 export function WakeFleetScroll() {
   const { openWithSelection } = useBookingModal();
@@ -19,7 +19,7 @@ export function WakeFleetScroll() {
     <section
       id="fleet"
       className="relative w-full bg-white pt-20 sm:pt-24"
-      aria-label="Our Lake Tahoe boat rental fleet"
+      aria-label="Our Florida Keys boat rental and charter fleet"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mx-auto max-w-3xl text-center">
@@ -30,11 +30,7 @@ export function WakeFleetScroll() {
           {homepageCopy.fleet.h2}
         </h2>
         <p className="mt-3 text-base text-brand-muted sm:text-lg">
-          <span className="font-bold text-brand-dark">Party barges</span>,{" "}
-          <span className="font-bold text-brand-dark">wakesurf charters</span>, and{" "}
-          <span className="font-bold text-brand-dark">luxury pontoons</span> — three completely
-          different days on the water. Every Tahoe boat rental includes a full tank of gas, water
-          toys, coolers, and safety gear — so the price you see is the price you pay.
+          {homepageCopy.fleet.intro}
         </p>
       </div>
 
@@ -123,7 +119,11 @@ export function WakeFleetScroll() {
       </p>
       </div>
       <div
-        className="pointer-events-none h-64 bg-[linear-gradient(180deg,#ffffff_0%,#f8f9fb_14%,#eef1f5_26%,#dce2ea_38%,#c2cad6_50%,#9aa6b6_62%,#6d7a8c_74%,#3e4c5e_86%,#1a2736_94%,#0a1628_100%)] sm:h-80 lg:h-[22rem]"
+        className="pointer-events-none h-64 sm:h-80 lg:h-[22rem]"
+        style={{
+          background:
+            "linear-gradient(180deg, #ffffff 0%, var(--brand-bg) 12%, color-mix(in srgb, var(--brand-bg) 72%, var(--brand-dark) 28%) 28%, color-mix(in srgb, var(--brand-bg) 42%, var(--brand-dark) 58%) 48%, color-mix(in srgb, var(--brand-bg) 18%, var(--brand-dark) 82%) 70%, var(--brand-dark) 100%)",
+        }}
         aria-hidden
       />
     </section>

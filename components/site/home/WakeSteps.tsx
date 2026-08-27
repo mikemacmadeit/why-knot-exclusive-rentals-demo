@@ -8,20 +8,20 @@ import { homepageCopy } from "@/content/homepage";
 const steps = [
   {
     num: "01",
-    name: "Pick your boat",
+    name: "Pick your trip",
     clipId: "clip-original",
-    image: "/photos/wakebusters/wakesurf.jpg",
-    imageX: -80,
-    imageY: -145,
-    imageWidth: 700,
-    imageHeight: 525,
+    image: "/photos/whyknot/sandbar-contender.jpg",
+    imageX: -40,
+    imageY: -120,
+    imageWidth: 540,
+    imageHeight: 720,
   },
   {
     num: "02",
     name: "Book online instantly",
     clipId: "clip-calendar",
     image: "/photos/wakebusters/book-online.png",
-    // Pull in side padding; keep full week + Continue in frame
+    // Same Tahoe booking-calendar crop — keep full week + Continue in frame
     imageX: -28,
     imageY: -262,
     imageWidth: 556,
@@ -31,11 +31,11 @@ const steps = [
     num: "03",
     name: "Show up and have fun",
     clipId: "clip-pixels",
-    image: "/photos/wakebusters/lilypad.jpg",
-    imageX: -220,
-    imageY: -180,
-    imageWidth: 940,
-    imageHeight: 705,
+    image: "/photos/whyknot/sandbar-cheers.jpg",
+    imageX: -90,
+    imageY: -160,
+    imageWidth: 680,
+    imageHeight: 907,
   },
 ];
 

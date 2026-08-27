@@ -93,6 +93,11 @@ export type SiteConfig = {
     defaultOgImageAlt: string;
     keywords: string[];
     blogName: string;
+    /**
+     * When true, this deployment must not appear in search (sales demo / preview).
+     * Also honored via DEMO_PITCH_SITE or BLOCK_SEARCH_INDEXING env vars.
+     */
+    blockSearchIndexing?: boolean;
   };
 
   media: {

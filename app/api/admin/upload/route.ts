@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     const isBucketNotFound = /bucket does not exist|notFound|bucket.*exist/i.test(message);
     const bucketUsed = bookingEnv.firebaseStorageBucket || (bookingEnv.firebaseProjectId ? `${bookingEnv.firebaseProjectId}.appspot.com` : "not set");
     const hint = isBucketNotFound
-      ? `Storage bucket "${bucketUsed}" was not found. For demos, paste a public path like /photos/wakebusters/party-barge.jpg instead of uploading. To enable uploads: Firebase Console → Build → Storage → Get started, then set FIREBASE_STORAGE_BUCKET to the bucket name.`
+      ? `Storage bucket "${bucketUsed}" was not found. For demos, paste a public path like /photos/whyknot/hero.jpg instead of uploading. To enable uploads: Firebase Console → Build → Storage → Get started, then set FIREBASE_STORAGE_BUCKET to the bucket name.`
       : /firebase|storage|credential/i.test(message)
         ? "Enable Firebase Storage in Console and ensure the Storage bucket exists. Until then you can paste /photos/… paths."
         : undefined;

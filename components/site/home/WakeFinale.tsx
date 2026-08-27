@@ -31,37 +31,36 @@ export function WakeFinale() {
               <LinkPreview
                 url="/experiences/pontoon"
                 isStatic
-                imageSrc="/photos/wakebusters/party-barge.jpg"
+                imageSrc="/photos/whyknot/boat-day.png"
                 width={240}
                 height={150}
                 className="font-bold text-brand-dark"
               >
-                Party barge
+                Boat rental
               </LinkPreview>
               ,{" "}
               <LinkPreview
                 url="/experiences/watersports"
                 isStatic
-                imageSrc="/photos/wakebusters/wakesurf.jpg"
+                imageSrc="/photos/whyknot/catch-swordfish.jpg"
                 width={240}
                 height={150}
                 className="font-bold text-brand-dark"
               >
-                wakesurf charter
+                fishing charter
               </LinkPreview>
               , or{" "}
               <LinkPreview
                 url="/experiences/sunset"
                 isStatic
-                imageSrc="/photos/wakebusters/tritoon.jpg"
+                imageSrc="/photos/whyknot/sandbar-cheers.jpg"
                 width={240}
                 height={150}
                 className="font-bold text-brand-dark"
               >
-                luxury tritoon
+                sandbar &amp; snorkel
               </LinkPreview>{" "}
-              — reserve your day on Lake Tahoe with a captain who knows the water. Gas and toys
-              included, no hidden fees.
+              — reserve your day in the Florida Keys. USCG-licensed captains on captained trips.
             </>
           }
           primaryLabel={copy.primaryCta}
@@ -73,7 +72,7 @@ export function WakeFinale() {
           secondaryHref={phone ? `tel:${phone.tel}` : undefined}
           onSecondaryClick={phone ? () => analytics.callClick("finale", "home") : undefined}
           hint="Secure your date online · Text or call for same-day questions"
-          imageSrc="/photos/wakebusters/cta-bachelorette.jpg"
+          imageSrc="/photos/whyknot/bougie-girl.jpg"
           imageAlt={copy.imageAlt}
         />
       </div>

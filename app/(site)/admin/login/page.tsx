@@ -121,11 +121,11 @@ export default function AdminLoginPage() {
     <AuthUI
       content={{
         image: {
-          src: "/photos/wakebusters/tahoe-shoreline.jpg",
-          alt: "Lake Tahoe shoreline with Sierra mountains",
+          src: "/photos/whyknot/hero.jpg",
+          alt: "Florida Keys water with Why Knot Exclusive Rentals",
         },
         quote: {
-          text: "Welcome back. The lake is waiting.",
+          text: "Welcome back. The Keys are waiting.",
           author: brand.companyName,
         },
       }}
@@ -136,9 +136,9 @@ export default function AdminLoginPage() {
             <Image
               src={brand.logoDesktopPath || brand.logoPath}
               alt={brand.logoAlt || brand.companyName}
-              width={140}
-              height={40}
-              className="h-10 w-auto object-contain"
+              width={760}
+              height={760}
+              className="h-auto w-full max-w-full object-contain"
               priority
             />
           )}

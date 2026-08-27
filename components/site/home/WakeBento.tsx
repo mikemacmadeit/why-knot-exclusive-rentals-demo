@@ -26,8 +26,8 @@ const reasons: {
 }[] = [
   {
     icon: GaugeIcon,
-    title: "Everything included",
-    body: "Gas, tubes, boards, skis, coolers, and premium Bluetooth stereo. One flat rate — no fuel surprise on the way out.",
+    title: "Keys-ready trips",
+    body: "Boats, gear, captains, and local knowledge so you can focus on the day — fishing, sandbar, snorkel, or a self-drive rental.",
     tone: "photo",
     span: "md:col-span-2 md:row-span-2",
   },
@@ -36,38 +36,38 @@ const reasons: {
     title: "Premium fleet",
     body: (
       <>
-        Bennington{" "}
+        Luxury{" "}
         <LinkPreview
           url="/experiences/sunset"
           isStatic
-          imageSrc="/photos/wakebusters/tritoon.jpg"
+          imageSrc="/photos/whyknot/sandbar-cheers.jpg"
           width={220}
           height={140}
           className="font-bold text-white decoration-white/40 hover:decoration-white"
         >
-          tritoons
+          sandbar boats
         </LinkPreview>
-        , Mastercraft{" "}
+        ,{" "}
         <LinkPreview
           url="/experiences/watersports"
           isStatic
-          imageSrc="/photos/wakebusters/wakesurf.jpg"
+          imageSrc="/photos/whyknot/catch-swordfish.jpg"
           width={220}
           height={140}
           className="font-bold text-white decoration-white/40 hover:decoration-white"
         >
-          wakesurf boats
+          fishing charters
         </LinkPreview>
-        , and custom double-decker{" "}
+        , and{" "}
         <LinkPreview
           url="/experiences/pontoon"
           isStatic
-          imageSrc="/photos/wakebusters/party-barge.jpg"
+          imageSrc="/photos/whyknot/boat-day.png"
           width={220}
           height={140}
           className="font-bold text-white decoration-white/40 hover:decoration-white"
         >
-          party barges
+          boat rentals
         </LinkPreview>
         .
       </>
@@ -76,14 +76,14 @@ const reasons: {
   },
   {
     icon: FerryIcon,
-    title: "Tahoe Keys Marina",
-    body: "Easy South Shore access from Highway 50 and the hotels. Delivery and multi-day available.",
+    title: "Tavernier Creek",
+    body: "Florida Keys departures from Tavernier. Easy access for Key Largo and Islamorada stays.",
     tone: "lifted",
   },
   {
     icon: HelmIcon,
     title: "Real local knowledge",
-    body: "A decade of cove-by-cove Tahoe knowledge no booking widget can fake.",
+    body: "Captain Braxton knows the sandbars, reefs, and backcountry spots that never make the map.",
     tone: "teal",
   },
   {
@@ -95,7 +95,7 @@ const reasons: {
   {
     icon: SailboatIcon,
     title: "Any occasion",
-    body: "Birthdays, bachelorettes, weddings, corporate, 4th of July. Groups of 2 to 40+.",
+    body: "Fishing, families, sandbar days, sunset cruises, snorkeling — customized to your group.",
     tone: "lifted",
   },
 ];
@@ -108,7 +108,7 @@ export function WakeBento() {
     <section
       id="why-us"
       className="relative scroll-mt-28 overflow-visible bg-brand-dark px-5 py-20 sm:px-8 sm:py-24 lg:scroll-mt-32 lg:px-14 xl:px-20"
-      aria-label="Why Book With Tahoe Wakebusters"
+      aria-label="Why Book With Why Knot Exclusive Rentals"
     >
       <div
         className="pointer-events-none absolute -right-24 top-0 h-[28rem] w-[28rem] rounded-full bg-brand-primary/12 blur-3xl"
@@ -155,8 +155,8 @@ export function WakeBento() {
                   <div className="absolute inset-x-0 bottom-0 top-1/2 rounded-[1.5rem] border border-white/15 bg-[#123047]" />
                   <div className="absolute inset-x-0 bottom-0 top-0 [clip-path:inset(0_round_0_0_1.5rem_1.5rem)]">
                     <Image
-                      src="/photos/wakebusters/include-swan.png"
-                      alt="Guest on a swan float holding an American flag on a Tahoe Wakebusters Lake Tahoe charter"
+                      src="/photos/whyknot/sandbar-contender.jpg"
+                      alt="Why Knot Contender at a Florida Keys sandbar"
                       fill
                       unoptimized
                       sizes="(max-width: 768px) 100vw, 66vw"

@@ -27,18 +27,18 @@ export type InquiryPackage = {
 export const inquiryPackages: InquiryPackage[] = [
   {
     id: "bachelor-blowout",
-    title: "Bachelor Blowout",
+    title: "Bachelor Keys Weekend",
     guests: "6–8 guests",
     nights: "3 nights",
     fishingDays: "2 fishing days",
-    fromPriceLabel: "Starting at $14,500",
-    hook: "The crew trip that actually fishes.",
+    fromPriceLabel: "Inquiry",
+    hook: "The crew trip that actually fishes the Keys.",
     description:
-      "A private bachelor itinerary with captained days on the water, lodging coordination, and group logistics.",
+      "A private bachelor itinerary with captained fishing and sandbar days, plus group logistics in Tavernier.",
     includesHint:
-      "Fishing days, villa coordination, transportation, food/provisioning guidance, catch handling, group coordination.",
+      "Fishing days, sandbar time, lodging coordination, catch handling, group coordination.",
     image: brand.media.welcome,
-    imageAlt: "Guests on a private boat rental",
+    imageAlt: "Guests on a Why Knot Exclusive Rentals charter",
     imagePosition: "58% 18%",
     highlights: [
       "2 private fishing days",

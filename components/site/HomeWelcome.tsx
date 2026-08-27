@@ -27,7 +27,7 @@ export function HomeWelcome() {
             transition={{ duration: 0.4 }}
           >
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-secondary mb-3">
-              Family owned · Lake Tahoe locals
+              Family owned · Florida Keys locals
             </p>
             <h2
               id="home-welcome-heading"
@@ -36,16 +36,17 @@ export function HomeWelcome() {
               We&apos;re {brand.companyName}.
             </h2>
             <p className="mt-4 text-base sm:text-lg text-brand-muted leading-relaxed">
-              Brothers Jarod and Bobby Minghini grew up on this lake. For 10+ years we&apos;ve been
-              sharing South Lake Tahoe with gas included, toys on every boat, and local knowledge you
-              can&apos;t get from an app — departing from Tahoe Keys Marina.
+              Captain Braxton Black is a true local waterman. {brand.companyName} combines years of
+              Keys knowledge with a genuine passion for the ocean — fishing, snorkeling, sandbar
+              days, and boat rentals from Tavernier Creek.
             </p>
             <p className="mt-4 text-base sm:text-lg text-brand-muted leading-relaxed">
-              Party barges, wakesurf charters, and luxury tritoons for groups of 2 to 40+. Birthdays,
-              bachelorettes, weddings, corporate days — we&apos;ve done it all.
+              Boat rentals if you want to drive, captained fishing and sandbar trips if you want to
+              sit back. Customized around what you want to do.
             </p>
             <p className="mt-4 text-base sm:text-lg text-brand-muted leading-relaxed">
-              Show up 20 minutes early, get a quick safety briefing, and the lake is yours.
+              We’ll confirm dock details after you book. Show up a few minutes early, get a quick
+              safety briefing, and the Keys are yours.
             </p>
             <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row flex-wrap items-center lg:items-stretch justify-center lg:justify-start gap-3">
               <Link

@@ -22,9 +22,9 @@ import { cn } from "@/lib/utils";
 
 /** Short blurbs for mega-menu — keep copy tight under photos. */
 const FLEET_BLURBS: Record<string, string> = {
-  pontoon: "Slides · grill · whole crew",
-  watersports: "Mastercraft · boards included",
-  sunset: "Emerald Bay · easy cruising",
+  pontoon: "Be your own captain",
+  watersports: "Offshore · reef · backcountry",
+  sunset: "Sandbar · snorkel · Bougie Girl",
 };
 
 function fleetLinks(): NavItemType[] {
@@ -42,19 +42,19 @@ function companyLinks(): NavItemType[] {
     {
       title: "Our Story",
       href: "/our-story",
-      description: "Brothers · locals · lake obsessed",
+      description: "Captain Braxton · Keys local",
       icon: Users,
     },
     {
-      title: "Why Wakebusters",
+      title: "Why Why Knot",
       href: "/#why-us",
-      description: "Gas · toys · captains included",
+      description: "Rentals · fishing · sandbar",
       icon: Sparkles,
     },
     {
       title: "Reviews",
       href: "/#reviews",
-      description: "5-star Lake Tahoe days",
+      description: "5-star Florida Keys days",
       icon: Star,
     },
   ];

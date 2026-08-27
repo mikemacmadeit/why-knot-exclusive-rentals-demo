@@ -173,7 +173,7 @@ function MetricCard({
 function DashboardSkeleton() {
   return (
     <div className="space-y-6 sm:space-y-8 animate-pulse">
-      <div className="h-56 rounded-3xl bg-brand-dark/90" />
+      <div className="h-40 rounded-3xl border border-slate-200 bg-white" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="h-28 rounded-2xl border border-brand-dark/10 bg-white" />
@@ -293,54 +293,53 @@ function OperatorAdminHomePage() {
 
       {!loading && stats && (
         <>
-          <section className="relative overflow-hidden rounded-3xl bg-brand-dark px-5 py-6 text-white shadow-premium sm:px-8 sm:py-8">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-primary/25 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-brand-secondary/20 blur-3xl" />
+          <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-sm sm:px-8 sm:py-8">
+            <div className="absolute inset-x-0 top-0 h-1 bg-brand-secondary" aria-hidden />
             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0">
                 <h1 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-primary">Dashboard</h1>
-                <p className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+                <p className="mt-3 font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
                   {greeting}
                 </p>
-                <p className="mt-2 text-sm text-white/70">{dateLabel}</p>
+                <p className="mt-2 text-sm text-slate-500">{dateLabel}</p>
                 {showFinancials ? (
                   <>
-                    <p className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                    <p className="mt-4 font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                       {formatCents(stats.totalRevenueCents)}
                     </p>
-                    <p className="mt-2 text-sm text-white/80">All-time attributed revenue</p>
+                    <p className="mt-2 text-sm text-slate-600">All-time attributed revenue</p>
                   </>
                 ) : (
-                  <p className="mt-4 text-sm text-white/80">Calendar, bookings, customers, and waivers</p>
+                  <p className="mt-4 text-sm text-slate-600">Calendar, bookings, customers, and waivers</p>
                 )}
               </div>
               <div className="flex flex-wrap gap-3 lg:justify-end">
                 {showFinancials && (
-                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">This month</p>
-                  <p className="mt-1 text-lg font-bold">{formatCents(stats.revenueThisMonthCents)}</p>
-                  <p className="text-[11px] text-white/60">Last {formatCents(stats.revenueLastMonthCents ?? 0)}</p>
+                <div className="min-w-[140px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">This month</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">{formatCents(stats.revenueThisMonthCents)}</p>
+                  <p className="text-[11px] text-slate-500">Last {formatCents(stats.revenueLastMonthCents ?? 0)}</p>
                 </div>
                 )}
-                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Active bookings</p>
-                  <p className="mt-1 text-lg font-bold">{stats.slotTakenBookingsCount.toLocaleString()}</p>
-                  <p className="text-[11px] text-white/60">Holding a slot</p>
+                <div className="min-w-[140px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Active bookings</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">{stats.slotTakenBookingsCount.toLocaleString()}</p>
+                  <p className="text-[11px] text-slate-500">Holding a slot</p>
                 </div>
-                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Customers</p>
-                  <p className="mt-1 text-lg font-bold">{stats.uniqueCustomerCount.toLocaleString()}</p>
-                  <p className="text-[11px] text-white/60">Last 500 bookings</p>
+                <div className="min-w-[140px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Customers</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">{stats.uniqueCustomerCount.toLocaleString()}</p>
+                  <p className="text-[11px] text-slate-500">Last 500 bookings</p>
                 </div>
-                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Listings</p>
-                  <p className="mt-1 text-lg font-bold">{stats.listingCount.toLocaleString()}</p>
-                  <p className="text-[11px] text-white/60">Experiences</p>
+                <div className="min-w-[140px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Listings</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">{stats.listingCount.toLocaleString()}</p>
+                  <p className="text-[11px] text-slate-500">Experiences</p>
                 </div>
               </div>
             </div>
-            <div className="relative mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
-              <p className="max-w-xl text-xs leading-relaxed text-white/55">
+            <div className="relative mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+              <p className="max-w-xl text-xs leading-relaxed text-slate-500">
                 {showFinancials
                   ? "Snapshot of revenue, upcoming trips, and recent bookings. Open Financials for date filters, platforms, and Stripe."
                   : "Upcoming trips and recent bookings. Dollar amounts are hidden for Operator accounts."}
@@ -350,7 +349,7 @@ function OperatorAdminHomePage() {
                 type="button"
                 onClick={checkBookingHealth}
                 disabled={healthLoading}
-                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20 disabled:opacity-40"
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-50 disabled:opacity-40"
               >
                 <Activity className={cn("h-3.5 w-3.5", healthLoading && "animate-pulse")} aria-hidden />
                 {healthLoading ? "Checking…" : "Check booking health"}
@@ -632,8 +631,8 @@ function OperatorAdminHomePage() {
                     className={cn(
                       "group flex flex-col gap-3 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md",
                       action.primary
-                        ? "border-brand-primary/30 bg-brand-primary text-white shadow-sm hover:bg-brand-primary/90"
-                        : "border-brand-dark/10 bg-brand-bg/30 hover:border-brand-primary/25 hover:bg-white"
+                        ? "border-slate-200 bg-slate-900 text-white shadow-sm hover:bg-slate-800"
+                        : "border-brand-dark/10 bg-white hover:border-brand-primary/25 hover:shadow-sm"
                     )}
                   >
                     <div

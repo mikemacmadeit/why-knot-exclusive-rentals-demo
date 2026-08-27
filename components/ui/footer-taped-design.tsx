@@ -40,10 +40,10 @@ export function FooterTapedDesign() {
   const hours = getVerifiedHours();
 
   const fleetLinks = [
-    { href: "/experiences", label: "Our Fleet" },
-    { href: "/experiences/pontoon", label: "Party Barge" },
-    { href: "/experiences/watersports", label: "Wakesurf Charter" },
-    { href: "/experiences/sunset", label: "Luxury Tritoon" },
+    { href: "/experiences", label: "Our Trips" },
+    { href: "/experiences/pontoon", label: "Boat Rental" },
+    { href: "/experiences/watersports", label: "Fishing Charters" },
+    { href: "/experiences/sunset", label: "Sandbar & Snorkel" },
     ...(hasFeature("packages") ? [{ href: "/packages", label: "Packages" }] : []),
   ];
 
@@ -113,14 +113,14 @@ export function FooterTapedDesign() {
               <Image
                 src={brand.logoNavbarPath || brand.logoDarkPath || brand.logoPath}
                 alt={brand.logoAlt}
-                width={220}
-                height={72}
-                className="h-12 w-auto object-contain object-left sm:h-14"
+                width={400}
+                height={400}
+                className="h-28 w-auto object-contain object-left sm:h-32 md:h-40"
                 unoptimized
               />
             </Link>
             <p className="text-base font-medium text-white/70">
-              {brand.tagline} Party barges, wakesurf charters, and luxury pontoons on Lake Tahoe.
+              {brand.tagline}
             </p>
           </div>
 

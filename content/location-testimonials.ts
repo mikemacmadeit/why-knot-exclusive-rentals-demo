@@ -5,12 +5,17 @@
 export const LOCATION_TESTIMONIALS: { quote: string; attribution: string }[] = [
   {
     quote:
-      "The double decker pontoon boat was one of the highlights of our entire weekend! Our driver was great and all the girls on the bachelorette party had such a great time.",
-    attribution: "Yelp review",
+      "This was the best fishing trip I’ve been on in the keys in the 20 years since I’ve been coming here! Braxton and his wife were very out going and easy to work with and we had a blast on the boat rental and charter !",
+    attribution: "Colton Maxey — Google",
   },
   {
     quote:
-      "Bobby knew the lake perfectly and took us to Emerald Bay and Camp Richardson. Can't wait to rent again!!",
-    attribution: "Hannah C. R. — Yelp",
+      "He picked out some great stops for us that included snorkeling and a sandbar. The snorkel equipment was provided for us which was great. Braxton was super accommodating and the boat was clean and spacious.",
+    attribution: "Jenny Iruela — Google",
+  },
+  {
+    quote:
+      "Great experience renting from Why Knot. They were super easy to work with, very relaxed, and made the whole process stress-free. We even decided to extend our rental last minute, and they were totally flexible.",
+    attribution: "Kyle Mcabery — Google",
   },
 ];

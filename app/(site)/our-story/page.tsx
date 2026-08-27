@@ -13,26 +13,26 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Our Story",
   description:
-    "We're Jarod and Bobby Minghini — Tahoe locals who grew up on this lake. Tahoe Wakebusters exists to give every guest the best possible day on the water.",
-  keywords: [brand.companyName, "Jarod Minghini", "Bobby Minghini", "South Lake Tahoe boat rentals"],
+    "Meet Captain Braxton Black — a Florida Keys local waterman. Why Knot Exclusive Rentals exists to give every guest the best possible day on the water.",
+  keywords: [brand.companyName, "Captain Braxton Black", "Tavernier boat rentals", "Florida Keys charters"],
   alternates: { canonical },
   openGraph: {
     title: `Our Story | ${brand.companyName}`,
-    description: "Brothers. Locals. Lake Obsessed. Family-owned Lake Tahoe boat rentals from Tahoe Keys Marina.",
+    description: "Boat rentals, fishing charters, and luxury sandbar & snorkel from Tavernier, Florida Keys.",
     url: canonical,
     images: [
       {
         url: ogImage,
         width: 1800,
         height: 2400,
-        alt: "Jarod and Bobby Minghini, founders of Tahoe Wakebusters boat rentals in South Lake Tahoe",
+        alt: "Captain Braxton Black and Why Knot Exclusive Rentals in the Florida Keys",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: `Our Story | ${brand.companyName}`,
-    description: "Brothers. Locals. Lake Obsessed. Family-owned Lake Tahoe boat rentals from Tahoe Keys Marina.",
+    description: "Boat rentals, fishing charters, and luxury sandbar & snorkel from Tavernier, Florida Keys.",
     images: [ogImage],
   },
 };

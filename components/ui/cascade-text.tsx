@@ -19,6 +19,14 @@ export interface TextRevealProps {
   onClick?: (e: React.MouseEvent) => void;
 }
 
+function splitGraphemes(value: string): string[] {
+  if (typeof Intl !== "undefined" && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+    return Array.from(segmenter.segment(value), (s) => s.segment);
+  }
+  return Array.from(value);
+}
+
 const TextReveal = React.memo(function TextReveal({
   text,
   as: Component = "a",
@@ -37,24 +45,18 @@ const TextReveal = React.memo(function TextReveal({
 }: TextRevealProps) {
   const [hovered, setHovered] = useState(false);
 
-  const chars = useMemo(() => {
-    if (typeof Intl !== "undefined" && Intl.Segmenter) {
-      const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
-      return Array.from(segmenter.segment(text), (s) => s.segment);
-    }
-    return Array.from(text);
-  }, [text]);
+  const words = useMemo(() => text.split(/\s+/).filter(Boolean), [text]);
 
   const sign = direction === "up" ? 1 : -1;
 
   const rootProps: Record<string, unknown> = {
-    className: `inline-block relative no-underline font-extrabold uppercase tracking-tight overflow-hidden cursor-pointer select-none ${className}`.trim(),
+    className: `relative inline-block max-w-full no-underline font-extrabold uppercase tracking-tight cursor-pointer select-none ${className}`.trim(),
     style: {
       fontSize,
       color: hovered ? hoverColor : color,
       transition: "color 0.35s ease",
       padding: "0.15em 0.4em",
-      lineHeight: 1,
+      lineHeight: 0.95,
       ...style,
     },
     onMouseEnter: () => setHovered(true),
@@ -71,27 +73,34 @@ const TextReveal = React.memo(function TextReveal({
 
   return (
     <Component {...rootProps}>
-      <span
-        className="inline-flex overflow-hidden relative"
-        style={{ height: "1em" }}
-        aria-hidden="true"
-      >
-        {chars.map((char, i) => (
-          <span
-            key={i}
-            className="inline-block relative will-change-transform"
-            style={{
-              textShadow: `0 ${sign}em currentColor`,
-              transition: `transform ${duration}ms ${easing}`,
-              transitionDelay: `${i * staggerDelay}ms`,
-              transform: hovered
-                ? `translateY(${-sign}em)`
-                : "translateY(0)",
-            }}
-          >
-            {char === " " ? "\u00A0" : char}
-          </span>
-        ))}
+      <span className="relative block max-w-full text-center" aria-hidden="true">
+        {words.map((word, wi) => {
+          const chars = splitGraphemes(word);
+          const charOffset = words.slice(0, wi).reduce((n, w) => n + w.length + 1, 0);
+          return (
+            <span key={`${word}-${wi}`}>
+              <span className="inline-block whitespace-nowrap">
+                <span className="inline-flex overflow-hidden align-bottom" style={{ height: "1.05em" }}>
+                  {chars.map((char, i) => (
+                    <span
+                      key={`${wi}-${i}`}
+                      className="relative inline-block will-change-transform"
+                      style={{
+                        textShadow: `0 ${sign}em currentColor`,
+                        transition: `transform ${duration}ms ${easing}`,
+                        transitionDelay: `${(charOffset + i) * staggerDelay}ms`,
+                        transform: hovered ? `translateY(${-sign}em)` : "translateY(0)",
+                      }}
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </span>
+              </span>
+              {wi < words.length - 1 ? " " : null}
+            </span>
+          );
+        })}
       </span>
     </Component>
   );

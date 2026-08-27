@@ -3,32 +3,32 @@ import { siteConfig } from "@/config/site";
 import { DEFAULT_CANCELLATION_POLICY } from "@/lib/booking/cancellation-policy";
 
 /**
- * Flagship boat for seed — 30' Double Decker Party Barge.
+ * Flagship boat for seed — The Bougie Girl.
  */
 
 export const LAUNCH_BOAT = {
-  name: "30′ Double Decker Party Barge",
-  slug: "party-barge",
+  name: "The Bougie Girl",
+  slug: "bougie-girl",
   previousNames: [] as const,
-  previousSlugs: ["charter-boat"] as const,
-  year: 2020,
-  model: "Double Decker Party Barge",
-  make: "Custom",
-  heroSubtitle: "Dual slides · Grill · Up to 13 · Gas included",
-  capacity: 13,
+  previousSlugs: ["charter-boat", "party-barge"] as const,
+  year: 2022,
+  model: "Luxury Sandbar & Snorkel Charter",
+  make: "Why Knot Exclusive Rentals",
+  heroSubtitle: "Comfort-first · Captain included · Sandbar & snorkel",
+  capacity: 12,
   timezone: brand.timezone,
-  capacityMax: 13,
-  petsMax: 2,
+  capacityMax: 12,
+  petsMax: 0,
   defaultLocationText: siteConfig.contact.marinaMeetNote,
   cancellationPolicyText: DEFAULT_CANCELLATION_POLICY,
   photos: [
-    "/photos/wakebusters/party-barge.jpg",
-    "/photos/wakebusters/hero-slides.jpg",
-    "/photos/wakebusters/party-crew.jpg",
+    "/photos/whyknot/bougie-girl.jpg",
+    "/photos/whyknot/sandbar-cheers.jpg",
+    "/photos/whyknot/gallery-2.jpg",
   ] as string[],
   description: [
-    "The ultimate Tahoe party boat. Dual waterslides, a full propane grill, water toys, and room for the whole crew.",
-    "Full tank of gas and safety gear included. Captain required — fees paid separately to your USCG-certified captain.",
+    "The Bougie Girl Experience — designed for comfort, not just getting you there.",
+    "Luxury sandbar and snorkel days in the Florida Keys with a USCG-licensed captain handling every detail.",
   ].join("\n\n"),
 } as const;
 

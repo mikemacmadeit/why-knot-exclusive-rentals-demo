@@ -1,7 +1,7 @@
 import { getSiteBaseUrl, siteConfig } from "@/config/site";
 import { experiences } from "@/content/experiences";
 import { getHomepageFaqs } from "@/content/faqs";
-import { testimonials } from "@/content/testimonials";
+import { featuredTestimonials } from "@/content/testimonials";
 import { faqPageJsonLd } from "@/lib/seo/metadata";
 
 /**
@@ -43,7 +43,7 @@ export function buildHomepageJsonLd(): object {
     };
   });
 
-  const reviews = testimonials.map((t) => ({
+  const reviews = featuredTestimonials.map((t) => ({
     "@type": "Review",
     reviewBody: t.quote,
     author: { "@type": "Person", name: t.author },

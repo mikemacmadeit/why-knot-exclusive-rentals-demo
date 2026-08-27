@@ -1,67 +1,63 @@
 /**
- * Homepage marketing copy — Tahoe Wakebusters brief.
+ * Homepage marketing copy — Why Knot Exclusive Rentals (Florida Keys).
  * Keep wording here; page components should import these strings.
  */
 
 export const homepageCopy = {
   hero: {
-    eyebrow: "South Lake Tahoe · Departing Tahoe Keys Marina",
-    h1: "Lake Tahoe Boat Rentals",
-    subhead:
-      "Party barges, wakesurf charters, and luxury pontoons on Lake Tahoe.",
-    subheadDetail: "Gas, toys, and safety gear included · Groups of 2 to 40+",
-    body: "Ten years of Lake Tahoe boat rentals from a family-owned crew who actually grew up on this water. One flat rate. No hidden fuel charges. USCG-certified captains who know every cove from Emerald Bay to Camp Richardson.",
+    eyebrow: "Tavernier · Florida Keys",
+    h1: "Florida Keys Boat Rentals & Charters",
+    subhead: "Boat rentals, fishing charters, and luxury sandbar & snorkel trips.",
+    subheadDetail: "5.0 from 92 Google reviews · USCG licensed captains · Explore the water your way",
+    body: "Why Knot Exclusive Rentals is your go-to for unforgettable days on the water in the Florida Keys. Be your own captain or relax while a pro handles the boat — fishing, sandbar, snorkeling, sightseeing, or a customized private charter.",
     primaryCta: "Book now",
-    imageAlt:
-      "Wakebusters wakesurf boat on Lake Tahoe with a guest on an inflatable swan and snow-capped Sierra peaks",
-    trust: ["5-Star Rated", "10+ Years on the Lake", "Family Owned", "Flexible Weather Policy"] as const,
+    imageAlt: "Why Knot Exclusive Rentals boat on the water in the Florida Keys near Tavernier",
+    trust: ["5.0 · 92 Google reviews", "USCG Licensed Captains", "Keys Locals", "Flexible Weather Policy"] as const,
   },
   fleet: {
-    eyebrow: "Choose your adventure",
-    h2: "Our Lake Tahoe Boat Rental Fleet",
+    eyebrow: "Create your perfect trip",
+    h2: "Boat Rentals & Custom Charters",
     intro:
-      "Three boats, three completely different days on the water. Every Tahoe boat rental includes a full tank of gas, water toys, coolers, and safety gear — so the price you see is the price you pay.",
-    captainNote: "Captain required — captain fees paid separately",
+      "Rent a boat and explore at your own pace, or book a captained fishing, sandbar, or snorkel charter. Every trip is customized around what you want to do.",
+    captainNote: "USCG-licensed captains on captained charters · Bareboat rentals available",
   },
   captain: {
-    eyebrow: "Included with every charter",
-    h2: "Every Lake Tahoe Boat Rental Comes With a Captain",
+    eyebrow: "USCG licensed captains",
+    h2: "Fish, Snorkel, or Sit Back — Captain Braxton Has You",
     cta: "Book a Captained Charter",
   },
   whyUs: {
-    eyebrow: "The Wakebusters difference",
-    h2: "Why Book With Tahoe Wakebusters",
+    eyebrow: "What we offer at Why Knot",
+    h2: "Why Book With Why Knot Exclusive Rentals",
     intro:
-      "One flat rate, a real crew on the water, and a decade of cove-by-cove Tahoe knowledge you cannot get from a booking widget.",
+      "Boats, gear, captains, and local knowledge so you can focus on the day. From trophy fish to a stress-free family sandbar, we make the Keys easy.",
   },
   reviews: {
     eyebrow: "Don't just take our word for it",
-    h2: "5-Star Reviews From Guests on Lake Tahoe",
-    stats: "10+ Years in Business · 5★ Average Rating · 1000s of Happy Guests",
+    h2: "5-Star Reviews From Guests in the Florida Keys",
+    stats: "5.0 from 92 Google reviews · 167 Gardenia St, Tavernier, FL",
   },
   story: {
     eyebrow: "Our story",
-    h2: "Brothers. Locals. Lake Obsessed.",
-    imageAlt:
-      "Snow-dusted Sierra mountains above turquoise Lake Tahoe shoreline under a clear sky",
-    crewLine: "A real crew on a real lake.",
-    occasions: "Bachelorettes to board meetings.",
+    h2: "Meet Captain Braxton Black",
+    imageAlt: "Florida Keys water and shoreline near Tavernier Creek",
+    crewLine: "A true local waterman.",
+    occasions: "Fishing to sandbar days.",
   },
   howItWorks: {
     eyebrow: "Dead simple",
-    h2: "How to Rent a Boat on Lake Tahoe in Three Steps",
+    h2: "How to Book a Florida Keys Trip in Three Steps",
     cta: "Check Availability & Book Now",
     hint: "Instant confirmation · Easy reschedule · Flexible weather policy",
   },
   faq: {
-    h2: "Lake Tahoe Boat Rental FAQs",
+    h2: "Florida Keys Boat Rental & Charter FAQs",
   },
   finale: {
-    eyebrow: "Summer books fast",
-    h2: "Ready to Book Your Lake Tahoe Boat Rental?",
-    body: "Party barge, wakesurf charter, or luxury tritoon — reserve your day on Lake Tahoe with a captain who knows the water. Gas and toys included, no hidden fees.",
+    eyebrow: "The Keys are calling",
+    h2: "Ready to Book Your Day on the Water?",
+    body: "Boat rental, fishing charter, or luxury sandbar & snorkel — reserve with Why Knot Exclusive Rentals in Tavernier.",
     primaryCta: "Book Now — Reserve Online Instantly",
-    imageAlt:
-      "Bachelorette party celebrating on a Tahoe Wakebusters boat on Lake Tahoe with Sierra mountains behind them",
+    imageAlt: "Guests enjoying a Why Knot Exclusive Rentals day on the Florida Keys",
   },
 } as const;

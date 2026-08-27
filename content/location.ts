@@ -3,7 +3,7 @@
  */
 
 import { getSiteBaseUrl, siteConfig } from "@/config/site";
-import { testimonials } from "@/content/testimonials";
+import { GOOGLE_REVIEW_COUNT } from "@/content/testimonials";
 
 const { company, contact } = siteConfig;
 
@@ -19,7 +19,7 @@ export const location = {
     zip: contact.address.zip,
   },
   /** Area label for UI (not a street NAP). */
-  addressFormatted: [contact.address.city, contact.address.state, contact.address.country]
+  addressFormatted: [contact.address.line1, contact.address.city, contact.address.state, contact.address.zip]
     .filter(Boolean)
     .join(", "),
   /** Meet-up area note — slip details after booking. */
@@ -34,9 +34,9 @@ export const location = {
   geo: contact.geo,
   /** Service area for content */
   areaServed: [...contact.areaServed],
-  /** On-page guest testimonials (do not invent a larger public review count). */
+  /** Public Google rating for Why Knot Boat Rentals & Charters. */
   rating: 5,
-  reviewCount: testimonials.length,
+  reviewCount: GOOGLE_REVIEW_COUNT,
   sameAs: [] as string[],
   url: getSiteBaseUrl(),
 };
@@ -46,7 +46,10 @@ export type Location = typeof location;
 /** Customer-facing review count, e.g. "120+ 5-star reviews". */
 export function reviewCountLabel(): string {
   if (location.reviewCount <= 0) return "New charter";
-  return `${location.reviewCount}+ 5-star reviews`;
+  if (location.reviewCount < 10) {
+    return `${location.reviewCount} five-star reviews`;
+  }
+  return `${location.reviewCount} Google reviews`;
 }
 
 /** Star rating + review count for compact trust lines. */

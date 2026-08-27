@@ -127,11 +127,11 @@ function NavLinks({
               className={cn(
                 "rounded-xl px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] flex items-center gap-3",
                 active
-                  ? "bg-brand-primary/20 text-brand-primary shadow-sm ring-1 ring-brand-primary/30"
-                  : "text-white/85 hover:bg-white/10 hover:text-white"
+                  ? "bg-brand-secondary text-brand-dark shadow-sm"
+                  : "text-white hover:bg-white/10 hover:text-white"
               )}
             >
-              <Icon className={cn("h-5 w-5 shrink-0", active ? "text-brand-primary" : "text-white/70")} aria-hidden />
+              <Icon className={cn("h-5 w-5 shrink-0", active ? "text-brand-dark" : "text-white")} aria-hidden />
               <span>{label}</span>
             </Link>
           );
@@ -147,7 +147,7 @@ function NavLinks({
         if (links.length === 0) return null;
         return (
           <div key={group.label} className="mb-6 last:mb-0">
-            <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">
+            <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/80">
               {group.label}
             </p>
             <div className="flex flex-col gap-0.5">
@@ -161,11 +161,11 @@ function NavLinks({
                     className={cn(
                       "rounded-xl px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] flex items-center gap-3",
                       active
-                        ? "bg-brand-primary/20 text-brand-primary shadow-sm ring-1 ring-brand-primary/30"
-                        : "text-white/85 hover:bg-white/10 hover:text-white"
+                        ? "bg-brand-secondary text-brand-dark shadow-sm"
+                        : "text-white hover:bg-white/10 hover:text-white"
                     )}
                   >
-                    <Icon className={cn("h-5 w-5 shrink-0", active ? "text-brand-primary" : "text-white/70")} aria-hidden />
+                    <Icon className={cn("h-5 w-5 shrink-0", active ? "text-brand-dark" : "text-white")} aria-hidden />
                     <span>{label}</span>
                   </Link>
                 );
@@ -194,9 +194,9 @@ export function AdminShell({
 
   return (
     <AdminPrincipalContext.Provider value={{ role, displayName, email }}>
-      <div className="flex flex-col min-h-screen bg-brand-bg/50">
+      <div className="flex flex-col min-h-screen bg-slate-50">
         <PlatformDevBanner />
-        <header className="lg:hidden sticky top-0 z-30 flex h-14 items-center gap-3 bg-brand-dark border-b border-white/10 px-4 shrink-0">
+        <header className="lg:hidden sticky top-0 z-30 flex h-14 items-center gap-3 bg-brand-dark border-b border-white/15 px-4 shrink-0">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -230,7 +230,7 @@ export function AdminShell({
           <aside
             className={cn(
               "fixed top-0 left-0 z-50 flex h-full w-72 max-w-[85vw] flex-col bg-brand-dark shadow-2xl transition-transform duration-200 ease-out lg:static lg:z-0 lg:h-auto lg:w-64 lg:shrink-0 lg:translate-x-0 lg:shadow-none",
-              "border-r border-white/10",
+              "border-r border-white/15",
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}
           >
@@ -264,17 +264,20 @@ export function AdminShell({
               <NavLinks pathname={pathname} role={role} onLinkClick={() => setSidebarOpen(false)} />
             </nav>
             <div className="mt-auto border-t border-white/10 p-4 shrink-0">
-              {displayName ? (
-                <p className="mb-3 px-3 text-xs text-white/50">
-                  <span className="block truncate font-medium text-white/80">{displayName}</span>
-                  <span className="block truncate">
-                    {adminRoleLabel(role)}
-                  </span>
-                </p>
-              ) : null}
+              <p className="mb-3 px-3 text-xs text-white/70">
+                <span className="block truncate font-medium text-white">{brand.companyName}</span>
+                {displayName ? (
+                  <>
+                    <span className="mt-1 block truncate text-white/80">{displayName}</span>
+                    <span className="block truncate">{adminRoleLabel(role)}</span>
+                  </>
+                ) : (
+                  <span className="block truncate">{adminRoleLabel(role)}</span>
+                )}
+              </p>
               <button
                 type="button"
-                className="w-full rounded-xl px-3 py-2.5 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white text-left min-h-[44px] flex items-center gap-3 transition-colors"
+                className="w-full rounded-xl px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 text-left min-h-[44px] flex items-center gap-3 transition-colors"
                 onClick={async () => {
                   try {
                     await fetch("/api/admin/logout", {
@@ -289,7 +292,7 @@ export function AdminShell({
                   window.location.href = "/admin/login";
                 }}
               >
-                <LogOut className="h-5 w-5 shrink-0 text-white/60" aria-hidden />
+                <LogOut className="h-5 w-5 shrink-0 text-white/80" aria-hidden />
                 Sign out
               </button>
             </div>

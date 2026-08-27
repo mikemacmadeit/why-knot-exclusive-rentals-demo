@@ -1,6 +1,7 @@
 /**
- * Tahoe Wakebusters — sales demo / preview customer config.
- * Branch: demo/tahoe-wakebusters. Not for their live domain until they buy.
+ * Why Knot Exclusive Rentals — sales demo / preview customer config.
+ * Branch: demo/why-knot-exclusive-rentals. Not for their live domain until they buy.
+ * Source identity: https://www.whyknotexclusiverentals.com/
  */
 
 import type { SiteConfig } from "@/config/site-types";
@@ -16,40 +17,39 @@ export { TEMPLATE_PLACEHOLDER } from "@/config/site-types";
 const TEMPLATE_PLAN = "full" as const;
 
 export const siteConfig: SiteConfig = {
-  tenantId: "tahoe-wakebusters-demo",
+  tenantId: "why-knot-exclusive-rentals-demo",
   environment: "development",
   plan: TEMPLATE_PLAN,
 
   company: {
-    name: "Tahoe Wakebusters",
-    shortName: "Wakebusters",
-    legalName: "Tahoe Wakebusters",
-    publicName: "Tahoe Wakebusters",
-    tagline: "Make Wakes. Create Memories.",
-    domain: "tahoewakebusters.com",
+    name: "Why Knot Exclusive Rentals",
+    shortName: "Why Knot",
+    legalName: "Why Knot Exclusive Rentals",
+    publicName: "Why Knot Exclusive Rentals",
+    tagline: "Explore the water your way with boat rentals & private charters.",
+    domain: "whyknotexclusiverentals.com",
   },
 
   contact: {
-    email: "tahoewakebusters@gmail.com",
-    phone: "(775) 241-4039",
-    phoneTel: "+17752414039",
-    sms: "+17752414039",
+    email: "hello@whyknotexclusiverentals.com",
+    phone: "(645) 242-1977",
+    phoneTel: "+16452421977",
+    sms: "+16452421977",
     address: {
-      line1: "2435 Venice Drive",
-      city: "South Lake Tahoe",
-      state: "CA",
-      zip: "96150",
+      line1: "167 Gardenia St",
+      city: "Tavernier",
+      state: "FL",
+      zip: "33070",
       country: "US",
     },
-    hours: "By reservation — summer books fast",
+    hours: "By reservation — Florida Keys season books fast",
     marinaMeetNote:
-      "Departures from Tahoe Keys Marina. Arrive 20 minutes early for parking and loading (first come, first served).",
-    hoursNote: "Trips depart at your booked time. We'll confirm meet-up details after you reserve.",
-    googleMapsPlaceUrl: "https://maps.google.com/?q=2435+Venice+Drive+South+Lake+Tahoe+CA+96150",
-    mapEmbedSrc:
-      "https://www.google.com/maps?q=2435+Venice+Drive,+South+Lake+Tahoe,+CA+96150&output=embed",
-    geo: { latitude: 38.9399, longitude: -119.9772 },
-    areaServed: ["South Lake Tahoe", "Lake Tahoe", "Tahoe Keys Marina", "Emerald Bay"],
+      "Meet at 167 Gardenia St, Tavernier, FL. We’ll confirm the exact dock after you book.",
+    hoursNote: "Trips depart at your booked time. Call or text to confirm meet-up details.",
+    googleMapsPlaceUrl: "https://maps.google.com/?q=167+Gardenia+St+Tavernier+FL+33070",
+    mapEmbedSrc: "https://www.google.com/maps?q=167+Gardenia+St,+Tavernier,+FL+33070&output=embed",
+    geo: { latitude: 25.0115, longitude: -80.5153 },
+    areaServed: ["Tavernier", "Florida Keys", "Key Largo", "Islamorada", "Monroe County"],
   },
 
   branding: {
@@ -59,102 +59,98 @@ export const siteConfig: SiteConfig = {
     logoNavbar: "/brand/logo-navbar-white.png",
     logoHover: "/brand/logo-light.png",
     logoDark: "/brand/logo-dark.png",
-    /** White lockup for dark navy email headers */
-    logoEmail: "/brand/logo-navbar-white.png",
+    logoEmail: "/brand/logo.png",
     logoHero: "/brand/logo-light.png",
     logoHeroHover: "/brand/logo-light.png",
-    logoAlt: "Tahoe Wakebusters",
-    favicon: "/brand/logo.png",
+    logoAlt: "Why Knot Exclusive Rentals",
+    favicon: "/brand/favicon.png",
   },
 
-  // Matched to live tahoewakebusters.com/css/styles.css :root tokens
+  // Matched to live whyknotexclusiverentals.com (Wix teal CTA + Keys navy)
   theme: {
-    primaryColor: "#00b4d8", // --teal (accents, Lake Tahoe, eyebrows)
-    secondaryColor: "#ff6b2b", // --orange (Book Now CTAs)
-    accentColor: "#0096b7", // --teal-dark
-    darkColor: "#0a1628", // --navy
-    mutedColor: "#7a8899", // --gray-500
-    backgroundColor: "#f7f9fc", // --off-white
-    textColor: "#1a2535", // --text
-    silverColor: "#c8d0dd", // --gray-300
-    borderRadius: "0.75rem", // --radius 12px
-    fontDisplay: "Roboto Slab",
+    primaryColor: "#047f97",
+    secondaryColor: "#08d4c7",
+    accentColor: "#044d60",
+    darkColor: "#044d60",
+    mutedColor: "#5a6b73",
+    backgroundColor: "#f4fafb",
+    textColor: "#141414",
+    silverColor: "#c5d4d8",
+    borderRadius: "0.5rem",
+    fontDisplay: "Barlow",
   },
 
   social: {
-    instagram: "https://www.instagram.com/tahoewakebusters/",
+    instagram: "https://www.instagram.com/whyknotcharters_rentals/",
     facebook: "",
     youtube: "",
-    tiktok: "",
-    yelp: "https://www.yelp.com/",
+    tiktok: "https://www.tiktok.com/@whyknot.boat.rentals",
+    yelp: "",
     tripadvisor: "",
   },
 
   seo: {
-    title: "South Lake Tahoe Boat Rentals | Party Barge & Wakesurf Charters",
+    title: "Florida Keys Boat Rentals & Charters | Why Knot Exclusive Rentals",
     description:
-      "Lake Tahoe boat rentals from Tahoe Keys Marina. Party barges, wakesurf boats & pontoons with captain. Gas and toys included. Groups of 2–40+. Book online.",
-    defaultOgImage: "/photos/wakebusters/hero-live.jpg",
+      "Boat rentals and private captained charters in Tavernier, Florida Keys. Fishing, sandbar & snorkel, and luxury days on the water with USCG-licensed captains. Book online.",
+    defaultOgImage: "/photos/whyknot/hero.jpg",
     defaultOgImageAlt:
-      "Wakebusters wakesurf boat on Lake Tahoe with a guest on an inflatable swan and snow-capped Sierra peaks",
+      "Why Knot Exclusive Rentals boat on the water in the Florida Keys",
     keywords: [
-      "south lake tahoe boat rentals",
-      "lake tahoe boat rentals",
-      "tahoe boat rentals",
-      "lake tahoe boat rentals with captain",
-      "lake tahoe pontoon boat rental",
-      "tahoe wakeboard boat rental",
-      "lake tahoe boat charters",
-      "rent a boat tahoe",
-      "boat hire lake tahoe",
-      "lake tahoe watercraft rentals",
-      "Tahoe Wakebusters",
-      "Tahoe Keys Marina",
+      "Florida Keys boat rentals",
+      "Tavernier boat rental",
+      "Key Largo boat charter",
+      "Florida Keys fishing charter",
+      "sandbar snorkel charter Keys",
+      "Why Knot Exclusive Rentals",
+      "captained charter Tavernier",
+      "Bougie Girl charter",
     ],
-    blogName: "Lake Life",
+    blogName: "Keys Notes",
+    blockSearchIndexing: true,
   },
 
   media: {
-    hero: "/photos/wakebusters/hero-slides.jpg",
-    welcome: "/photos/wakebusters/founder-portrait.jpg",
-    boats: "/photos/wakebusters/party-barge.jpg",
-    galleryFallback: "/photos/wakebusters/gallery-1.jpg",
-    listingFallback: "/photos/wakebusters/tritoon.jpg",
+    hero: "/photos/whyknot/hero.jpg",
+    welcome: "/photos/whyknot/gallery-4.jpg",
+    boats: "/photos/whyknot/boat-day.png",
+    galleryFallback: "/photos/whyknot/gallery-2.jpg",
+    listingFallback: "/photos/whyknot/bougie-girl.jpg",
   },
 
   catalog: {
     halfDay: {
-      title: "Party Barge",
-      durationLabel: "4–8 Hours",
-      ctaLabel: "Book Party Barge",
+      title: "Boat Rental",
+      durationLabel: "Half or Full Day",
+      ctaLabel: "Book a Rental",
     },
     fullDay: {
-      title: "Wakesurf Charter",
-      durationLabel: "2–8 Hours",
-      ctaLabel: "Book Wakesurf",
+      title: "Fishing Charter",
+      durationLabel: "Half or Full Day",
+      ctaLabel: "Book Fishing",
     },
     allIn: {
-      title: "Luxury Tritoon",
-      ctaLabel: "Book Tritoon",
+      title: "Sandbar & Snorkel",
+      ctaLabel: "Book Sandbar Trip",
     },
   },
 
   nav: {
     blogLabel: "Guides",
-    experiencesLabel: "Fleet",
+    experiencesLabel: "Trips",
     packagesLabel: "Packages",
     boatLabel: "Our Fleet",
   },
 
   business: {
-    timezone: "America/Los_Angeles",
+    timezone: "America/New_York",
     currency: "USD",
     country: "US",
     locale: "en-US",
     taxRate: 0,
     legal: {
-      governingLaw: "the State of California",
-      venue: "El Dorado County, California",
+      governingLaw: "the State of Florida",
+      venue: "Monroe County, Florida",
     },
   },
 
@@ -173,10 +169,10 @@ export const siteConfig: SiteConfig = {
       partialRefundDaysEnd: 7,
       noRefundWithinDays: 7,
       fullText:
-        "Cancel up to 7 days before your charter for a full refund. " +
+        "Cancel up to 7 days before your trip for a full refund. " +
         "If weather does not cooperate, we will work with you on a rain check or full refund. " +
         "No-shows without prior notice are non-refundable. " +
-        "Contact us by phone or email to cancel.",
+        "Contact us by phone or text to cancel.",
       summary:
         "Full refund if you cancel 7+ days ahead · Weather rain checks available · No-shows non-refundable.",
     },
@@ -184,18 +180,18 @@ export const siteConfig: SiteConfig = {
 
   operations: {
     operatingHours: {
-      startHour: 8,
+      startHour: 7,
       endHour: 20,
-      firstDepartureHour: 8,
-      lastDepartureHour: 18,
+      firstDepartureHour: 7,
+      lastDepartureHour: 17,
     },
   },
 
   features: resolveFeatureFlags(TEMPLATE_PLAN),
 
-  phone: "(775) 241-4039",
-  phoneTel: "+17752414039",
-  sms: "+17752414039",
+  phone: "(645) 242-1977",
+  phoneTel: "+16452421977",
+  sms: "+16452421977",
 };
 
 assertCustomerConfigForDeploy(siteConfig);
@@ -223,11 +219,9 @@ export function emailSubjectSuffix(): string {
 }
 
 export function isPlatformDevBannerEnabled(): boolean {
-  // Opt-in only — keep public pages and sales demos free of the identity strip.
   return process.env.NEXT_PUBLIC_SHOW_PLATFORM_BANNER === "1";
 }
 
-/** Inline CSS variables so Tailwind `brand.*` tokens follow this customer theme. */
 export function siteThemeCssVars(): Record<string, string> {
   const t = siteConfig.theme;
   return {

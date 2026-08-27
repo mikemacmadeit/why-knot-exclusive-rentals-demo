@@ -11,11 +11,14 @@ import { getPublicPhone } from "@/lib/seo/public-contact";
 
 const copy = homepageCopy.hero;
 /** Brand orange cascade hover — matches Book CTA */
-const HERO_CASCADE_HOVER = "#ff6b2b";
+const HERO_CASCADE_HOVER = "#08d4c7";
+
+const HERO_POSTER = "/photos/whyknot/hero.jpg";
+const HERO_VIDEO = "/videos/whyknot-hero.mp4";
 
 /**
- * Full-bleed photographic hero with centered copy.
- * Bottom of the photo fades to white into the fleet section.
+ * Full-bleed hero with Keys background video and centered copy.
+ * Poster still shows until the video can play; bottom fades to white into the fleet section.
  */
 export function WakeHero() {
   const { setOpen } = useBookingModal();
@@ -23,12 +26,12 @@ export function WakeHero() {
 
   return (
     <section
-      className="relative h-[100svh] min-h-[640px] overflow-hidden bg-white text-white"
-      aria-label={`${brand.companyName} — South Lake Tahoe boat rentals`}
+      className="relative min-h-[100svh] overflow-x-hidden bg-white text-white"
+      aria-label={`${brand.companyName} — Florida Keys boat rentals and charters`}
     >
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 bg-brand-dark">
         <Image
-          src="/photos/wakebusters/hero-live.jpg"
+          src={HERO_POSTER}
           alt={copy.imageAlt}
           fill
           priority
@@ -36,6 +39,18 @@ export function WakeHero() {
           sizes="100vw"
           className="object-cover object-[center_58%]"
         />
+        <video
+          className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster={HERO_POSTER}
+          aria-hidden
+        >
+          <source src={HERO_VIDEO} type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-black/20" aria-hidden />
         <div
           className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,22,40,0.52)_0%,rgba(10,22,40,0.36)_48%,rgba(10,22,40,0.18)_72%,transparent_90%)]"
@@ -47,25 +62,22 @@ export function WakeHero() {
         />
       </div>
 
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 pb-28 pt-16 text-center sm:px-8 sm:pb-24 sm:pt-20">
+      <div className="relative z-10 flex min-h-[100svh] w-full flex-col items-center justify-center px-4 py-24 text-center sm:px-8 sm:py-28">
         <TextReveal
           as="h1"
           text={copy.h1}
           color="#ffffff"
           hoverColor={HERO_CASCADE_HOVER}
-          fontSize="clamp(1.2rem, calc((100vw - 3rem) / 15.4), 6.5rem)"
-          className="w-max max-w-none shrink-0 cursor-default whitespace-nowrap font-display font-black tracking-[-0.03em] drop-shadow-[0_8px_32px_rgba(10,22,40,0.65)]"
+          fontSize="clamp(1.7rem, 2.4vw + 1.15rem, 5.25rem)"
+          className="mx-auto w-full max-w-[min(100%,18ch)] cursor-default text-balance font-display font-black tracking-[-0.03em] drop-shadow-[0_8px_32px_rgba(10,22,40,0.65)] sm:max-w-[min(100%,22ch)] lg:max-w-5xl"
           style={{ padding: 0 }}
         />
 
-        <div className="mx-auto mt-4 w-max max-w-[calc(100vw-2rem)] space-y-1.5 text-center sm:mt-5 sm:max-w-none sm:space-y-2">
-          <p
-            className="whitespace-nowrap font-medium leading-none text-white drop-shadow-[0_2px_12px_rgba(10,22,40,0.55)]"
-            style={{ fontSize: "clamp(0.7rem, calc((100vw - 2rem) / 42), 1.25rem)" }}
-          >
-            {copy.subhead.split(" ").join("\u00A0")}
+        <div className="mx-auto mt-4 w-full max-w-xl space-y-1.5 text-center sm:mt-5 sm:max-w-2xl sm:space-y-2 lg:max-w-3xl">
+          <p className="text-pretty text-[0.95rem] font-medium leading-snug text-white drop-shadow-[0_2px_12px_rgba(10,22,40,0.55)] sm:text-base lg:text-lg">
+            {copy.subhead}
           </p>
-          <p className="text-sm leading-snug text-white/85 drop-shadow-[0_2px_10px_rgba(10,22,40,0.5)] sm:text-base">
+          <p className="text-pretty text-sm leading-snug text-white/85 drop-shadow-[0_2px_10px_rgba(10,22,40,0.5)] sm:text-base">
             {copy.subheadDetail}
           </p>
         </div>

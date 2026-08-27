@@ -53,3 +53,6 @@ server.js
 
 # Local Netlify folder
 .netlify
+
+# Nested demo worktrees (separate remotes)
+.worktrees/

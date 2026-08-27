@@ -57,8 +57,8 @@ export function LipScrollZoominAnimation({
   ),
   watermark = "LOREM",
   videoSrc,
-  posterSrc = "/photos/wakebusters/tahoe-shoreline.jpg",
-  imageAlt = "Lake Tahoe",
+  posterSrc = "/photos/whyknot/hero.jpg",
+  imageAlt = "Florida Keys",
   className = "",
 }: LipScrollZoominAnimationProps) {
   const containerRef = useRef<HTMLDivElement>(null);

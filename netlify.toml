@@ -24,10 +24,16 @@
   command = "npm run build"
   # Publish dir is set by @netlify/plugin-nextjs when present; omit or use .next for static fallback.
   publish = ".next"
+  [build.environment]
+    DEMO_PITCH_SITE = "1"
+    BLOCK_SEARCH_INDEXING = "1"
 
 # Production: plain Next build. (GA gate / health plugin re-enabled for real customer launches.)
 [context.production]
   command = "npm run build"
+  [context.production.environment]
+    DEMO_PITCH_SITE = "1"
+    BLOCK_SEARCH_INDEXING = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

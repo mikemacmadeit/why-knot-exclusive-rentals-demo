@@ -392,7 +392,7 @@ const CAPTAIN_EMAIL_PREVIEW_PARAMS: CaptainTripEmailParams = {
   guestName: "Jordan Smith",
   guestPhone: "(512) 957-6197",
   partySize: 8,
-  locationText: "Tahoe Keys Marina — South Lake Tahoe, CA",
+  locationText: "Tavernier Creek — Tavernier, FL",
   specialNotes: "Birthday — bring Bluetooth speaker.",
   operatorNotes: "Dock on the north side. Guest is celebrating a 30th.",
   assignedByName: "Admin",

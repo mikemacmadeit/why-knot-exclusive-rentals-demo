@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Roboto_Slab, Montserrat } from "next/font/google";
+import { Barlow, Montserrat } from "next/font/google";
 import { headers } from "next/headers";
 import { getGaMeasurementId, isGaClientDebugEnabled } from "@/lib/ga-measurement-id";
 import { getGoogleAdsId } from "@/lib/google-ads-id";
@@ -17,11 +17,12 @@ import { getSiteBaseUrl, siteConfig, siteThemeCssVars } from "@/config/site";
 /** Must match `RELEASE_TRAIN` in `@stripe/stripe-js` so `loadStripe()` reuses this tag (CSP + strict-dynamic). */
 const STRIPE_JS_SRC = "https://js.stripe.com/clover/stripe.js";
 
-/** Display: Roboto Slab. Body/UI: Montserrat. */
-const robotoSlab = Roboto_Slab({
+/** Display: Barlow (Why Knot CTA type). Body/UI: Montserrat. */
+const displayFont = Barlow({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-display",
+  weight: ["500", "600", "700", "800"],
   preload: true,
 });
 
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteBaseUrl()),
   icons: {
     icon: [
-      { url: siteConfig.branding.favicon, type: "image/svg+xml" },
+      { url: siteConfig.branding.favicon, type: "image/png" },
       { url: "/favicon.ico", sizes: "any" },
     ],
     apple: siteConfig.branding.favicon,
@@ -85,7 +86,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${robotoSlab.variable} ${montserrat.variable}`}
+      className={`${displayFont.variable} ${montserrat.variable}`}
       style={siteThemeCssVars() as CSSProperties}
     >
       <body className="font-sans">

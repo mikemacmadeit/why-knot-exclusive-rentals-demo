@@ -7,7 +7,7 @@ export function SeoPricingOverview({
 }: {
   rows: { experience: string; href: string; fromLabel: string; note: string }[];
 }) {
-  const lake = siteConfig.contact.address.city || "Lake Tahoe";
+  const lake = siteConfig.contact.address.city || "the water";
   return (
     <section className="bg-white py-12 sm:py-16 border-y border-brand-dark/10" aria-labelledby="seo-pricing-overview-heading">
       <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">

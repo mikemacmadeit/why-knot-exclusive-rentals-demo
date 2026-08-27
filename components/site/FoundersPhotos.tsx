@@ -3,19 +3,19 @@ import { cn } from "@/lib/utils";
 
 const FOUNDERS = [
   {
-    src: "/photos/wakebusters/founder-wakesurf.jpg",
-    alt: "Tahoe Wakebusters founder wakesurfing on Lake Tahoe with snow-capped Sierra peaks",
+    src: "/photos/whyknot/gallery-4.jpg",
+    alt: "Why Knot Exclusive Rentals on the water in the Florida Keys",
     caption: "On the water",
   },
   {
-    src: "/photos/wakebusters/founder-portrait.jpg",
-    alt: "Tahoe Wakebusters founder — brothers Jarod and Bobby Minghini",
-    caption: "Lake obsessed",
+    src: "/photos/whyknot/catch-lobsters.jpg",
+    alt: "Guests with a lobster catch after a Why Knot Exclusive Rentals day",
+    caption: "Keys local",
   },
 ] as const;
 
 /**
- * Jarod & Bobby portrait pair for homepage about + Our Story.
+ * Captain / crew photo pair for homepage about + Our Story.
  */
 export function FoundersPhotos({
   className,
@@ -40,7 +40,7 @@ export function FoundersPhotos({
             />
           </div>
           {showCaptions ? (
-            <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0a1628]/80 to-transparent px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white sm:px-4 sm:text-xs">
+            <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#044d60]/80 to-transparent px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white sm:px-4 sm:text-xs">
               {person.caption}
             </figcaption>
           ) : null}

@@ -3,17 +3,17 @@ export const LOCATION_FAQ = [
   {
     question: "Where do we meet for our charter?",
     answer:
-      "We meet at the dock. Exact slip, dock instructions, and check-in time are in your confirmation email. Arrive a little early so we can load coolers and brief everyone before departure.",
+      "We meet in Tavernier on Tavernier Creek. Exact slip, dock instructions, and check-in time are in your confirmation. Arrive a little early so we can load coolers and brief everyone before departure.",
   },
   {
     question: "Do your charters include a captain?",
     answer:
-      `Yes. Every ${brand.companyName} charter includes a licensed captain and crew. You enjoy the trip — we handle the boat, safety, and navigation.`,
+      `Captained charters with ${brand.companyName} include a USCG-licensed captain. Boat rentals can be self-drive, or you can add a captain if you’d rather not run the boat.`,
   },
   {
     question: "What areas do you run?",
     answer:
-      "The captain sets the plan for the day based on conditions. Meet-up details are in your confirmation.",
+      "We run the Florida Keys from Tavernier — sandbars, reefs, offshore, and backcountry depending on the trip. The captain sets the plan based on conditions.",
   },
   {
     question: "How do I book a half-day or full-day charter?",

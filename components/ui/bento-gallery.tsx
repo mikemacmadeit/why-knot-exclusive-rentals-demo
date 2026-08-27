@@ -48,7 +48,7 @@ function ImageModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a1628]/85 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-brand-dark/85 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -214,7 +214,7 @@ export default function InteractiveImageBentoGallery({
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   draggable={false}
                 />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a1628]/85 via-[#0a1628]/25 to-transparent opacity-70 transition-opacity duration-400 group-hover:opacity-95" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/85 via-brand-dark/25 to-transparent opacity-70 transition-opacity duration-400 group-hover:opacity-95" />
                 <div className="relative z-10 p-4 transition-all duration-400 sm:translate-y-2 sm:opacity-90 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
                   <h3 className="font-display text-base font-bold text-white sm:text-lg">
                     {item.title}

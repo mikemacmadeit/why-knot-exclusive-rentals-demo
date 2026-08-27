@@ -10,15 +10,9 @@ import { LinkPreview } from "@/components/ui/link-preview";
 const founders = [
   {
     id: 1,
-    name: "Jarod Minghini",
-    designation: "Founder · Captain",
-    image: "/photos/wakebusters/founder-wakesurf.jpg",
-  },
-  {
-    id: 2,
-    name: "Bobby Minghini",
-    designation: "Founder · Captain",
-    image: "/photos/wakebusters/founder-portrait.jpg",
+    name: "Captain Braxton Black",
+    designation: "Captain · Keys local",
+    image: "/photos/whyknot/gallery-4.jpg",
   },
 ];
 
@@ -41,7 +35,7 @@ export function WakeStory() {
             itemClassName="-mr-12 sm:-mr-16 lg:-mr-20"
           />
           <p className="mt-6 text-center text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted lg:text-left">
-            Jarod &amp; Bobby · Founders
+            Captain Braxton Black · Why Knot
           </p>
         </div>
 
@@ -53,37 +47,37 @@ export function WakeStory() {
             {homepageCopy.story.h2}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-brand-muted sm:text-lg">
-            We&apos;re Jarod and Bobby Minghini — Tahoe locals who grew up skiing this mountain in
-            winter and living on this lake every summer. {brand.companyName} exists for one reason:
-            give every guest the best possible day on the water.
+            Captain Braxton Black is a true local waterman who turns every trip into an
+            unforgettable adventure. {brand.companyName} exists for one reason: give every guest
+            the best possible day on the Florida Keys.
           </p>
 
           <h3 className="mt-6 font-display text-lg font-extrabold text-brand-dark">
             {homepageCopy.story.crewLine}
           </h3>
           <p className="mt-2 text-base leading-relaxed text-brand-muted sm:text-lg">
-            Finest boats, everything included, honest prices, and cove knowledge no booking widget
-            can fake. From{" "}
+            Finest boats, captains who know these waters, and hidden spots you won&apos;t find on a
+            map. From{" "}
             <LinkPreview
               url="/experiences/watersports"
               isStatic
-              imageSrc="/photos/wakebusters/gallery-2.jpg"
+              imageSrc="/photos/whyknot/catch-swordfish.jpg"
               width={240}
               height={150}
               className="font-bold text-brand-dark"
             >
-              Emerald Bay
+              offshore fishing
             </LinkPreview>{" "}
             to{" "}
             <LinkPreview
-              url="/experiences/pontoon"
+              url="/experiences/sunset"
               isStatic
-              imageSrc="/photos/wakebusters/party-crew.jpg"
+              imageSrc="/photos/whyknot/sandbar-cheers.jpg"
               width={240}
               height={150}
               className="font-bold text-brand-dark"
             >
-              Camp Richardson
+              sandbar &amp; snorkel
             </LinkPreview>
             , we know where the day wants to go.
           </p>
@@ -92,19 +86,18 @@ export function WakeStory() {
             {homepageCopy.story.occasions}
           </h3>
           <p className="mt-2 text-base leading-relaxed text-brand-muted sm:text-lg">
-            Birthdays, weddings, corporate outings, 4th of July chaos — groups of 2 to 40+, with
-            single{" "}
+            Families, anglers, sandbar days, sunset cruises — with{" "}
             <LinkPreview
-              url="/experiences/sunset"
+              url="/experiences/pontoon"
               isStatic
-              imageSrc="/photos/wakebusters/tritoon.jpg"
+              imageSrc="/photos/whyknot/boat-day.png"
               width={240}
               height={150}
               className="font-bold text-brand-dark"
             >
-              boats
+              boat rentals
             </LinkPreview>{" "}
-            or the full fleet running together.
+            or a fully captained private charter.
           </p>
 
           <Link

@@ -6,7 +6,9 @@
 import { brand } from "@/content/brand";
 import {
   EMAIL_BG,
+  EMAIL_CTA,
   EMAIL_LIGHT_BLUE,
+  EMAIL_MUTED,
   EMAIL_NAVY,
   EMAIL_WHITE,
   renderEmailHeaderCell,
@@ -37,8 +39,9 @@ export interface BookingReminderParams {
 }
 
 const PRIMARY = EMAIL_LIGHT_BLUE;
+const CTA = EMAIL_CTA;
 const DARK = EMAIL_NAVY;
-const MUTED = "#7a8899";
+const MUTED = EMAIL_MUTED;
 const BG = EMAIL_BG;
 
 /** Header row with logo and subtitle (solid navy + accent bars). */
@@ -77,7 +80,7 @@ function waiverBlockHtml(waiverSigningUrl: string, waiverGroupSigningUrl?: strin
       <td style="background: #fef3c7; border-radius: 12px; padding: 16px 20px; border: 1px solid #f59e0b;">
         <p style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: ${DARK};">✍️ Sign your waiver</p>
         <p style="margin: 0 0 12px; font-size: 14px; color: ${MUTED}; line-height: 1.5;">You still need to sign the waiver before your trip. It only takes a minute.</p>
-        <a href="${escapeHtml(waiverSigningUrl)}" target="_blank" rel="noopener" style="display: inline-block; background: ${DARK}; color: #fff; padding: 12px 24px; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">Sign waiver now</a>
+        <a href="${escapeHtml(waiverSigningUrl)}" target="_blank" rel="noopener" style="display: inline-block; background: ${CTA}; color: #fff; padding: 12px 24px; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px;">Sign waiver now</a>
         ${group}
       </td>
     </tr>
@@ -276,7 +279,7 @@ export function buildFinalPaymentRequestHtml(params: FinalPaymentRequestParams):
               <td style="padding: 20px 24px;">
                 <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: ${DARK};">Remaining balance</p>
                 <p style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: ${DARK};">${escapeHtml(params.amountFormatted)}</p>
-                <a href="${escapeHtml(params.payLink)}" target="_blank" rel="noopener" style="display: inline-block; background: ${PRIMARY}; color: #fff; padding: 14px 28px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px;">Pay now</a>
+                <a href="${escapeHtml(params.payLink)}" target="_blank" rel="noopener" style="display: inline-block; background: ${CTA}; color: #fff; padding: 14px 28px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px;">Pay now</a>
               </td>
             </tr>
           </table>

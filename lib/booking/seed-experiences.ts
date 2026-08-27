@@ -52,14 +52,19 @@ function halfDayRates(): RateSeed[] {
   const priceCents = getActiveCatalogRateCents("half");
   return [
     {
-      durationHours: 5,
-      displayName: `${siteConfig.catalog.halfDay.title} (${siteConfig.catalog.halfDay.durationLabel})`,
+      durationHours: 4,
+      displayName: `${siteConfig.catalog.halfDay.title} (4 Hours)`,
       priceCents,
       active: true,
     },
+    {
+      durationHours: 8,
+      displayName: `${siteConfig.catalog.halfDay.title} (8 Hours)`,
+      priceCents: getActiveCatalogRateCents("full"),
+      active: true,
+    },
     // Historical / unused — keep docs, hide from new bookings
-    { durationHours: 4, displayName: "Half-Day (4 Hours)", priceCents: STANDARD_RATE_CENTS.half, active: false },
-    { durationHours: 8, displayName: "Full-Day (8 Hours)", priceCents: STANDARD_RATE_CENTS.full, active: false },
+    { durationHours: 5, displayName: "Half-Day (5 Hours)", priceCents: STANDARD_RATE_CENTS.half, active: false },
     { durationHours: 10, displayName: "Full-Day (10 Hours)", priceCents: STANDARD_RATE_CENTS.full, active: false },
   ];
 }
@@ -106,7 +111,7 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
     title: siteConfig.catalog.halfDay.title,
     subtitle: `${siteConfig.catalog.halfDay.durationLabel} · Private Captained Charter`,
     descriptionLong:
-      "Private half-day captained charter. Captain and mate included. Confirm inclusions when you book.",
+      "The double decker party barge — waterslides, BBQ grill, and room for the whole crew. Full tank of gas, water toys, and safety gear included. Captain required — captain fees paid separately.",
     heroMedia: { type: "image", url: siteConfig.media.boats },
     gallery: [
       siteConfig.media.boats,
@@ -115,18 +120,21 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
       siteConfig.media.listingFallback,
     ],
     location: {
-      title: "Marina / dock",
+      title: "Tahoe Keys Marina",
       addressText: siteConfig.contact.marinaMeetNote,
-      notes: "Meet at the dock — soft-soled shoes recommended.",
+      notes: "Arrive 20 minutes early for parking and loading. Soft-soled shoes recommended.",
     },
-    maxGuests: 6,
+    maxGuests: 13,
     petsMax: 0,
     included: CHARTER_INCLUDED,
     whatToBring: WHAT_TO_BRING,
     rules: RULES,
     cancellationPolicy: CANCELLATION_POLICY,
     faqs: [
-      { q: "Is a captain included?", a: "Yes. Every charter includes a licensed captain and mate." },
+      {
+        q: "Do I need a captain?",
+        a: "Yes. Every charter runs with a USCG-certified captain. Captain fees are quoted separately and confirmed before you book.",
+      },
       { q: "What should we bring?", a: "Sunscreen, sunglasses, hat, soft-soled shoes. Specific inclusions are listed when you book." },
     ],
     seasonal: { enabled: false },
@@ -147,7 +155,7 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
     title: siteConfig.catalog.fullDay.title,
     subtitle: `${siteConfig.catalog.fullDay.durationLabel} · Private Captained Charter`,
     descriptionLong:
-      "Private full-day captained charter. More time on the water. Captain and mate included. Confirm inclusions when you book.",
+      "Mastercraft NXT wakesurf charter with boards for every skill level. Full tank of gas included. Captain required — captain fees paid separately.",
     heroMedia: { type: "image", url: "/photos/wakebusters/wakesurf.jpg" },
     gallery: [
       "/photos/wakebusters/wakesurf.jpg",
@@ -156,10 +164,10 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
       siteConfig.media.hero,
     ],
     location: {
-      title: "Marina / dock",
+      title: "Tahoe Keys Marina",
       addressText: siteConfig.contact.marinaMeetNote,
     },
-    maxGuests: 6,
+    maxGuests: 10,
     petsMax: 0,
     included: CHARTER_INCLUDED,
     whatToBring: WHAT_TO_BRING,
@@ -186,30 +194,52 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
   },
   {
     slug: "sunset",
-    title: "Sunset",
-    subtitle: "Evening charter — specialty listing (inactive by default).",
+    title: siteConfig.catalog.allIn.title,
+    subtitle: "4–8 Hours · Luxury Bennington Tritoon",
     descriptionLong:
-      "Shorter evening trip timed around sunset. Inactive in the template — activate in admin if this customer offers it.",
-    heroMedia: { type: "image", url: "/photos/wakebusters/sunset.jpg" },
-    gallery: ["/photos/wakebusters/sunset.jpg", siteConfig.media.listingFallback, siteConfig.media.galleryFallback],
+      "Our Bennington tritoon for Emerald Bay, Sand Harbor, and quiet Tahoe coves. Full tank of gas, water toys, and safety gear included. Captain required — captain fees paid separately.",
+    heroMedia: { type: "image", url: "/photos/wakebusters/tritoon.jpg" },
+    gallery: [
+      "/photos/wakebusters/tritoon.jpg",
+      "/photos/wakebusters/tritoon-slide.jpg",
+      siteConfig.media.listingFallback,
+      "/photos/wakebusters/sunset.jpg",
+    ],
     location: {
-      title: "Marina / dock",
+      title: "Tahoe Keys Marina",
       addressText: siteConfig.contact.marinaMeetNote,
     },
-    maxGuests: 6,
+    maxGuests: 12,
     petsMax: 0,
     included: CHARTER_INCLUDED,
-    whatToBring: ["Light layer", "Camera", "Valid ID"],
+    whatToBring: WHAT_TO_BRING,
     rules: RULES,
     cancellationPolicy: CANCELLATION_POLICY,
-    faqs: [],
+    faqs: [
+      {
+        q: "Where do we launch?",
+        a: "All rentals depart from Tahoe Keys Marina in South Lake Tahoe. Arrive 20 minutes early for parking and loading.",
+      },
+      {
+        q: "Do I need a captain?",
+        a: "Yes. Captain fees are quoted separately and confirmed before you book.",
+      },
+    ],
     seasonal: { enabled: false },
-    active: false,
+    active: true,
     timezone: brand.timezone,
     pricingType: "charter",
-    sortOrder: 90,
+    allowDeposit: true,
+    featured: false,
+    fromPriceCents: 110_000,
+    sortOrder: 2,
+    metaTitle: `${siteConfig.catalog.allIn.title} | Lake Tahoe`,
+    metaDescription: `Book ${siteConfig.catalog.allIn.title} — private captained charter. ${brand.companyName}.`,
+    tagline: "Luxury Tritoon",
     _rates: [
-      { durationHours: 4, displayName: "Sunset (4 Hours)", priceCents: getActiveCatalogRateCents("half"), active: true },
+      { durationHours: 4, displayName: "Half day (4 Hours)", priceCents: 110_000, active: true },
+      { durationHours: 6, displayName: "6 Hours (Mon–Thu)", priceCents: 150_000, active: true },
+      { durationHours: 8, displayName: "Full day (8 Hours)", priceCents: 190_000, active: true },
     ],
   },
   {
@@ -221,10 +251,10 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
     heroMedia: { type: "image", url: "/photos/wakebusters/wedding.jpg" },
     gallery: ["/photos/wakebusters/wedding.jpg", siteConfig.media.boats, siteConfig.media.hero],
     location: {
-      title: "Marina / dock",
+      title: "Tahoe Keys Marina",
       addressText: siteConfig.contact.marinaMeetNote,
     },
-    maxGuests: 6,
+    maxGuests: 13,
     petsMax: 0,
     included: CHARTER_INCLUDED,
     whatToBring: WHAT_TO_BRING,
@@ -297,7 +327,7 @@ export async function runSeedExperiences(): Promise<
       const expRef = db.collection("experiences").doc(expId);
       await reconcileRates(expRef.collection("rates"), _rates);
       // Core charter products get the full addon catalog; specialty listings get a lighter set if inactive.
-      if (expFields.slug === "pontoon" || expFields.slug === "watersports") {
+      if (expFields.slug === "pontoon" || expFields.slug === "watersports" || expFields.slug === "sunset") {
         await reconcileAddons(expRef.collection("addons"), CATALOG_ADDONS);
       }
     }

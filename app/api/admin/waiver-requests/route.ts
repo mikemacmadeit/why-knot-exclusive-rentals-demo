@@ -108,15 +108,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ requests: serialized });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    const isFirebase = /firebase|FIREBASE|config missing|credential|private.?key|service.?account/i.test(message);
+    // Index errors include console.firebase.google.com — do not treat as missing credentials.
+    const needsFirestoreIndex =
+      /FAILED_PRECONDITION/i.test(message) && /requires an index|indexes\?create_composite/i.test(message);
+    const isFirebaseConfig =
+      !needsFirestoreIndex &&
+      /config missing|credential|truncated|private.?key|FIREBASE_PRIVATE_KEY|FIREBASE_PROJECT_ID|service.?account/i.test(
+        message
+      );
+    const hint = needsFirestoreIndex
+      ? "Firestore composite index missing or still building. Open the create_composite link in the error, or deploy indexes: firebase deploy --only firestore:indexes --project <FIREBASE_PROJECT_ID>. Wait until the index shows Enabled."
+      : isFirebaseConfig
+        ? FIREBASE_SETUP_HINT
+        : undefined;
     return NextResponse.json(
       {
-        error: isFirebase ? "Waiver tracking requires Firebase." : message,
-        /** Actual error so you can see the real cause (e.g. key truncated vs permission denied). */
+        error: needsFirestoreIndex
+          ? message
+          : isFirebaseConfig
+            ? "Waiver tracking requires Firebase."
+            : message,
         errorDetail: message,
-        ...(isFirebase && { hint: FIREBASE_SETUP_HINT }),
+        ...(hint && { hint }),
       },
-      { status: isFirebase ? 503 : 500 }
+      { status: needsFirestoreIndex || isFirebaseConfig ? 503 : 500 }
     );
   }
 }

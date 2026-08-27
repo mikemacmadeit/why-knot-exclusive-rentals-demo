@@ -200,12 +200,16 @@ export function AuthUI({ children, content = {}, className }: AuthUIProps) {
 
   return (
     <div className={cn("w-full min-h-screen md:grid md:grid-cols-2", className)}>
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         input[type="password"]::-ms-reveal,
         input[type="password"]::-ms-clear {
           display: none;
         }
-      `}</style>
+      `,
+        }}
+      />
 
       <div className="flex min-h-screen items-center justify-center bg-white p-6 md:p-10 lg:p-12">
         <div className="mx-auto w-full max-w-[380px]">{children}</div>

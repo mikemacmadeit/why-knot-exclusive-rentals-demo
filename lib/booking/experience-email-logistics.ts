@@ -4,6 +4,13 @@
  */
 
 import type { Experience, ExperienceConfirmationEmail } from "./types";
+import {
+  EMAIL_BG,
+  EMAIL_BORDER,
+  EMAIL_LIGHT_BLUE,
+  EMAIL_MUTED,
+  EMAIL_NAVY,
+} from "./email-palette";
 
 export const DEFAULT_ARRIVAL_INSTRUCTIONS =
   "Please arrive 10–15 minutes before your scheduled departure time.";
@@ -185,10 +192,10 @@ export function emailFieldsFromExperience(
   return { logistics, locationText: locationTextFromLogistics(logistics, fallbackLocationText) };
 }
 
-const PRIMARY = "#50bdba";
-const DARK = "#001c30";
-const MUTED = "#196a87";
-const BG = "#f0fafb";
+const PRIMARY = EMAIL_LIGHT_BLUE;
+const DARK = EMAIL_NAVY;
+const MUTED = EMAIL_MUTED;
+const BG = EMAIL_BG;
 
 function escapeHtml(s: string): string {
   return s
@@ -205,7 +212,7 @@ function formattedMultiline(s: string): string {
 function sectionTable(title: string, inner: string): string {
   if (!inner.trim()) return "";
   return `
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: ${BG}; border-radius: 12px; margin: 0 0 24px; border: 1px solid rgba(0,28,48,0.08);">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: ${BG}; border-radius: 12px; margin: 0 0 24px; border: 1px solid ${EMAIL_BORDER};">
                 <tr>
                   <td style="padding: 20px 24px;">
                     <p style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: ${DARK};">${title}</p>

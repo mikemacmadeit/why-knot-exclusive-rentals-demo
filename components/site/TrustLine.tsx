@@ -29,9 +29,9 @@ export function TrustLine({
         <span>{reviewCountLabel()}</span>
       </span>
       <span className={isOnDark ? "text-white/50" : "text-brand-muted/70"} aria-hidden>·</span>
-      <span>Local Austin crew</span>
+      <span>South Lake Tahoe crew</span>
       <span className={isOnDark ? "text-white/50" : "text-brand-muted/70"} aria-hidden>·</span>
-      <span>Captain included</span>
+      <span>Captain fees separate</span>
     </div>
   );
 }

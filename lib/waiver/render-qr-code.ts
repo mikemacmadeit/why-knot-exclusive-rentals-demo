@@ -4,6 +4,9 @@
 
 import "server-only";
 import QRCode from "qrcode";
+import { siteConfig } from "@/config/site";
+
+const QR_DARK = `${(siteConfig.theme.darkColor || "#0a1628").replace(/^#/, "")}ff`;
 
 export async function waiverQrToPngBuffer(signUrl: string): Promise<Buffer> {
   return QRCode.toBuffer(signUrl, {
@@ -11,7 +14,7 @@ export async function waiverQrToPngBuffer(signUrl: string): Promise<Buffer> {
     width: 640,
     margin: 2,
     errorCorrectionLevel: "M",
-    color: { dark: "#001c30ff", light: "#ffffffff" },
+    color: { dark: `#${QR_DARK}`, light: "#ffffffff" },
   });
 }
 

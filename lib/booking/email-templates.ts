@@ -8,8 +8,11 @@ import { fromOperatorNoteAuthorLabel, operatorNoteAuthorFirstName } from "@/lib/
 import { bookingEnv } from "./env";
 import {
   EMAIL_BG,
+  EMAIL_BORDER,
+  EMAIL_CTA,
   EMAIL_HEAD_EXTRAS,
   EMAIL_LIGHT_BLUE,
+  EMAIL_MUTED,
   EMAIL_NAVY,
   EMAIL_WHITE,
   renderEmailHeaderCell,
@@ -112,8 +115,9 @@ export const EMAIL_TEMPLATES: EmailTemplateMeta[] = [
 ];
 
 const PRIMARY_COLOR = EMAIL_LIGHT_BLUE;
+const CTA_COLOR = EMAIL_CTA;
 const DARK_COLOR = EMAIL_NAVY;
-const MUTED_COLOR = "#7a8899";
+const MUTED_COLOR = EMAIL_MUTED;
 const BG_LIGHT = EMAIL_BG;
 const EMAIL_CARD = `max-width: 560px; background: ${EMAIL_WHITE}; border-radius: 16px; box-shadow: 0 4px 24px rgba(10,22,40,0.08);`;
 
@@ -245,7 +249,7 @@ export function renderBookingConfirmationHtml(booking: Booking, context: Booking
               <p style="margin: 24px 0 0; font-size: 14px; color: ${MUTED_COLOR}; line-height: 1.5;">Please sign your waiver before your trip:</p>
               <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin-top: 12px;">
                 <tr>
-                  <td style="border-radius: 10px; background: ${DARK_COLOR};">
+                  <td style="border-radius: 10px; background: ${CTA_COLOR};">
                     <a href="${escapeHtml(waiverSigningUrl)}" target="_blank" rel="noopener" style="display: inline-block; padding: 14px 28px; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">Sign waiver</a>
                   </td>
                 </tr>
@@ -259,7 +263,7 @@ export function renderBookingConfirmationHtml(booking: Booking, context: Booking
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 32px; background: ${BG_LIGHT}; border-top: 1px solid rgba(0,28,48,0.08); text-align: center;">
+            <td style="padding: 24px 32px; background: ${BG_LIGHT}; border-top: 1px solid ${EMAIL_BORDER}; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: ${MUTED_COLOR};">— ${brand.companyName}</p>
             </td>
           </tr>
@@ -388,7 +392,7 @@ const CAPTAIN_EMAIL_PREVIEW_PARAMS: CaptainTripEmailParams = {
   guestName: "Jordan Smith",
   guestPhone: "(512) 957-6197",
   partySize: 8,
-  locationText: "Loop 360 Boat Ramp — 5019 N Capital of Texas Hwy, Austin, TX 78746",
+  locationText: "Tahoe Keys Marina — South Lake Tahoe, CA",
   specialNotes: "Birthday — bring Bluetooth speaker.",
   operatorNotes: "Dock on the north side. Guest is celebrating a 30th.",
   assignedByName: "Admin",
@@ -489,7 +493,7 @@ function captainEmailShell(opts: { subtitle: string; greeting: string; intro: st
                   <td width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>`
                       : ""
                   }
-                  <td style="border-radius: 10px; background: ${PRIMARY_COLOR};">
+                  <td style="border-radius: 10px; background: ${CTA_COLOR};">
                     <a href="${escapeHtml(manageUrl)}" target="_blank" rel="noopener" style="display: inline-block; padding: 14px 20px; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">Manage in app</a>
                   </td>
                 </tr>
@@ -539,7 +543,7 @@ function captainEmailShell(opts: { subtitle: string; greeting: string; intro: st
             </td>
           </tr>
           <tr>
-            <td style="padding: 24px 32px; background: ${BG_LIGHT}; border-top: 1px solid rgba(0,28,48,0.08); text-align: center;">
+            <td style="padding: 24px 32px; background: ${BG_LIGHT}; border-top: 1px solid ${EMAIL_BORDER}; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: ${MUTED_COLOR};">— ${escapeHtml(brand.companyName)}</p>
             </td>
           </tr>
@@ -634,7 +638,7 @@ export function renderTeamInviteHtml(params: TeamInviteEmailParams): string {
               <p style="margin: 0 0 24px; font-size: 15px; color: ${MUTED_COLOR}; line-height: 1.6;">You've been invited as a <strong style="color: ${DARK_COLOR};">${escapeHtml(roleLabel)}</strong> for ${escapeHtml(brand.companyName)}. Set your password with the button below, then sign in with this email address.</p>
               <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin: 8px auto 24px;">
                 <tr>
-                  <td style="border-radius: 10px; background: ${DARK_COLOR};">
+                  <td style="border-radius: 10px; background: ${CTA_COLOR};">
                     <a href="${escapeHtml(resetLink)}" target="_blank" rel="noopener" style="display: inline-block; padding: 14px 28px; font-size: 15px; font-weight: 600; color: #ffffff; text-decoration: none;">Set your password</a>
                   </td>
                 </tr>
@@ -646,7 +650,7 @@ export function renderTeamInviteHtml(params: TeamInviteEmailParams): string {
             </td>
           </tr>
           <tr>
-            <td style="padding: 24px 32px; background: ${BG_LIGHT}; border-top: 1px solid rgba(0,28,48,0.08); text-align: center;">
+            <td style="padding: 24px 32px; background: ${BG_LIGHT}; border-top: 1px solid ${EMAIL_BORDER}; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: ${MUTED_COLOR};">— ${escapeHtml(brand.companyName)}</p>
             </td>
           </tr>

@@ -7,7 +7,12 @@ import { brand } from "@/content/brand";
 import { getNoreplyEmail, getSenderName } from "@/config/site";
 import {
   EMAIL_BG,
+  EMAIL_BORDER,
+  EMAIL_CTA,
+  EMAIL_LIGHT_BLUE,
+  EMAIL_MUTED,
   EMAIL_NAVY,
+  EMAIL_WHITE,
   renderEmailHeaderCell,
 } from "@/lib/booking/email-brand";
 import { bookingEnv } from "@/lib/booking/env";
@@ -16,7 +21,11 @@ import { getDefaultTokenExpiryDays } from "./tokens";
 
 const BREVO_API_BASE = "https://api.brevo.com/v3";
 const DARK = EMAIL_NAVY;
+const CTA = EMAIL_CTA;
+const LINK = EMAIL_LIGHT_BLUE;
+const MUTED = EMAIL_MUTED;
 const BG = EMAIL_BG;
+const WHITE = EMAIL_WHITE;
 
 /** Header block matching booking emails: solid navy + accent bars. */
 function waiverEmailHeader(subtitle: string): string {
@@ -56,8 +65,8 @@ function groupSigningBlock(groupSigningUrl: string, partySize: number | undefine
   if (!groupSigningUrl.trim() || (partySize ?? 1) <= 1) return "";
   return `
     <p style="margin:20px 0 8px;font-size:14px;font-weight:600;color:${DARK};">For your other guests</p>
-    <p style="margin:0 0 8px;font-size:14px;color:#196a87;line-height:1.5;">Each person needs to sign. Share this link with everyone in your party:</p>
-    <p style="word-break:break-all;font-size:13px;margin:0 0 16px;"><a href="${groupSigningUrl}" style="color:#196a87;">${groupSigningUrl}</a></p>`;
+    <p style="margin:0 0 8px;font-size:14px;color:${MUTED};line-height:1.5;">Each person needs to sign. Share this link with everyone in your party:</p>
+    <p style="word-break:break-all;font-size:13px;margin:0 0 16px;"><a href="${groupSigningUrl}" style="color:${LINK};">${groupSigningUrl}</a></p>`;
 }
 
 function buildInviteHtml(params: WaiverInviteParams): string {
@@ -70,17 +79,17 @@ function buildInviteHtml(params: WaiverInviteParams): string {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="font-family:system-ui,sans-serif;line-height:1.5;max-width:560px;margin:0 auto;padding:24px;background-color:${BG};">
   ${waiverEmailHeader("Sign your waiver")}
-  <div style="background:#fff;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,28,48,0.08);overflow:hidden;padding:28px;">
-    <p>Hi ${params.name},</p>
-    <p>Please sign your waiver before your trip. It only takes a minute.</p>
-    <div style="background:${BG};padding:16px;border-radius:8px;margin:16px 0;border:1px solid rgba(0,28,48,0.08);">
-      <pre style="margin:0;white-space:pre-wrap;font-size:14px;">${summary}</pre>
+  <div style="background:${WHITE};border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(10,22,40,0.08);overflow:hidden;padding:28px;">
+    <p style="color:${DARK};">Hi ${params.name},</p>
+    <p style="color:${MUTED};">Please sign your waiver before your trip. It only takes a minute.</p>
+    <div style="background:${BG};padding:16px;border-radius:8px;margin:16px 0;border:1px solid ${EMAIL_BORDER};">
+      <pre style="margin:0;white-space:pre-wrap;font-size:14px;color:${DARK};">${summary}</pre>
     </div>
-    <p><a href="${params.signingUrl}" style="display:inline-block;background:${DARK};color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;">Sign waiver</a></p>
-    <p style="color:#196a87;font-size:14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-    <p style="word-break:break-all;font-size:13px;">${params.signingUrl}</p>
+    <p><a href="${params.signingUrl}" style="display:inline-block;background:${CTA};color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;">Sign waiver</a></p>
+    <p style="color:${MUTED};font-size:14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+    <p style="word-break:break-all;font-size:13px;"><a href="${params.signingUrl}" style="color:${LINK};">${params.signingUrl}</a></p>
     ${groupBlock}
-    <p style="color:#196a87;font-size:14px;">These links stay valid for about <strong>${expiryDays} days</strong> (or until everyone has signed).</p>
+    <p style="color:${MUTED};font-size:14px;">These links stay valid for about <strong style="color:${DARK};">${expiryDays} days</strong> (or until everyone has signed).</p>
   </div>
 </body>
 </html>`;
@@ -95,14 +104,14 @@ function buildReminderHtml(params: WaiverReminderParams): string {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="font-family:system-ui,sans-serif;line-height:1.5;max-width:560px;margin:0 auto;padding:24px;background-color:${BG};">
   ${waiverEmailHeader("Reminder: Sign your waiver")}
-  <div style="background:#fff;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,28,48,0.08);overflow:hidden;padding:28px;">
-    <p>Hi ${params.name},</p>
-    <p>This is a friendly reminder to sign your waiver before your upcoming trip.</p>
-    <div style="background:${BG};padding:16px;border-radius:8px;margin:16px 0;border:1px solid rgba(0,28,48,0.08);">
-      <pre style="margin:0;white-space:pre-wrap;font-size:14px;">${summary}</pre>
+  <div style="background:${WHITE};border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(10,22,40,0.08);overflow:hidden;padding:28px;">
+    <p style="color:${DARK};">Hi ${params.name},</p>
+    <p style="color:${MUTED};">This is a friendly reminder to sign your waiver before your upcoming trip.</p>
+    <div style="background:${BG};padding:16px;border-radius:8px;margin:16px 0;border:1px solid ${EMAIL_BORDER};">
+      <pre style="margin:0;white-space:pre-wrap;font-size:14px;color:${DARK};">${summary}</pre>
     </div>
-    <p><a href="${params.signingUrl}" style="display:inline-block;background:${DARK};color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;">Sign waiver</a></p>
-    <p style="color:#196a87;font-size:14px;">If the button doesn't work, copy this link: ${params.signingUrl}</p>
+    <p><a href="${params.signingUrl}" style="display:inline-block;background:${CTA};color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;">Sign waiver</a></p>
+    <p style="color:${MUTED};font-size:14px;">If the button doesn't work, copy this link: <a href="${params.signingUrl}" style="color:${LINK};">${params.signingUrl}</a></p>
     ${groupBlock}
   </div>
 </body>

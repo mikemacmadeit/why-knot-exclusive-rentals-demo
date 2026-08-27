@@ -1,6 +1,7 @@
 import { isValidBookingEmail } from "@/lib/booking/validate-email";
 import { validatePhone } from "@/lib/booking/validate-phone";
 import { parseAdsAttributionFromUnknown, type AdsAttribution } from "@/lib/ads/attribution";
+import { brand } from "@/content/brand";
 
 export const LEAD_INTERESTS = [
   "pontoon",
@@ -100,14 +101,14 @@ export function suggestedLeadEmails(opts: {
     {
       id: "availability",
       label: "Send availability",
-      subject: "Lake Austin availability — Admin",
-      body: `Hi ${name},\n\nThanks for reaching out${interestLine}. You can check live times and book here:\n\n${opts.bookingUrl}\n\nIf you share a date and group size, I can point you at the best boat.\n\n— Slipstack`,
+      subject: `${brand.companyName} availability`,
+      body: `Hi ${name},\n\nThanks for reaching out${interestLine}. You can check live times and book here:\n\n${opts.bookingUrl}\n\nIf you share a date and group size, I can point you at the best boat.\n\n— ${brand.companyName}`,
     },
     {
       id: "follow_up",
       label: "Friendly follow-up",
-      subject: "Still thinking about a Lake Austin boat day?",
-      body: `Hi ${name},\n\nJust checking in — we still have openings this season. Book online anytime:\n\n${opts.bookingUrl}\n\nHappy to help you pick a boat if you want a recommendation.\n\n— Slipstack`,
+      subject: `Still thinking about a ${brand.companyName} boat day?`,
+      body: `Hi ${name},\n\nJust checking in — we still have openings this season. Book online anytime:\n\n${opts.bookingUrl}\n\nHappy to help you pick a boat if you want a recommendation.\n\n— ${brand.companyName}`,
     },
   ];
 }

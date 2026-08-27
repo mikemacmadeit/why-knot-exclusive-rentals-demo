@@ -26,7 +26,6 @@ import {
   Megaphone,
 } from "lucide-react";
 import { brand } from "@/content/brand";
-import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { notifyAdminAuthChanged } from "@/lib/admin-auth-client";
 import { PlatformDevBanner } from "@/components/site/PlatformDevBanner";
@@ -192,7 +191,6 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const shellLabel = role === "captain" ? "Captain" : "Admin";
 
   return (
     <AdminPrincipalContext.Provider value={{ role, displayName, email }}>
@@ -207,18 +205,15 @@ export function AdminShell({
           >
             <Menu className="h-6 w-6" aria-hidden />
           </button>
-          <Link href="/" prefetch={false} className="flex items-center gap-2 min-w-0">
+          <Link href="/" prefetch={false} className="flex items-center min-w-0">
             <Image
               src={brand.logoNavbarPath ?? brand.logoPath}
               alt={brand.logoAlt}
-              width={32}
+              width={140}
               height={32}
-              className="h-8 w-8 shrink-0 object-contain rounded-lg"
+              className="h-8 w-auto max-w-[160px] object-contain"
               unoptimized
             />
-            <span className="text-xs font-medium text-brand-primary truncate">
-              {shellLabel} · {siteConfig.tenantId}
-            </span>
           </Link>
         </header>
 
@@ -239,29 +234,27 @@ export function AdminShell({
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             )}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
+            <div className="relative border-b border-white/10 px-4 py-4">
               <Link
                 href="/"
                 prefetch={false}
-                className="flex items-center gap-3 min-w-0 rounded-xl overflow-hidden p-1 -m-1 hover:bg-white/5 transition-colors"
+                className="flex w-full items-center justify-center rounded-xl p-1 hover:bg-white/5 transition-colors"
                 aria-label={`${brand.logoAlt} home`}
               >
                 <Image
                   src={brand.logoNavbarPath ?? brand.logoPath}
                   alt={brand.logoAlt}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 shrink-0 object-contain rounded-xl"
+                  width={220}
+                  height={56}
+                  className="h-auto w-full max-w-full object-contain"
                   unoptimized
+                  priority
                 />
-                <span className="text-xs font-medium text-brand-primary truncate">
-                  {shellLabel} · {siteConfig.tenantId}
-                </span>
               </Link>
               <button
                 type="button"
                 onClick={() => setSidebarOpen(false)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white/80 hover:bg-white/10 hover:text-white lg:hidden transition-colors"
+                className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-white/80 hover:bg-white/10 hover:text-white lg:hidden transition-colors"
                 aria-label="Close menu"
               >
                 <X className="h-5 w-5" aria-hidden />

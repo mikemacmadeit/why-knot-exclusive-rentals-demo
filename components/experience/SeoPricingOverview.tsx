@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteConfig } from "@/config/site";
 
 /** Pillar-page pricing snapshot (captures “how much” queries in visible HTML). */
 export function SeoPricingOverview({
@@ -6,14 +7,15 @@ export function SeoPricingOverview({
 }: {
   rows: { experience: string; href: string; fromLabel: string; note: string }[];
 }) {
+  const lake = siteConfig.contact.address.city || "Lake Tahoe";
   return (
     <section className="bg-white py-12 sm:py-16 border-y border-brand-dark/10" aria-labelledby="seo-pricing-overview-heading">
       <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
         <h2 id="seo-pricing-overview-heading" className="font-display text-2xl sm:text-3xl font-bold text-brand-dark mb-2">
-          How much does a boat rental in Austin cost?
+          How much does a boat rental on {lake} cost?
         </h2>
         <p className="text-brand-dark/70 mb-8">
-          Every charter includes a licensed captain. Prices vary by experience and duration — check live availability for your date.
+          Captains are required for every charter — fees are quoted separately. Prices vary by boat and duration — check live availability for your date.
         </p>
         <div className="overflow-x-auto rounded-xl border border-brand-dark/10">
           <table className="w-full text-left text-sm sm:text-base">

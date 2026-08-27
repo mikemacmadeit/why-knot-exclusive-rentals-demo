@@ -12,6 +12,7 @@ import { getNoreplyEmail, getSenderName, getContactEmail } from "@/config/site";
 import { bookingEnv } from "./env";
 import { DEFAULT_CANCELLATION_POLICY } from "./cancellation-policy";
 import { formatMoney } from "./format-money";
+import { EMAIL_CTA } from "./email-brand";
 import { renderBookingConfirmationHtml, isDepositFromBookingStripe } from "./email-templates";
 import {
   buildReminderHtml,
@@ -712,7 +713,7 @@ export async function sendFinalChargeFailedEmail(
     : "We couldn't charge the remaining balance for your upcoming trip. Please reply to this email or contact us to update your card or pay the remaining balance.";
   const ctaHtml =
     manageLink
-      ? `<p style="margin-top: 24px;"><a href="${manageLink.replace(/"/g, "&quot;")}" style="display: inline-block; background: #0d9488; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Update your card and pay now</a></p>`
+      ? `<p style="margin-top: 24px;"><a href="${manageLink.replace(/"/g, "&quot;")}" style="display: inline-block; background: ${EMAIL_CTA}; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Update your card and pay now</a></p>`
       : "";
   const tripHtml = finalChargeFailedTripDetailsHtml(tripDetails);
   const html = `

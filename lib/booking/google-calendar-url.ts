@@ -1,3 +1,4 @@
+import { brand } from "@/content/brand";
 import { BOOKING_DISPLAY_TIMEZONE } from "./format-booking-datetime";
 
 function pad2(n: string): string {
@@ -35,7 +36,7 @@ export function buildGoogleCalendarTemplateUrl(opts: {
   const tz = opts.timeZone ?? BOOKING_DISPLAY_TIMEZONE;
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: opts.title.trim() || "Boat Bros trip",
+    text: opts.title.trim() || `${brand.companyName} trip`,
     dates: `${formatGoogleCalendarLocalStamp(opts.start, tz)}/${formatGoogleCalendarLocalStamp(opts.end, tz)}`,
     ctz: tz,
   });

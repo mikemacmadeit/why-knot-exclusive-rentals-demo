@@ -289,7 +289,7 @@ export async function checkRateLimitValidateDiscount(key: string): Promise<RateL
   const windowStart = Math.floor(Date.now() / WINDOW_MS) * WINDOW_MS;
   const redisKey = redis ? `rl:${RATE_LIMIT_KEY_PREFIX_VALIDATE_DISCOUNT}${key}:${windowStart}` : null;
 
-  if (isProduction && !redis) {
+  if (isProduction && !redis && !isDemoPitchSite()) {
     return rateLimitBlockedProductionNoRedis();
   }
 

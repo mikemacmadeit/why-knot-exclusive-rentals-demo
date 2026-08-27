@@ -227,11 +227,21 @@ async function main() {
       row.exp.slug === "watersports" ? "Mastercraft NXT Wakesurf Charter" : "30' Double Decker Party Barge";
 
     const past = row.date < today;
-    const status = past ? (row.i % 11 === 0 ? "canceled" : "confirmed") : "confirmed";
+    // Dashboard / calendar only count slot-taken statuses (not "confirmed").
+    const status = past
+      ? row.i % 11 === 0
+        ? "canceled"
+        : "final_paid"
+      : row.i % 5 === 0
+        ? "paid"
+        : "final_due";
+    const remainingForStatus =
+      status === "final_paid" || status === "paid" ? 0 : Math.max(0, totalCents - depositCents);
 
     const bookingId = `mock-twb-${row.date}-${String(row.hour).padStart(2, "0")}-${row.i}`;
     const createdOffsetDays = Math.min(14, Math.max(1, Math.floor((Date.parse(row.date) - Date.parse(today)) / 86400000) * -1 + 3));
     const createdAtDate = new Date(Date.now() - createdOffsetDays * 86400000 - (row.i % 12) * 3600000);
+    const summaryMonthKey = `revenue_${createdAtDate.getFullYear()}_${String(createdAtDate.getMonth() + 1).padStart(2, "0")}`;
 
     const bookingDoc = {
       status,
@@ -255,11 +265,17 @@ async function main() {
         totalCents,
         currency: "usd",
         depositCents,
-        remainingCents: Math.max(0, totalCents - depositCents),
+        remainingCents: remainingForStatus,
       },
       totalCents,
       depositCents,
-      remainingCents: Math.max(0, totalCents - depositCents),
+      remainingCents: remainingForStatus,
+      stripe: {
+        totalAmountCents: totalCents,
+        depositAmountCents: depositCents,
+        currency: "usd",
+        mode: "demo_seed",
+      },
       source: row.source === "admin" ? "admin" : row.source,
       specialNotes:
         row.source === "admin"
@@ -267,6 +283,8 @@ async function main() {
           : marketplace
             ? `Imported from ${row.source} — demo seed`
             : "Online booking — demo seed",
+      summaryCountersApplied: status !== "canceled",
+      summaryMonthKey,
       createdAt: Timestamp.fromDate(createdAtDate),
       updatedAt: Timestamp.now(),
       demoSeed: true,
@@ -358,10 +376,41 @@ async function main() {
 
   await flush();
 
+  // Dashboard revenue comes from summaries/*, not raw booking totals.
+  const active = plan.filter((r) => {
+    const past = r.date < today;
+    const status = past ? (r.i % 11 === 0 ? "canceled" : "final_paid") : r.i % 5 === 0 ? "paid" : "final_due";
+    return status !== "canceled";
+  });
+  let totalRevenueCents = 0;
+  const byMonth = new Map();
+  for (const row of active) {
+    const cents = moneyFor(row.exp.slug, row.hours, row.i);
+    totalRevenueCents += cents;
+    const createdOffsetDays = Math.min(14, Math.max(1, Math.floor((Date.parse(row.date) - Date.parse(today)) / 86400000) * -1 + 3));
+    const createdAtDate = new Date(Date.now() - createdOffsetDays * 86400000 - (row.i % 12) * 3600000);
+    const key = `revenue_${createdAtDate.getFullYear()}_${String(createdAtDate.getMonth() + 1).padStart(2, "0")}`;
+    const cur = byMonth.get(key) ?? { revenueCents: 0, bookingCount: 0 };
+    cur.revenueCents += cents;
+    cur.bookingCount += 1;
+    byMonth.set(key, cur);
+  }
+  await db.collection("summaries").doc("revenue").set(
+    { totalRevenueCents, bookingCount: active.length, demoSeed: true, updatedAt: Timestamp.now() },
+    { merge: true }
+  );
+  for (const [key, row] of byMonth.entries()) {
+    await db.collection("summaries").doc(key).set(
+      { revenueCents: row.revenueCents, bookingCount: row.bookingCount, demoSeed: true, updatedAt: Timestamp.now() },
+      { merge: true }
+    );
+  }
+
   console.log("Done.");
   console.log(`  bookings: ${bookingWrites}`);
   console.log(`  marketplace events: ${eventWrites}`);
   console.log(`  range: ${startDay} → ${endDay}`);
+  console.log(`  revenue: $${(totalRevenueCents / 100).toFixed(0)} across ${active.length} active bookings`);
 }
 
 main().catch((e) => {

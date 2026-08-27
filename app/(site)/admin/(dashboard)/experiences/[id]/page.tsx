@@ -66,7 +66,9 @@ export default function EditExperiencePage() {
     <div className="space-y-6 sm:space-y-8">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl font-bold text-brand-dark sm:text-3xl">Edit listing</h1>
-        <p className="mt-1 text-sm text-brand-muted">Update listing and rates/add-ons. Only changed fields are sent; rates and add-ons are replaced only when you edit them.</p>
+        <p className="mt-1 text-sm text-brand-muted">
+          Update the cover photo, rates, and booking settings guests see. SEO extras stay collapsed until you need them.
+        </p>
       </div>
       <ExperienceForm
         initialData={initialData}

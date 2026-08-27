@@ -72,7 +72,8 @@ function buildExperienceDoc(
   };
 
   const primaryRate = exp.rates.find((r) => r.active !== false) ?? exp.rates[0];
-  const heroUrl = exp.heroMediaUrl ?? siteConfig.media.welcome;
+  // Prefer listing/boat media — never fall back to welcome/founder portraits for fleet cards.
+  const heroUrl = exp.heroMediaUrl ?? siteConfig.media.boats ?? siteConfig.media.listingFallback ?? siteConfig.media.hero;
 
   return {
     slug: firestoreSlug,

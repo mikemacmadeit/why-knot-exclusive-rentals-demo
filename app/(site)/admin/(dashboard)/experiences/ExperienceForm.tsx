@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Anchor, Users, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { Anchor, Users, Info, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DynamicPricingEditor } from "@/components/admin/DynamicPricingEditor";
@@ -11,6 +11,12 @@ import { ImageFramingTool } from "@/components/admin/ImageFramingTool";
 import { normalizePublicSlug } from "@/lib/booking/slug";
 import { experienceCardImageUrl } from "@/lib/booking/experience-card-image";
 import { siteConfig } from "@/config/site";
+import {
+  DEFAULT_ARRIVAL_INSTRUCTIONS,
+  DEFAULT_GRATUITY_TEXT,
+  DEFAULT_RULES_TEXT,
+  parseConfirmationEmail,
+} from "@/lib/booking/experience-email-logistics";
 
 const defaultBusinessTimezone = siteConfig.business.timezone;
 
@@ -73,6 +79,11 @@ export type ExperienceFormData = {
   locationTitle: string;
   locationAddress: string;
   locationNotes: string;
+  confirmationEntranceFeeText: string;
+  confirmationArrivalInstructions: string;
+  confirmationRulesText: string;
+  confirmationGratuityText: string;
+  confirmationAdditionalNotes: string;
   maxGuests: number;
   petsMax: number;
   included: string[];
@@ -133,6 +144,11 @@ function getDefaultFormData(): ExperienceFormData {
     locationTitle: "",
     locationAddress: "",
     locationNotes: "",
+    confirmationEntranceFeeText: "",
+    confirmationArrivalInstructions: DEFAULT_ARRIVAL_INSTRUCTIONS,
+    confirmationRulesText: DEFAULT_RULES_TEXT,
+    confirmationGratuityText: DEFAULT_GRATUITY_TEXT,
+    confirmationAdditionalNotes: "",
     maxGuests: 0,
     petsMax: 0,
     included: [],
@@ -186,6 +202,10 @@ function dataFromApi(api: Record<string, unknown>): ExperienceFormData {
   const rates = (api.rates as Array<Record<string, unknown>>) ?? [];
   const addons = (api.addons as Array<Record<string, unknown>>) ?? [];
   const faqs = (api.faqs as Array<{ q?: string; a?: string }>) ?? [];
+  const ceRaw = api.confirmationEmail;
+  const ceConfigured = ceRaw != null && typeof ceRaw === "object";
+  const ce = ceConfigured ? (ceRaw as Record<string, unknown>) : {};
+  const listingRules = Array.isArray(api.rules) ? api.rules.filter((x): x is string => typeof x === "string") : [];
   return {
     slug: typeof api.slug === "string" ? api.slug : "",
     title: typeof api.title === "string" ? api.title : "",
@@ -199,6 +219,24 @@ function dataFromApi(api: Record<string, unknown>): ExperienceFormData {
     locationTitle: typeof loc.title === "string" ? loc.title : "",
     locationAddress: typeof loc.addressText === "string" ? loc.addressText : "",
     locationNotes: typeof loc.notes === "string" ? loc.notes : "",
+    confirmationEntranceFeeText: typeof ce.entranceFeeText === "string" ? ce.entranceFeeText : "",
+    confirmationArrivalInstructions:
+      typeof ce.arrivalInstructions === "string"
+        ? ce.arrivalInstructions
+        : ceConfigured
+          ? ""
+          : DEFAULT_ARRIVAL_INSTRUCTIONS,
+    confirmationRulesText:
+      typeof ce.rulesText === "string"
+        ? ce.rulesText
+        : ceConfigured
+          ? ""
+          : listingRules.length
+            ? listingRules.join("\n")
+            : DEFAULT_RULES_TEXT,
+    confirmationGratuityText:
+      typeof ce.gratuityText === "string" ? ce.gratuityText : ceConfigured ? "" : DEFAULT_GRATUITY_TEXT,
+    confirmationAdditionalNotes: typeof ce.additionalNotes === "string" ? ce.additionalNotes : "",
     maxGuests: typeof api.maxGuests === "number" ? api.maxGuests : 0,
     petsMax: typeof api.petsMax === "number" ? api.petsMax : 0,
     included: Array.isArray(api.included) ? api.included.filter((x): x is string => typeof x === "string") : [],
@@ -325,21 +363,6 @@ function buildMinimalExperiencePatchBody(data: ExperienceFormData, initial: Expe
 }
 
 function formDataToBody(d: ExperienceFormData): Record<string, unknown> {
-  const spotsOverrideParsed =
-    d.spotsLeftOverride !== "" ? parseInt(d.spotsLeftOverride, 10) : NaN;
-  const spotsLeftOverride =
-    d.spotsLeftOverride === ""
-      ? null
-      : !isNaN(spotsOverrideParsed) && spotsOverrideParsed >= 0
-        ? spotsOverrideParsed
-        : null;
-  const hasSeasonalDates =
-    Boolean(d.seasonalStartDate) &&
-    Boolean(d.seasonalEndDate) &&
-    /^\d{4}-\d{2}-\d{2}$/.test(d.seasonalStartDate) &&
-    /^\d{4}-\d{2}-\d{2}$/.test(d.seasonalEndDate);
-  // Restricted season requires dates; without them do not persist enabled:true + months 1–12.
-  const seasonalEnabled = d.seasonalEnabled && hasSeasonalDates;
   return {
     slug: normalizePublicSlug(d.slug),
     title: d.title,
@@ -350,6 +373,13 @@ function formDataToBody(d: ExperienceFormData): Record<string, unknown> {
     heroImagePosition: d.heroImagePosition.trim(),
     listingCardImagePosition: d.listingCardImagePosition.trim(),
     location: { title: d.locationTitle, addressText: d.locationAddress, notes: d.locationNotes || undefined },
+    confirmationEmail: parseConfirmationEmail({
+      entranceFeeText: d.confirmationEntranceFeeText,
+      arrivalInstructions: d.confirmationArrivalInstructions,
+      rulesText: d.confirmationRulesText,
+      gratuityText: d.confirmationGratuityText,
+      additionalNotes: d.confirmationAdditionalNotes,
+    }),
     maxGuests: d.maxGuests,
     petsMax: 0, // Pets are offered as add-ons only; no separate max-pets field
     included: d.included,
@@ -358,10 +388,10 @@ function formDataToBody(d: ExperienceFormData): Record<string, unknown> {
     cancellationPolicy: d.cancellationPolicy,
     faqs: d.faqs,
     seasonal: {
-      enabled: seasonalEnabled,
+      enabled: d.seasonalEnabled,
       startMonth: d.seasonalStartMonth,
       endMonth: d.seasonalEndMonth,
-      ...(hasSeasonalDates && { startDate: d.seasonalStartDate, endDate: d.seasonalEndDate }),
+      ...(d.seasonalStartDate && d.seasonalEndDate && /^\d{4}-\d{2}-\d{2}$/.test(d.seasonalStartDate) && /^\d{4}-\d{2}-\d{2}$/.test(d.seasonalEndDate) && { startDate: d.seasonalStartDate, endDate: d.seasonalEndDate }),
     },
     active: d.active,
     timezone: d.timezone || undefined,
@@ -381,22 +411,21 @@ function formDataToBody(d: ExperienceFormData): Record<string, unknown> {
       maxQty: a.maxQty || undefined,
       ...(a.highlight && { highlight: true }),
     })),
-    // Always include clearable optionals so minimal PATCH can send empty/null to clear.
-    heroOverlayText: d.heroOverlayText,
-    promoVideoUrl: d.promoVideoUrl,
-    metaTitle: d.metaTitle,
-    metaDescription: d.metaDescription,
-    ctaButtonText: d.ctaButtonText,
-    cancellationSummary: d.cancellationSummary,
-    testimonials: d.testimonials.map((t) => ({ name: t.name, quote: t.quote, ...(t.date && { date: t.date }) })),
+    ...(d.heroOverlayText && { heroOverlayText: d.heroOverlayText }),
+    ...(d.promoVideoUrl && { promoVideoUrl: d.promoVideoUrl }),
+    ...(d.metaTitle && { metaTitle: d.metaTitle }),
+    ...(d.metaDescription && { metaDescription: d.metaDescription }),
+    ...(d.ctaButtonText && { ctaButtonText: d.ctaButtonText }),
+    ...(d.cancellationSummary && { cancellationSummary: d.cancellationSummary }),
+    ...(d.testimonials.length > 0 && { testimonials: d.testimonials.map((t) => ({ name: t.name, quote: t.quote, ...(t.date && { date: t.date }) })) }),
     featured: d.featured,
-    spotsLeftOverride,
+    ...(d.spotsLeftOverride !== "" ? (() => { const n = parseInt(d.spotsLeftOverride, 10); return !isNaN(n) ? { spotsLeftOverride: n } : {}; })() : {}),
     ...(d.defaultRateId && { defaultRateId: d.defaultRateId }),
     ...(d.bookingPosition !== "sidebar" && { bookingPosition: d.bookingPosition }),
-    galleryAltTexts: d.galleryAltTexts,
-    holidayDates: d.holidayDates.filter((h) => h.start || h.end),
+    ...(d.galleryAltTexts.length > 0 && { galleryAltTexts: d.galleryAltTexts }),
+    ...(d.holidayDates.length > 0 && { holidayDates: d.holidayDates.filter((h) => h.start || h.end) }),
     weekendDays: d.weekendDays.length > 0 ? d.weekendDays : [0, 6],
-    friSunDays: d.friSunDays ?? [],
+    ...(d.friSunDays?.length ? { friSunDays: d.friSunDays } : {}),
     pricingType: d.pricingType,
     ...(d.pricingType === "charter" && { allowDeposit: d.allowDeposit ?? false }),
     allowTipNow: d.allowTipNow !== false,
@@ -431,7 +460,9 @@ export function ExperienceForm({
   const [data, setData] = useState<ExperienceFormData>(() => initialData ?? getDefaultFormData());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    () => new Set(["seo", "faqs", "testimonials"])
+  );
   const [heroUploadsActive, setHeroUploadsActive] = useState(false);
   const [galleryUploadsActive, setGalleryUploadsActive] = useState(false);
   const uploadsActive = heroUploadsActive || galleryUploadsActive;
@@ -451,6 +482,19 @@ export function ExperienceForm({
     if (next.has(name)) next.delete(name); else next.add(name);
     return next;
   });
+  const sectionOpen = (name: string) => !collapsedSections.has(name);
+  const SectionToggle = ({ name, label }: { name: string; label: string }) => (
+    <button
+      type="button"
+      onClick={() => toggleSection(name)}
+      className="flex items-center gap-1 text-sm text-brand-muted hover:text-brand-dark"
+      aria-expanded={sectionOpen(name) ? "true" : "false"}
+      aria-label={`${sectionOpen(name) ? "Collapse" : "Expand"} ${label}`}
+    >
+      {sectionOpen(name) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      <span className="sr-only sm:not-sr-only sm:inline">{sectionOpen(name) ? "Hide" : "Show"}</span>
+    </button>
+  );
 
   const update = <K extends keyof ExperienceFormData>(key: K, value: ExperienceFormData[K]) => {
     setData((prev) => ({ ...prev, [key]: value }));
@@ -568,8 +612,13 @@ export function ExperienceForm({
       setLoading(false);
       return;
     }
-    if (data.seasonalEnabled && (!data.seasonalStartDate || !data.seasonalEndDate)) {
-      setError("Set both From and To dates for a restricted booking window, or switch back to Year-round.");
+    if (data.active && data.heroType === "image" && !data.heroUrl.trim() && data.gallery.every((u) => !u.trim())) {
+      setError("Add a hero image or gallery photo before publishing this listing.");
+      setLoading(false);
+      return;
+    }
+    if (data.active && data.heroType === "video" && !data.heroUrl.trim()) {
+      setError("Add a hero video URL before publishing this listing.");
       setLoading(false);
       return;
     }
@@ -757,8 +806,11 @@ export function ExperienceForm({
         </div>
         {data.heroType === "image" ? (
           <div>
-            <label className="block text-sm font-medium text-brand-dark mb-2">Hero image</label>
-            <p className="text-sm text-brand-muted mb-2">Upload one image or paste a URL. Drag to upload, or use Browse uploads / Paste URL.</p>
+            <label className="block text-sm font-medium text-brand-dark mb-2">Cover photo (hero)</label>
+            <p className="text-sm text-brand-muted mb-2">
+              Use a clear photo of the boat or experience — not a person/portrait. Upload, browse uploads, or paste a{" "}
+              <code className="text-xs bg-brand-bg px-1 rounded">/photos/…</code> path.
+            </p>
             <PhotoUploader
               value={data.heroUrl ? [data.heroUrl] : []}
               onChange={(urls) => update("heroUrl", urls[0] ?? "")}
@@ -776,33 +828,10 @@ export function ExperienceForm({
         )}
         <div>
           <label className="block text-sm font-medium text-brand-dark mb-2">Gallery</label>
-          <p className="text-sm text-brand-muted mb-2">Upload or paste URLs. Drag photos to reorder. First image can be used as the listing cover.</p>
+          <p className="text-sm text-brand-muted mb-2">Extra photos guests see on the listing. Drag to reorder. First gallery image is used if cover is empty.</p>
           <PhotoUploader
             value={data.gallery}
-            onChange={(urls) => {
-              setData((prev) => {
-                const oldGallery = prev.gallery;
-                const oldAlts = [...(prev.galleryAltTexts || [])];
-                while (oldAlts.length < oldGallery.length) oldAlts.push("");
-                const used = new Set<number>();
-                const nextAlts = urls.map((url) => {
-                  let idx = -1;
-                  for (let i = 0; i < oldGallery.length; i++) {
-                    if (used.has(i)) continue;
-                    if (oldGallery[i] === url) {
-                      idx = i;
-                      break;
-                    }
-                  }
-                  if (idx >= 0) {
-                    used.add(idx);
-                    return oldAlts[idx] ?? "";
-                  }
-                  return "";
-                });
-                return { ...prev, gallery: urls, galleryAltTexts: nextAlts };
-              });
-            }}
+            onChange={(urls) => update("gallery", urls)}
             onUploadStateChange={setGalleryUploadsActive}
             maxPhotos={24}
             listPrefix="experiences/gallery/"
@@ -837,14 +866,28 @@ export function ExperienceForm({
       </section>
 
       <section className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-4 sm:p-6 lg:p-8 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-brand-dark">Display &amp; SEO</h2>
-          <button type="button" onClick={() => toggleSection("seo")} className="lg:hidden flex items-center gap-1 text-sm text-brand-muted hover:text-brand-dark" aria-expanded={collapsedSections.has("seo") ? "false" : "true"}>
-            {collapsedSections.has("seo") ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </button>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-dark">SEO &amp; page extras</h2>
+            <p className="text-sm text-brand-muted mt-0.5">Optional — meta tags, CTA, featured flag, testimonials.</p>
+          </div>
+          <SectionToggle name="seo" label="SEO and page extras" />
         </div>
-        {!collapsedSections.has("seo") && <div className="space-y-4">
-        <p className="text-sm text-brand-muted">Optional: hero overlay, meta, CTA text, testimonials, and listing page behavior.</p>
+        {sectionOpen("seo") && <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-meta-title">Meta title</label>
+            <input id="exp-meta-title" className={inputClass} value={data.metaTitle} onChange={(e) => update("metaTitle", e.target.value)} placeholder="Defaults to experience title" aria-label="Meta title" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-cta-text">Book button text</label>
+            <input id="exp-cta-text" className={inputClass} value={data.ctaButtonText} onChange={(e) => update("ctaButtonText", e.target.value)} placeholder="e.g. Book now" aria-label="CTA button text" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-meta-desc">Meta description</label>
+          <input id="exp-meta-desc" className={inputClass} value={data.metaDescription} onChange={(e) => update("metaDescription", e.target.value)} placeholder="Short SEO description for search results" aria-label="Meta description" />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-hero-overlay">Hero overlay line</label>
@@ -855,46 +898,33 @@ export function ExperienceForm({
             <input id="exp-promo-video" className={inputClass} value={data.promoVideoUrl} onChange={(e) => update("promoVideoUrl", e.target.value)} placeholder="https://..." aria-label="Promo video URL" />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-meta-title">Meta title</label>
-            <input id="exp-meta-title" className={inputClass} value={data.metaTitle} onChange={(e) => update("metaTitle", e.target.value)} placeholder="Defaults to experience title" aria-label="Meta title" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-cta-text">CTA button text</label>
-            <input id="exp-cta-text" className={inputClass} value={data.ctaButtonText} onChange={(e) => update("ctaButtonText", e.target.value)} placeholder="e.g. Book now / Reserve your charter" aria-label="CTA button text" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-meta-desc">Meta description</label>
-          <input id="exp-meta-desc" className={inputClass} value={data.metaDescription} onChange={(e) => update("metaDescription", e.target.value)} placeholder="SEO description" aria-label="Meta description" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-cancel-summary">Cancellation summary (short)</label>
-          <input id="exp-cancel-summary" className={inputClass} value={data.cancellationSummary} onChange={(e) => update("cancellationSummary", e.target.value)} placeholder="e.g. Free cancel 7+ days before" aria-label="Cancellation summary" />
-        </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <input type="checkbox" id="exp-featured" checked={data.featured} onChange={(e) => update("featured", e.target.checked)} aria-label="Featured" />
-            <label htmlFor="exp-featured" className="text-sm font-medium text-brand-dark">Featured listing</label>
+            <label htmlFor="exp-featured" className="text-sm font-medium text-brand-dark">Featured on homepage</label>
           </div>
           <div>
-            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-spots-left">Spots left (override)</label>
-            <input id="exp-spots-left" type="number" min={0} className={`${inputClass} w-24`} value={data.spotsLeftOverride} onChange={(e) => update("spotsLeftOverride", e.target.value)} placeholder="—" aria-label="Spots left override" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-booking-pos">Booking position</label>
+            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-booking-pos">Booking widget placement</label>
             <select id="exp-booking-pos" className={inputClass} value={data.bookingPosition} onChange={(e) => update("bookingPosition", e.target.value as "sidebar" | "inline" | "modal")} aria-label="Booking position">
-              <option value="sidebar">Sidebar (desktop) / sheet (mobile)</option>
+              <option value="sidebar">Sidebar (recommended)</option>
               <option value="inline">Inline below hero</option>
               <option value="modal">Modal only</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-default-rate">Default rate ID</label>
-            <input id="exp-default-rate" className={inputClass} value={data.defaultRateId} onChange={(e) => update("defaultRateId", e.target.value)} placeholder="Rate doc ID to highlight first" aria-label="Default rate ID" />
-          </div>
         </div>
+        <details className="rounded-lg border border-brand-dark/10 bg-brand-bg/20 p-3">
+          <summary className="cursor-pointer text-sm font-medium text-brand-dark">Rare options</summary>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-spots-left">Spots left (manual override)</label>
+              <input id="exp-spots-left" type="number" min={0} className={`${inputClass} w-28`} value={data.spotsLeftOverride} onChange={(e) => update("spotsLeftOverride", e.target.value)} placeholder="—" aria-label="Spots left override" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-default-rate">Default rate ID</label>
+              <input id="exp-default-rate" className={inputClass} value={data.defaultRateId} onChange={(e) => update("defaultRateId", e.target.value)} placeholder="Usually leave blank" aria-label="Default rate ID" />
+            </div>
+          </div>
+        </details>
         <div>
           <label className="block text-sm font-medium text-brand-dark mb-2">Testimonials</label>
           {data.testimonials.map((t, i) => (
@@ -909,7 +939,7 @@ export function ExperienceForm({
         </div>
         {data.gallery.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-brand-dark mb-2">Gallery alt text (one per image, for SEO)</label>
+            <label className="block text-sm font-medium text-brand-dark mb-2">Gallery alt text (SEO)</label>
             {data.gallery.map((_, i) => (
               <div key={i} className="flex gap-2 mt-1">
                 <span className="text-xs text-brand-muted w-8 shrink-0 pt-2.5">#{i + 1}</span>
@@ -929,17 +959,57 @@ export function ExperienceForm({
           </button>
         </div>
         {!collapsedSections.has("location") && <div className="space-y-4">
+        <p className="text-sm text-brand-muted">
+          Pickup details are unique to this experience and appear in confirmation and reminder emails. Use the real dock or ramp for this listing.
+        </p>
         <div>
-          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-loc-title">Location title</label>
-          <input id="exp-loc-title" className={inputClass} value={data.locationTitle} onChange={(e) => update("locationTitle", e.target.value)} aria-label="Location title" />
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-loc-title">Pickup location</label>
+          <input id="exp-loc-title" className={inputClass} value={data.locationTitle} onChange={(e) => update("locationTitle", e.target.value)} aria-label="Pickup location" placeholder="e.g. Main marina dock" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-loc-address">Address text</label>
-          <input id="exp-loc-address" className={inputClass} value={data.locationAddress} onChange={(e) => update("locationAddress", e.target.value)} aria-label="Address text" />
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-loc-address">Pickup address</label>
+          <input id="exp-loc-address" className={inputClass} value={data.locationAddress} onChange={(e) => update("locationAddress", e.target.value)} aria-label="Pickup address" placeholder="Street address customers should navigate to" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-loc-notes">Notes</label>
-          <input id="exp-loc-notes" className={inputClass} value={data.locationNotes} onChange={(e) => update("locationNotes", e.target.value)} aria-label="Location notes" />
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-loc-notes">Location notes</label>
+          <textarea id="exp-loc-notes" rows={3} className={textareaClass} value={data.locationNotes} onChange={(e) => update("locationNotes", e.target.value)} aria-label="Location notes" placeholder="Parking, dock instructions, or other location-specific notes" />
+        </div>
+        </div>}
+      </section>
+
+      <section className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-4 sm:p-6 lg:p-8 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-brand-dark">
+            <Mail className="h-5 w-5 text-brand-primary" aria-hidden />
+            Confirmation Email
+          </h2>
+          <button type="button" onClick={() => toggleSection("confirmationEmail")} className="lg:hidden flex items-center gap-1 text-sm text-brand-muted hover:text-brand-dark" aria-expanded={collapsedSections.has("confirmationEmail") ? "false" : "true"}>
+            {collapsedSections.has("confirmationEmail") ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          </button>
+        </div>
+        {!collapsedSections.has("confirmationEmail") && <div className="space-y-4">
+        <p className="text-sm text-brand-muted">
+          Customer-facing copy for this experience only. Leave a field blank to hide it from emails. Pickup location and address come from the Location section above. What to bring comes from Capacity &amp; rules below.
+        </p>
+        <div>
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-ce-fee">Entrance / parking fee</label>
+          <textarea id="exp-ce-fee" rows={2} className={textareaClass} value={data.confirmationEntranceFeeText} onChange={(e) => update("confirmationEntranceFeeText", e.target.value)} aria-label="Entrance or parking fee" placeholder="e.g. $5 cash per person for park entry. Leave blank if none." />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-ce-arrival">Arrival instructions</label>
+          <textarea id="exp-ce-arrival" rows={2} className={textareaClass} value={data.confirmationArrivalInstructions} onChange={(e) => update("confirmationArrivalInstructions", e.target.value)} aria-label="Arrival instructions" placeholder={DEFAULT_ARRIVAL_INSTRUCTIONS} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-ce-rules">Rules / reminders</label>
+          <textarea id="exp-ce-rules" rows={3} className={textareaClass} value={data.confirmationRulesText} onChange={(e) => update("confirmationRulesText", e.target.value)} aria-label="Rules and reminders" placeholder={DEFAULT_RULES_TEXT} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-ce-gratuity">Gratuity note</label>
+          <textarea id="exp-ce-gratuity" rows={2} className={textareaClass} value={data.confirmationGratuityText} onChange={(e) => update("confirmationGratuityText", e.target.value)} aria-label="Gratuity note" placeholder={DEFAULT_GRATUITY_TEXT} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-ce-notes">Additional instructions</label>
+          <textarea id="exp-ce-notes" rows={3} className={textareaClass} value={data.confirmationAdditionalNotes} onChange={(e) => update("confirmationAdditionalNotes", e.target.value)} aria-label="Additional confirmation instructions" placeholder="Anything else customers should know before this trip" />
         </div>
         </div>}
       </section>
@@ -971,6 +1041,7 @@ export function ExperienceForm({
         </div>
         <div>
           <label className="block text-sm font-medium text-brand-dark">What to bring</label>
+          <p className="mt-1 text-xs text-brand-muted">Also shown in confirmation and reminder emails for this experience.</p>
           {data.whatToBring.map((v, i) => (
             <div key={i} className="flex gap-2 mt-1">
               <input className={inputClass} value={v} onChange={(e) => setListItem("whatToBring", i, e.target.value)} aria-label={`What to bring ${i + 1}`} />
@@ -1023,17 +1094,22 @@ export function ExperienceForm({
           <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-cp-full">Full text (shown to guests)</label>
           <textarea id="exp-cp-full" className={textareaClass} rows={2} value={data.cancellationPolicy.fullText} onChange={(e) => update("cancellationPolicy", { ...data.cancellationPolicy, fullText: e.target.value })} placeholder="e.g. Free cancellation up to 30 days before. Partial refund 15–30 days before. No refund within 14 days." aria-label="Cancellation policy full text" />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-brand-dark" htmlFor="exp-cancel-summary">Short summary (cards / badges)</label>
+          <input id="exp-cancel-summary" className={inputClass} value={data.cancellationSummary} onChange={(e) => update("cancellationSummary", e.target.value)} placeholder="e.g. Free cancel 7+ days before" aria-label="Cancellation summary" />
+        </div>
         </div>}
       </section>
 
       <section className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-4 sm:p-6 lg:p-8 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-brand-dark">FAQs</h2>
-          <button type="button" onClick={() => toggleSection("faqs")} className="lg:hidden flex items-center gap-1 text-sm text-brand-muted hover:text-brand-dark" aria-expanded={collapsedSections.has("faqs") ? "false" : "true"}>
-            {collapsedSections.has("faqs") ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </button>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-dark">FAQs</h2>
+            <p className="text-sm text-brand-muted mt-0.5">Optional questions shown on the listing page.</p>
+          </div>
+          <SectionToggle name="faqs" label="FAQs" />
         </div>
-        {!collapsedSections.has("faqs") && <div className="space-y-4">
+        {sectionOpen("faqs") && <div className="space-y-4">
         {data.faqs.map((f, i) => (
           <div key={i} className="flex gap-2 items-start">
             <div className="flex-1 space-y-1">
@@ -1325,7 +1401,7 @@ export function ExperienceForm({
                     const m = data.departureMinute;
                     const h12 = h % 12 === 0 ? 12 : h % 12;
                     const ampm = h >= 12 ? "PM" : "AM";
-                    return `Daily departure at ${h12}:${String(m).padStart(2, "0")} ${ampm} · ${defaultBusinessTimezone}`;
+                    return `Daily departure at ${h12}:${String(m).padStart(2, "0")} ${ampm} · ${data.timezone || "set timezone above"}`;
                   })()}
                 </p>
               </div>
@@ -1366,9 +1442,7 @@ export function ExperienceForm({
               />
               <span>
                 <span className="block text-sm font-medium text-sky-800">Show spots remaining on booking calendar</span>
-                <span className="block text-xs text-sky-700 mt-0.5">
-                  When enabled, customers see &lsquo;X of {data.maxCapacity > 0 ? data.maxCapacity : "N"} spots left&rsquo; on the calendar
-                </span>
+                <span className="block text-xs text-sky-700 mt-0.5">When enabled, customers see &lsquo;X of 12 spots left&rsquo; on the calendar</span>
               </span>
             </label>
           </div>

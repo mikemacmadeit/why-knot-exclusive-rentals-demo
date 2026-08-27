@@ -51,6 +51,8 @@ const WEB = {
   NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyAkd5Jhiir6MuFYiNJd65ELFF_IkONh5As",
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "twb-demo-2026.firebaseapp.com",
   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "twb-demo-2026.firebasestorage.app",
+  // GCS bucket created for demo uploads (Firebase Console Storage not bootstrapped on this project)
+  FIREBASE_STORAGE_BUCKET: "twb-demo-2026",
   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "385993027589",
   NEXT_PUBLIC_FIREBASE_APP_ID: "1:385993027589:web:4e71aaf47e300030a5ac6c",
   ADMIN_EMAIL: "usalandspecialist@gmail.com,tahoewakebusters@gmail.com",

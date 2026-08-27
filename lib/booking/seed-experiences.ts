@@ -107,12 +107,12 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
     subtitle: `${siteConfig.catalog.halfDay.durationLabel} · Private Captained Charter`,
     descriptionLong:
       "Private half-day captained charter. Captain and mate included. Confirm inclusions when you book.",
-    heroMedia: { type: "image", url: siteConfig.media.welcome },
+    heroMedia: { type: "image", url: siteConfig.media.boats },
     gallery: [
-      siteConfig.media.welcome,
-      "/photos/stock/charter/anglers-on-boat-pexels.jpg",
-      siteConfig.media.galleryFallback,
+      siteConfig.media.boats,
       siteConfig.media.hero,
+      siteConfig.media.galleryFallback,
+      siteConfig.media.listingFallback,
     ],
     location: {
       title: "Marina / dock",
@@ -148,12 +148,12 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
     subtitle: `${siteConfig.catalog.fullDay.durationLabel} · Private Captained Charter`,
     descriptionLong:
       "Private full-day captained charter. More time on the water. Captain and mate included. Confirm inclusions when you book.",
-    heroMedia: { type: "image", url: siteConfig.media.boats },
+    heroMedia: { type: "image", url: "/photos/wakebusters/wakesurf.jpg" },
     gallery: [
-      siteConfig.media.boats,
-      siteConfig.media.hero,
-      "/photos/stock/charter/anglers-on-boat-pexels.jpg",
+      "/photos/wakebusters/wakesurf.jpg",
+      "/photos/wakebusters/wakesurf-2.jpg",
       siteConfig.media.galleryFallback,
+      siteConfig.media.hero,
     ],
     location: {
       title: "Marina / dock",
@@ -190,8 +190,8 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
     subtitle: "Evening charter — specialty listing (inactive by default).",
     descriptionLong:
       "Shorter evening trip timed around sunset. Inactive in the template — activate in admin if this customer offers it.",
-    heroMedia: { type: "image", url: siteConfig.media.hero },
-    gallery: [siteConfig.media.hero, siteConfig.media.galleryFallback],
+    heroMedia: { type: "image", url: "/photos/wakebusters/sunset.jpg" },
+    gallery: ["/photos/wakebusters/sunset.jpg", siteConfig.media.listingFallback, siteConfig.media.galleryFallback],
     location: {
       title: "Marina / dock",
       addressText: siteConfig.contact.marinaMeetNote,
@@ -218,8 +218,8 @@ const EXPERIENCES: (Omit<Experience, "id"> & { _rates: RateSeed[] })[] = [
     subtitle: "Seasonal specialty listing (inactive by default).",
     descriptionLong:
       "Seasonal specialty charter. Inactive in the template — activate in admin if this customer offers it.",
-    heroMedia: { type: "image", url: siteConfig.media.boats },
-    gallery: [siteConfig.media.boats, siteConfig.media.galleryFallback],
+    heroMedia: { type: "image", url: "/photos/wakebusters/wedding.jpg" },
+    gallery: ["/photos/wakebusters/wedding.jpg", siteConfig.media.boats, siteConfig.media.hero],
     location: {
       title: "Marina / dock",
       addressText: siteConfig.contact.marinaMeetNote,

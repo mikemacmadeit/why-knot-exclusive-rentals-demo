@@ -23,7 +23,9 @@ export default function NewExperiencePage() {
     <div className="space-y-6 sm:space-y-8">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl font-bold text-brand-dark sm:text-3xl">Create listing</h1>
-        <p className="mt-1 text-sm text-brand-muted">Add a new experience. Hero and gallery are URL fields (paste links or use /photos/... paths).</p>
+        <p className="mt-1 text-sm text-brand-muted">
+          Start with title, cover photo, rates, and publish. SEO and FAQs are optional and collapsed by default.
+        </p>
       </div>
       <ExperienceForm
           initialData={getDefaultExperienceFormData()}

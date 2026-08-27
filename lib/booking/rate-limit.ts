@@ -141,11 +141,19 @@ function getRedisConfig(): { url: string; token: string } | null {
   return { url, token };
 }
 
+/** Pitch demos may run without Redis/Stripe; in-memory rate limits are intentional. */
+export function isDemoPitchSite(): boolean {
+  const v = process.env.DEMO_PITCH_SITE?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 /**
  * True when rate limiting is ready for production: either not in production (dev uses in-memory)
  * or Redis is configured. When Redis is missing in production, requests are rejected (503).
+ * Pitch demos (`DEMO_PITCH_SITE`) are ready without Redis (in-memory limiting).
  */
 export function isRateLimitReadyForProduction(): boolean {
+  if (isDemoPitchSite()) return true;
   const redis = getRedisConfig();
   const isProduction = process.env.NODE_ENV === "production";
   if (!isProduction) return true;
@@ -358,6 +366,10 @@ function limitForKey(kind: RateLimitKind, key: string): number {
     if (process.env.NODE_ENV !== "production") {
       return MAX_REQUESTS_PUBLIC_READ_DEV;
     }
+    // Calendar prefetch can burst across experiences; pitch demos have no Redis so keep a high ceiling.
+    if (isDemoPitchSite()) {
+      return unknown ? 2_000 : 5_000;
+    }
     return unknown ? MAX_REQUESTS_PUBLIC_READ_UNKNOWN : MAX_REQUESTS_PUBLIC_READ;
   }
   return unknown ? MAX_REQUESTS_UNKNOWN_BUCKET : MAX_REQUESTS;
@@ -373,11 +385,6 @@ type RateLimitCoreOpts = {
   /** When true and Redis is unset in production, use in-memory limiting instead of failing closed (post-payment paths). */
   postPaymentAllowMemoryWithoutRedis?: boolean;
 };
-
-function isDemoPitchSite(): boolean {
-  const v = process.env.DEMO_PITCH_SITE?.trim().toLowerCase();
-  return v === "1" || v === "true" || v === "yes";
-}
 
 async function checkRateLimitCore(kind: RateLimitKind, key: string, opts?: RateLimitCoreOpts): Promise<RateLimitResult> {
   const redis = getRedisConfig();

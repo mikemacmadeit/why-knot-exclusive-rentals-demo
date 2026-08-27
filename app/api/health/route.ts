@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { safeHasFirebaseConfig, hasStripeConfig, getFirebaseConfigStatus } from "@/lib/booking/env";
 import { hasReleaseTokenSecret } from "@/lib/booking/releaseToken";
-import { getClientKey, isRateLimitReadyForProduction } from "@/lib/booking/rate-limit";
+import { getClientKey, isDemoPitchSite, isRateLimitReadyForProduction } from "@/lib/booking/rate-limit";
 import { bookingReady, isLegacyFallbackSafe } from "@/lib/booking/booking-runtime-state";
 import {
   hasReceiptTokenSecretConfigured,
@@ -34,9 +34,13 @@ async function isPrivilegedHealthRequest(request: NextRequest): Promise<boolean>
 
 export async function GET(request: NextRequest) {
   const privileged = await isPrivilegedHealthRequest(request);
+  const demoPitch = isDemoPitchSite();
 
   const checks: Record<string, unknown> = {};
   let ok = true;
+  if (demoPitch) {
+    checks.demoPitchSite = true;
+  }
 
   if (!safeHasFirebaseConfig()) {
     checks.firebase = "not_configured";
@@ -80,7 +84,8 @@ export async function GET(request: NextRequest) {
   }
 
   checks.stripe = hasStripeConfig() ? "ok" : "not_configured";
-  if (checks.stripe !== "ok") ok = false;
+  // Pitch demos intentionally omit Stripe; do not mark the site unhealthy.
+  if (checks.stripe !== "ok" && !demoPitch) ok = false;
 
   if (privileged) {
     checks.rateLimitClientKey = getClientKey(request);
@@ -141,7 +146,7 @@ export async function GET(request: NextRequest) {
   const receiptTokenConfigured = hasReceiptTokenSecretConfigured();
   checks.releaseTokenSecret = releaseTokenConfigured ? "ok" : "not_configured";
   checks.receiptTokenSecret = receiptTokenConfigured ? "ok" : "not_configured";
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && !demoPitch) {
     if (!releaseTokenConfigured) {
       ok = false;
     }
@@ -156,7 +161,7 @@ export async function GET(request: NextRequest) {
           ? "Production requires UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN (or RATE_LIMIT_* equivalents) for booking endpoints; otherwise rate limiting is disabled."
           : "Redis not configured; in-memory store used (dev only).";
     }
-    ok = false;
+    if (!demoPitch) ok = false;
   }
 
   const status = ok ? "ok" : "degraded";

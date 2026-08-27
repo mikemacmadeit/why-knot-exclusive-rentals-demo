@@ -120,6 +120,7 @@ type ExperienceOption = { id: string; title: string; active: boolean };
 type FinancialsTab = "overview" | "platforms" | "promos" | "operations";
 
 const RECENT_PAGE_SIZE = 8;
+const PLATFORM_BOOKINGS_PAGE_SIZE = 10;
 
 function shiftIsoDate(dateStr: string, deltaDays: number): string {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -353,6 +354,11 @@ function PlatformRevenueSection({
     getmyboat: bookings.filter((b) => b.channel === "getmyboat"),
     viator: bookings.filter((b) => b.channel === "viator"),
   };
+  const [platformPages, setPlatformPages] = useState({
+    boatsetter: 0,
+    getmyboat: 0,
+    viator: 0,
+  });
 
   return (
     <section className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white shadow-sm">
@@ -459,8 +465,14 @@ function PlatformRevenueSection({
             {(["boatsetter", "getmyboat", "viator"] as const).map((id) => {
               const list = bookingsByPlatform[id];
               const channel = channels.find((c) => c.id === id);
+              const pageCount = Math.max(1, Math.ceil(list.length / PLATFORM_BOOKINGS_PAGE_SIZE));
+              const safePage = Math.min(platformPages[id], pageCount - 1);
+              const paged = list.slice(
+                safePage * PLATFORM_BOOKINGS_PAGE_SIZE,
+                (safePage + 1) * PLATFORM_BOOKINGS_PAGE_SIZE
+              );
               return (
-                <div key={id} className="bg-white">
+                <div key={id} className="flex flex-col bg-white">
                   <div className="flex items-center justify-between gap-2 border-b border-brand-dark/10 px-4 py-3">
                     <MarketplaceSourceBadge source={MARKETPLACE_SOURCE_STYLES[id]} />
                     <span className="text-xs font-bold text-brand-dark">
@@ -470,23 +482,36 @@ function PlatformRevenueSection({
                   {list.length === 0 ? (
                     <p className="px-4 py-8 text-center text-xs text-brand-muted">None in this range</p>
                   ) : (
-                    <ul className="divide-y divide-brand-dark/5">
-                      {list.map((row) => (
-                        <li key={row.id}>
-                          <Link
-                            href={`/admin/bookings?highlight=${encodeURIComponent(row.id)}`}
-                            className="block px-4 py-3 transition-colors hover:bg-brand-bg/80"
-                          >
-                            <p className="truncate text-sm font-semibold text-brand-dark">{row.experienceName || "—"}</p>
-                            <p className="truncate text-xs text-brand-muted">
-                              {row.customerName || row.customerEmail || "—"}
-                              {row.startDateStr ? ` · ${row.startDateStr}` : ""}
-                            </p>
-                            <p className="mt-1 text-sm font-bold text-brand-dark">{formatCents(row.payoutCents)}</p>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                    <>
+                      <ul className="divide-y divide-brand-dark/5">
+                        {paged.map((row) => (
+                          <li key={row.id}>
+                            <Link
+                              href={`/admin/bookings?highlight=${encodeURIComponent(row.id)}`}
+                              className="block px-4 py-3 transition-colors hover:bg-brand-bg/80"
+                            >
+                              <p className="truncate text-sm font-semibold text-brand-dark">{row.experienceName || "—"}</p>
+                              <p className="truncate text-xs text-brand-muted">
+                                {row.customerName || row.customerEmail || "—"}
+                                {row.startDateStr ? ` · ${row.startDateStr}` : ""}
+                              </p>
+                              <p className="mt-1 text-sm font-bold text-brand-dark">{formatCents(row.payoutCents)}</p>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-auto">
+                        <ListPager
+                          page={safePage}
+                          pageCount={pageCount}
+                          total={list.length}
+                          pageSize={PLATFORM_BOOKINGS_PAGE_SIZE}
+                          onPage={(page) =>
+                            setPlatformPages((prev) => ({ ...prev, [id]: page }))
+                          }
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
               );

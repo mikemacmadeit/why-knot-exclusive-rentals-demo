@@ -4,6 +4,8 @@ import { useMemo, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getChicagoToday } from "@/lib/booking/booking-date-range";
+import { resolveMarketplaceSource } from "@/lib/admin/marketplace-source";
+import { MarketplaceSourceBadge } from "@/components/admin/MarketplaceSourceBadge";
 
 export type AdminBookingCalendarItem = {
   id: string;
@@ -16,6 +18,10 @@ export type AdminBookingCalendarItem = {
   startDate: string | null;
   startTime: string | null;
   endTime: string | null;
+  source?: string | null;
+  externalProvider?: string | null;
+  externalBookingId?: string | null;
+  specialNotes?: string | null;
 };
 
 const MONTH_NAMES = [
@@ -208,18 +214,22 @@ export function AdminBookingCalendar({
                 {dayBookings.length === 0 ? (
                   <span className="text-xs italic text-brand-muted">No bookings</span>
                 ) : (
-                  dayBookings.slice(0, maxBookingsPerDay).map((booking) => (
+                  dayBookings.slice(0, maxBookingsPerDay).map((booking) => {
+                    const market = resolveMarketplaceSource(booking);
+                    return (
                     <button
                       key={booking.id}
                       type="button"
                       onClick={() => onBookingClick?.(booking)}
                       className={cn(
                         "text-left rounded-lg border px-2 py-1.5 text-xs leading-tight transition-all duration-200 ease-out shrink-0",
-                        "bg-brand-primary/15 text-brand-dark hover:bg-brand-primary/25 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]",
-                        "border-brand-primary/20"
+                        "bg-brand-primary/15 text-brand-dark hover:bg-brand-primary/25 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] border-brand-primary/20"
                       )}
                     >
-                      <div className="font-semibold truncate">{booking.customer?.name ?? "—"}</div>
+                      <div className="flex items-start justify-between gap-1 min-w-0">
+                        <div className="font-semibold truncate min-w-0">{booking.customer?.name ?? "—"}</div>
+                        {market && <MarketplaceSourceBadge source={market} className="px-1.5 py-0.5 text-[8px]" />}
+                      </div>
                       <div className="truncate text-brand-muted">{booking.experienceName}</div>
                       {booking.partySize != null && (
                         <div className="text-[10px] text-brand-muted">{booking.partySize} guest{booking.partySize !== 1 ? "s" : ""}</div>
@@ -230,7 +240,8 @@ export function AdminBookingCalendar({
                         </div>
                       )}
                     </button>
-                  ))
+                    );
+                  })
                 )}
                 {dayBookings.length > maxBookingsPerDay && (
                   <span className="text-[10px] text-brand-muted mt-0.5 shrink-0">
@@ -240,15 +251,19 @@ export function AdminBookingCalendar({
               </div>
               {/* Mobile: colored dots */}
               <div className="sm:hidden flex flex-wrap gap-1 mt-auto">
-                {dayBookings.slice(0, 5).map((booking) => (
+                {dayBookings.slice(0, 5).map((booking) => {
+                  const market = resolveMarketplaceSource(booking);
+                  return (
                   <button
                     key={booking.id}
                     type="button"
                     onClick={() => onBookingClick?.(booking)}
-                    className="h-2.5 w-2.5 rounded-full bg-brand-primary/70 hover:bg-brand-primary transition-colors"
-                    aria-label={`Booking: ${booking.customer?.name}`}
+                    className={cn("h-2.5 w-2.5 rounded-full transition-colors", !market && "bg-brand-primary/70 hover:bg-brand-primary")}
+                    style={market ? { backgroundColor: market.rgb } : undefined}
+                    aria-label={`Booking: ${booking.customer?.name}${market ? ` · ${market.label}` : ""}`}
                   />
-                ))}
+                  );
+                })}
                 {dayBookings.length > 5 && (
                   <span className="text-[9px] text-brand-muted">+{dayBookings.length - 5}</span>
                 )}

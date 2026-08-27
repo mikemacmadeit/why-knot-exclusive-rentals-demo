@@ -73,31 +73,48 @@ export default function EditWaiverTemplatePage() {
     }
   };
 
-  if (loading) return <p className="text-brand-muted">Loading…</p>;
-  if (error && !template) return <p className="text-red-600">{error}</p>;
+  if (loading) {
+    return (
+      <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white px-6 py-16 text-center text-sm text-brand-muted shadow-sm">
+        Loading template…
+      </div>
+    );
+  }
+  if (error && !template) {
+    return <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>;
+  }
   if (!template || !value) return null;
 
   return (
-    <div className="space-y-8 pb-24">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <nav className="flex items-center gap-2 text-sm mb-2">
-            <Link href="/admin/waivers/templates" className="text-brand-muted hover:text-brand-dark transition-colors">
-              Templates
-            </Link>
-            <span className="text-brand-muted">/</span>
-            <span className="text-brand-dark font-medium">{template.title}</span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-brand-primary/10 text-brand-primary text-xs font-medium">
-              v{template.version}
-            </span>
-          </nav>
-          <h1 className="text-2xl font-bold text-brand-dark tracking-tight">Edit waiver template</h1>
-          <p className="mt-1 text-sm text-brand-muted max-w-xl">
+    <div className="space-y-6 sm:space-y-8 pb-24">
+      <section className="relative overflow-hidden rounded-3xl bg-brand-dark px-5 py-6 text-white shadow-premium sm:px-8 sm:py-8">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-brand-secondary/20 blur-3xl" />
+        <div className="relative">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-primary">Waivers</p>
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">{template.title}</h1>
+          <p className="mt-2 max-w-xl text-sm text-white/70">
             Changes create a new version. Existing signed waivers keep the version they used.
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Link href="/admin/waivers/templates" className="text-xs font-semibold text-brand-primary hover:underline">
+              ← Templates
+            </Link>
+            <span className="inline-flex rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-white">
+              v{template.version}
+            </span>
+            <span
+              className={
+                template.isActive
+                  ? "inline-flex rounded-full bg-green-400/20 px-2.5 py-0.5 text-xs font-semibold text-green-100"
+                  : "inline-flex rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-white/70"
+              }
+            >
+              {template.isActive ? "Active" : "Inactive"}
+            </span>
+          </div>
         </div>
-      </div>
+      </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-8 xl:gap-10">
         <div className="xl:col-span-3 min-w-0">

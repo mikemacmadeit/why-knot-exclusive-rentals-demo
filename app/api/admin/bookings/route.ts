@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { requireAdminSession, FIREBASE_SETUP_HINT } from "@/lib/admin-auth-firebase";
+import { getAdminPrincipalFromSessionCookie, requireAdminSession, FIREBASE_SETUP_HINT } from "@/lib/admin-auth-firebase";
 import { getDb, getFirestoreExports } from "@/lib/booking/firebase-admin";
 import type { Booking, AddonSelection, Slot, Experience } from "@/lib/booking/types";
 import { BOOKING_STATUSES_SLOT_TAKEN } from "@/lib/booking/types";
@@ -39,6 +39,15 @@ import {
 import { getLegacyBookingScanLimit } from "@/lib/booking/legacy-booking-scan-limit";
 import type { Hold } from "@/lib/booking/types";
 import { pickAdminBookingDiscountFields } from "@/lib/booking/admin-booking-discount-fields";
+import { pickAdminRescheduleFields } from "@/lib/booking/admin-reschedule";
+import {
+  customerContactForAdminApi,
+  isMarketplaceBookingSource,
+  marketplaceFieldsFromAdminSource,
+  pickMarketplaceBookingApiFields,
+} from "@/lib/admin/marketplace-source";
+import { pickAssignedCaptainApiFields } from "@/lib/admin/assigned-captain";
+import { pickOperatorNotesApiFields, sanitizeOperatorNotes, newOperatorNoteId } from "@/lib/admin/operator-notes";
 
 function toDate(ts: { seconds?: number; nanoseconds?: number; toDate?: () => Date }): string | null {
   if (ts.toDate) return ts.toDate().toISOString();
@@ -244,10 +253,13 @@ export async function GET(request: NextRequest) {
             experienceName: b.experienceId ? experienceNames.get(b.experienceId) ?? "—" : "—",
             boatId: b.boatId ?? null,
             boatName: b.boatId ? boatNames.get(b.boatId) ?? b.boatId : null,
-            customer: b.customer,
+            customer: customerContactForAdminApi(b.customer),
             partySize: b.partySize ?? null,
             petsCount: b.petsCount ?? 0,
             specialNotes: b.specialNotes ?? null,
+            ...pickMarketplaceBookingApiFields(b),
+            ...pickAssignedCaptainApiFields(b),
+            ...pickOperatorNotesApiFields(b),
             answers: b.answers ?? {},
             addonSelections: b.addonSelections ?? [],
             addonsWithNames: [] as AddonWithName[],
@@ -257,6 +269,7 @@ export async function GET(request: NextRequest) {
             pricing: b.pricing,
             tipCents: (b as { tipCents?: number }).tipCents ?? null,
             ...pickAdminBookingDiscountFields(b as { discountCode?: string; discountCents?: number }),
+            ...pickAdminRescheduleFields(b),
             status: b.status,
             stripe: b.stripe ?? undefined,
             createdAt,
@@ -437,10 +450,13 @@ export async function GET(request: NextRequest) {
         experienceName: b.experienceId ? experienceNames.get(b.experienceId) ?? "—" : "—",
         boatId: b.boatId ?? null,
         boatName: b.boatId ? boatNames.get(b.boatId) ?? b.boatId : null,
-        customer: b.customer,
+        customer: customerContactForAdminApi(b.customer),
         partySize: b.partySize ?? null,
         petsCount: b.petsCount ?? 0,
         specialNotes: b.specialNotes ?? null,
+        ...pickMarketplaceBookingApiFields(b),
+        ...pickAssignedCaptainApiFields(b),
+        ...pickOperatorNotesApiFields(b),
         answers: b.answers ?? {},
         addonSelections: b.addonSelections ?? [],
         addonsWithNames,
@@ -450,6 +466,7 @@ export async function GET(request: NextRequest) {
         pricing: b.pricing,
         tipCents: (b as { tipCents?: number }).tipCents ?? null,
         ...pickAdminBookingDiscountFields(b as { discountCode?: string; discountCents?: number }),
+        ...pickAdminRescheduleFields(b),
         status: b.status,
         stripe: b.stripe ?? undefined,
         card: bWithExt.card ?? undefined,
@@ -536,6 +553,7 @@ export async function POST(request: NextRequest) {
     const source = typeof body.source === "string" ? body.source.trim() : "";
     const externalReference = typeof body.externalReference === "string" ? body.externalReference.trim() : "";
     const specialNotes = typeof body.specialNotes === "string" ? body.specialNotes.trim() : "";
+    const operatorNotes = sanitizeOperatorNotes(body.operatorNotes);
     let boatId: string | undefined = typeof body.boatId === "string" ? body.boatId.trim() || undefined : undefined;
     const adminBookingMode: "shared" | "charter" = body.bookingMode === "shared" ? "shared" : "charter";
 
@@ -665,6 +683,7 @@ export async function POST(request: NextRequest) {
     if (!parsedSlotIdCheck) {
       console.warn("[admin/bookings] buildSlotId produced unparseable slotId", { slotId, tripDate, startHour, durationHours });
     }
+    const marketplaceFields = marketplaceFieldsFromAdminSource(source, externalReference);
     const noteParts = [source, externalReference ? `Ref: ${externalReference}` : "", specialNotes].filter(Boolean);
     const notes = noteParts.join(" — ");
     const pricingComputed = computePricing({
@@ -679,6 +698,13 @@ export async function POST(request: NextRequest) {
       totalCents: pricingComputed.totalCents,
       currency: "usd",
     };
+
+    const operatorNotesAt = operatorNotes ? Timestamp.now() : null;
+    const operatorNotesPrincipal = operatorNotes
+      ? await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"))
+      : null;
+    const operatorNotesAuthor = operatorNotesPrincipal?.email || undefined;
+    const operatorNotesAuthorName = operatorNotesPrincipal?.displayName?.trim() || undefined;
 
     const booking: Omit<Booking, "createdAt"> & {
       createdAt: ReturnType<typeof Timestamp.now>;
@@ -697,6 +723,23 @@ export async function POST(request: NextRequest) {
       answers: {},
       customer: { name: customer.name, email: customer.email, phone: customer.phone },
       specialNotes: notes || undefined,
+      ...(operatorNotes && operatorNotesAt
+        ? {
+            operatorNotes,
+            operatorNotesUpdatedAt: operatorNotesAt,
+            operatorNotesBy: operatorNotesAuthor,
+            operatorNotesLog: [
+              {
+                id: newOperatorNoteId(),
+                text: operatorNotes,
+                by: operatorNotesAuthor ?? "",
+                ...(operatorNotesAuthorName ? { byName: operatorNotesAuthorName } : {}),
+                at: operatorNotesAt.toDate().toISOString(),
+              },
+            ],
+          }
+        : {}),
+      ...marketplaceFields,
       pricing,
       status: "paid",
       stripe: {},
@@ -786,10 +829,12 @@ export async function POST(request: NextRequest) {
       }
 
       tx.set(bookingRef, booking);
-      tx.set(
-        db.collection("notificationOutbox").doc(confirmationOutboxDocId(bookingId)),
-        createPendingConfirmationPayload(bookingId)
-      );
+      if (!isMarketplaceBookingSource(marketplaceFields)) {
+        tx.set(
+          db.collection("notificationOutbox").doc(confirmationOutboxDocId(bookingId)),
+          createPendingConfirmationPayload(bookingId)
+        );
+      }
       if (pricing.totalCents > 0) {
         const summaryRef = db.collection("summaries").doc("revenue");
         tx.set(

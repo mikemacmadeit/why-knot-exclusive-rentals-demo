@@ -12,15 +12,21 @@ import { Dialog } from "@/components/ui/dialog";
 import { AdminBookingCalendar, type AdminBookingCalendarItem } from "@/components/booking/AdminBookingCalendar";
 import { getChicagoToday, getMonthRange, toDateStr } from "@/lib/booking/booking-date-range";
 import { formatTripDateYyyyMmDd, formatTripDateYyyyMmDdShort } from "@/lib/booking/format-booking-datetime";
-import { List, CalendarDays, ChevronDown, ChevronUp, AlertCircle, Plus, Search, FileSpreadsheet, Mail, Ban, ArrowUpDown } from "lucide-react";
+import { List, CalendarDays, ChevronDown, ChevronUp, AlertCircle, Plus, Search, FileSpreadsheet, Mail, Ban, ArrowUpDown, Download, RefreshCw, BookOpen, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AddBookingModal } from "./AddBookingModal";
 import { AdminSessionRedirectError, subscribeAdminAuthRevalidate, throwIfAdminApiError } from "@/lib/admin-auth-client";
 import { ADMIN_BOOKING_VISIBILITY_SLA_MS } from "@/lib/admin-booking-visibility-sla";
 import { BOOKING_STATUSES_SLOT_TAKEN } from "@/lib/booking/types";
-import { buildSlotId, parseSlotId } from "@/lib/booking/experience-slots";
 import { getAdminBookingStatusBadgeClass } from "@/lib/admin/admin-booking-status-badge";
 import { formatAdminFinancialExportDiscount } from "@/lib/booking/admin-booking-discount-fields";
+import { MarketplaceSourceBadge } from "@/components/admin/MarketplaceSourceBadge";
+import { MarketplaceEmailDetails } from "@/components/admin/MarketplaceEmailDetails";
+import { bookingExpectsWebsiteGuestConfirmation, displayMarketplaceGuestEmail, resolveMarketplaceSource } from "@/lib/admin/marketplace-source";
+import { AssignCaptainControl } from "@/components/admin/AssignCaptainControl";
+import { OperatorNotesControl } from "@/components/admin/OperatorNotesControl";
+import { RescheduleBookingControls } from "@/components/admin/RescheduleBookingControls";
+import { formatSlotIdAdminLabel } from "@/lib/booking/admin-reschedule";
 
 type StripeEventItem = {
   id: string;
@@ -50,6 +56,10 @@ type BookingItem = {
   partySize: number | null;
   petsCount: number;
   specialNotes: string | null;
+  operatorNotes?: string | null;
+  operatorNotesUpdatedAt?: string | null;
+  operatorNotesBy?: string | null;
+  operatorNotesLog?: { id: string; text: string; by: string; at: string }[];
   answers: Record<string, string>;
   addonSelections: { addonId: string; qty: number }[];
   addonsWithNames: AddonWithName[];
@@ -93,6 +103,21 @@ type BookingItem = {
   endTime?: string | null;
   waiver?: { requestId: string; status: string; templateId: string; templateVersion: number };
   confirmationSentAt?: string | null;
+  source?: string | null;
+  externalProvider?: string | null;
+  externalBookingId?: string | null;
+  externalListingName?: string | null;
+  externalKey?: string | null;
+  marketplaceDetails?: Record<string, string> | null;
+  marketplaceEmailExcerpt?: string | null;
+  assignedCaptain?: { email: string; name: string; assignedAt?: string | null; assignedBy?: string | null } | null;
+  bookingMode?: string | null;
+  pricingType?: string | null;
+  rescheduledAt?: string | null;
+  rescheduledFromSlotId?: string | null;
+  rescheduledFromStartDateStr?: string | null;
+  rescheduleCount?: number;
+  rescheduleHistory?: { fromSlotId: string; toSlotId: string; fromDateStr?: string; toDateStr?: string; at: string }[];
 };
 
 type TripQuickFilter = "today" | "tomorrow" | "next7";
@@ -100,6 +125,17 @@ type BookingSortField = "trip" | "created";
 type BookingSortDirection = "asc" | "desc";
 
 type ExperienceOption = { id: string; title: string };
+
+function MarketplaceBookingOrigin({ booking }: { booking: BookingItem }) {
+  const market = resolveMarketplaceSource(booking);
+  if (!market) return null;
+  return (
+    <span className="block text-xs mt-1 text-brand-muted">
+      From {market.label}
+      {booking.externalBookingId ? ` · ${booking.externalBookingId}` : ""}
+    </span>
+  );
+}
 
 function addDaysToDateStr(dateStr: string, days: number): string {
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -206,6 +242,10 @@ type CalendarEventApi = {
   startDate?: string | null;
   startTime?: string | null;
   endTime?: string | null;
+  source?: string | null;
+  externalProvider?: string | null;
+  externalBookingId?: string | null;
+  specialNotes?: string | null;
 };
 
 function mapCalendarEventToItem(e: CalendarEventApi): AdminBookingCalendarItem | null {
@@ -221,6 +261,10 @@ function mapCalendarEventToItem(e: CalendarEventApi): AdminBookingCalendarItem |
     startDate: e.startDate ?? null,
     startTime: e.startTime ?? null,
     endTime: e.endTime ?? null,
+    source: e.source ?? null,
+    externalProvider: e.externalProvider ?? null,
+    externalBookingId: e.externalBookingId ?? null,
+    specialNotes: e.specialNotes ?? null,
   };
 }
 
@@ -259,6 +303,9 @@ export default function AdminBookingsPage() {
   const [cancelRefundFailures, setCancelRefundFailures] = useState<Array<{ paymentIntentId: string; error?: string }>>([]);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [listLastUpdatedAt, setListLastUpdatedAt] = useState<Date | null>(null);
+  const [marketplacePayoutDollars, setMarketplacePayoutDollars] = useState("");
+  const [marketplacePayoutBusy, setMarketplacePayoutBusy] = useState(false);
+  const [marketplacePayoutError, setMarketplacePayoutError] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendFinalLoading, setResendFinalLoading] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => {
@@ -271,11 +318,6 @@ export default function AdminBookingsPage() {
   const [calendarPollTick, setCalendarPollTick] = useState(0);
   /** When false, no background interval merge — use Refresh or explicit actions only (avoids surprise overwrites). */
   const [autoBackgroundRefresh, setAutoBackgroundRefresh] = useState(false);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleHour, setRescheduleHour] = useState("7");
-  const [rescheduleLoading, setRescheduleLoading] = useState(false);
-  const [rescheduleConfirmPricing, setRescheduleConfirmPricing] = useState(false);
-
   const listFetchGenRef = useRef(0);
   const loadMoreGenRef = useRef(0);
   const calendarFetchGenRef = useRef(0);
@@ -503,19 +545,6 @@ export default function AdminBookingsPage() {
   }, [scheduleReconcile]);
 
   useEffect(() => {
-    if (!selectedBooking?.slotId) {
-      setRescheduleDate("");
-      setRescheduleHour("7");
-      setRescheduleConfirmPricing(false);
-      return;
-    }
-    const parsed = parseSlotId(selectedBooking.slotId);
-    if (!parsed) return;
-    setRescheduleDate(parsed.dateStr);
-    setRescheduleHour(String(parsed.startHour));
-  }, [selectedBooking?.slotId]);
-
-  useEffect(() => {
     if (!webhookEventsOpen) return;
     const endpoint = "/api/admin/stripe-events?limit=50";
     setWebhookEventsLoading(true);
@@ -553,7 +582,7 @@ export default function AdminBookingsPage() {
   }, [webhookEventsOpen, webhookEventsRefreshKey]);
 
   function exportCsv() {
-    const headers = ["Date", "Trip date", "Experience", "Party (guests)", "Customer name", "Email", "Phone", "Amount (USD)", "Status"];
+    const headers = ["Date", "Trip date", "Experience", "Party (guests)", "Customer name", "Email", "Phone", "Amount (USD)", "Status", "Source"];
     const rows = sortedFilteredList.map((b) => {
       const date = b.createdAt ? new Date(b.createdAt).toISOString() : "";
       const tripDate = b.startDate ?? "";
@@ -569,6 +598,7 @@ export default function AdminBookingsPage() {
         b.customer?.phone ?? "",
         amount,
         b.status ?? "",
+        resolveMarketplaceSource(b)?.label ?? b.source ?? "",
       ];
     });
     const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))].join("\n");
@@ -655,6 +685,54 @@ export default function AdminBookingsPage() {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
   }
 
+  function formatPhoneDisplay(phone: string): string {
+    const d = phone.replace(/\D/g, "");
+    if (d.length === 10) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+    if (d.length === 11 && d.startsWith("1")) return `(${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
+    return phone;
+  }
+
+  function formatStatusLabel(status: string): string {
+    return status.replace(/_/g, " ");
+  }
+
+  const guestEmailDisplay = displayMarketplaceGuestEmail(selectedBooking?.customer?.email);
+
+  const refreshSelectedBooking = async (bookingId: string) => {
+    const res = await fetch(`/api/admin/bookings/${bookingId}`, { credentials: "include" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throwIfAdminApiError(res, data, "Failed to load booking");
+    setSelectedBooking(data as BookingItem);
+    setRefreshKey((k) => k + 1);
+  };
+
+  const saveMarketplacePayout = async (opts: { fromStoredEmail?: boolean }) => {
+    if (!selectedBooking) return;
+    setMarketplacePayoutBusy(true);
+    setMarketplacePayoutError(null);
+    try {
+      const res = await fetch(`/api/admin/bookings/${selectedBooking.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          opts.fromStoredEmail
+            ? { fromStoredEmail: true }
+            : { marketplacePayoutDollars: marketplacePayoutDollars.trim() }
+        ),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data as { error?: string }).error ?? "Could not save payout");
+      setMarketplacePayoutDollars("");
+      await refreshSelectedBooking(selectedBooking.id);
+    } catch (e) {
+      if (e instanceof AdminSessionRedirectError) return;
+      setMarketplacePayoutError(e instanceof Error ? e.message : "Could not save payout");
+    } finally {
+      setMarketplacePayoutBusy(false);
+    }
+  };
+
   const handleBookingClick = async (booking: AdminBookingCalendarItem) => {
     const fromList = list.find((b) => b.id === booking.id);
     if (fromList) {
@@ -678,6 +756,8 @@ export default function AdminBookingsPage() {
   const openBookingDetailFromList = (b: BookingItem) => {
     setSelectedBooking(b);
     setDetailOpen(true);
+    setMarketplacePayoutDollars("");
+    setMarketplacePayoutError(null);
     void (async () => {
       try {
         const res = await fetch(`/api/admin/bookings/${b.id}`, { credentials: "include" });
@@ -689,52 +769,6 @@ export default function AdminBookingsPage() {
         setLoadError(e instanceof Error ? e.message : "Failed to refresh booking");
       }
     })();
-  };
-
-  const submitReschedule = async () => {
-    if (!selectedBooking?.id || !selectedBooking.slotId || !rescheduleDate) return;
-    const parsed = parseSlotId(selectedBooking.slotId);
-    const duration = parsed?.durationHours ?? selectedBooking.durationHours ?? 1;
-    const slotId = buildSlotId(rescheduleDate, Number(rescheduleHour), duration);
-    setRescheduleLoading(true);
-    try {
-      const res = await fetch(`/api/admin/bookings/${selectedBooking.id}/reschedule`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slotId, confirmPricingChange: rescheduleConfirmPricing }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 409) {
-        if ((data as { code?: string }).code === "PRICING_CHANGE_REQUIRES_CONFIRMATION") {
-          setRescheduleConfirmPricing(true);
-          const oldTotal = typeof (data as { oldTotalCents?: number }).oldTotalCents === "number" ? (data as { oldTotalCents: number }).oldTotalCents : null;
-          const newTotal = typeof (data as { newTotalCents?: number }).newTotalCents === "number" ? (data as { newTotalCents: number }).newTotalCents : null;
-          setLoadError(
-            oldTotal != null && newTotal != null
-              ? `Pricing changes from ${formatCents(oldTotal)} to ${formatCents(newTotal)}. Enable confirmation and retry.`
-              : ((data as { error?: string }).error ?? "Reschedule conflict.")
-          );
-          return;
-        }
-        setLoadError((data as { error?: string }).error ?? "Slot conflict. Choose a different start.");
-        return;
-      }
-      if (res.status === 400) {
-        setLoadError((data as { error?: string }).error ?? "Invalid start time. Use an allowed operating hour.");
-        return;
-      }
-      if (!res.ok) throw new Error((data as { error?: string }).error ?? "Failed to reschedule booking");
-      setDetailOpen(false);
-      setSelectedBooking(null);
-      setRescheduleConfirmPricing(false);
-      setRefreshKey((k) => k + 1);
-      setCalendarPollTick((t) => t + 1);
-    } catch (e) {
-      setLoadError(e instanceof Error ? e.message : "Failed to reschedule booking");
-    } finally {
-      setRescheduleLoading(false);
-    }
   };
 
   const filteredList = useMemo(() => {
@@ -800,306 +834,337 @@ export default function AdminBookingsPage() {
     setToTripDate(to);
   }, []);
 
+  const heroStats = useMemo(() => {
+    const today = getChicagoToday();
+    const next7 = addDaysToDateStr(today, 6);
+    const rows = sortedFilteredList;
+    const active = (b: BookingItem) => BOOKING_STATUSES_SLOT_TAKEN.has(b.status as never);
+    return {
+      count: rows.length,
+      todayTrips: rows.filter((b) => b.startDate === today && active(b)).length,
+      upcoming: rows.filter((b) => b.startDate && b.startDate >= today && b.startDate <= next7 && active(b)).length,
+      marketplace: rows.filter((b) => resolveMarketplaceSource(b)).length,
+    };
+  }, [sortedFilteredList]);
+
   const inputClass =
-    "rounded-lg border border-brand-dark/20 px-3 py-2 text-sm text-brand-dark focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary min-h-[40px] sm:min-h-[36px] transition-colors duration-200";
+    "min-h-[44px] rounded-xl border border-brand-dark/15 bg-brand-bg/40 px-3 py-2 text-sm text-brand-dark focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary sm:min-h-0";
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="mb-6 sm:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-dark sm:text-3xl">Bookings</h1>
-            <p className="mt-1 text-sm text-brand-muted">
-              Trip date, party size, and full details. Click a row to open booking details (customer, add-ons, payment breakdown).
+      <section className="relative overflow-hidden rounded-3xl bg-brand-dark px-5 py-6 text-white shadow-premium sm:px-8 sm:py-8">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-brand-secondary/20 blur-3xl" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-primary">Bookings</h1>
+            <p className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+              {heroStats.count.toLocaleString()}
             </p>
-            {listLastUpdatedAt && (
-              <p className="mt-2 text-xs text-brand-muted">
-                List updated {Math.max(0, Math.floor((Date.now() - listLastUpdatedAt.getTime()) / 1000))}s ago
-                {" · "}
-                <button
-                  type="button"
-                  className="text-brand-primary font-medium hover:underline"
-                  onClick={() => {
-                    setRefreshKey((k) => k + 1);
-                    setCalendarPollTick((t) => t + 1);
-                  }}
-                >
-                  Refresh
-                </button>
-                {" · "}
-                <label className="inline-flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={autoBackgroundRefresh}
-                    onChange={(e) => setAutoBackgroundRefresh(e.target.checked)}
-                    className="rounded border-brand-dark/30"
-                  />
-                  <span>Auto-refresh every {ADMIN_BOOKING_VISIBILITY_SLA_MS / 1000}s (tab visible)</span>
-                </label>
-              </p>
-            )}
+            <p className="mt-2 text-sm text-white/70">
+              {customerSearch.trim() || experienceFilter || statusFilter || fromDate || toDate || fromTripDate || toTripDate
+                ? "Matching this view"
+                : "Loaded in this list"}
+              {listLastUpdatedAt
+                ? ` · updated ${Math.max(0, Math.floor((Date.now() - listLastUpdatedAt.getTime()) / 1000))}s ago`
+                : ""}
+            </p>
           </div>
-          <Button onClick={() => setAddBookingOpen(true)} className="shrink-0 inline-flex items-center gap-2">
-            <Plus className="h-4 w-4" aria-hidden />
-            Add booking
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-4 sm:p-6">
-        <div className="flex flex-wrap items-end gap-4 sm:gap-6">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-brand-dark">View</span>
-            <div className="flex rounded-lg p-0.5 bg-brand-bg/50 border border-brand-dark/15">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-out",
-                  viewMode === "list"
-                    ? "bg-white text-brand-dark shadow-sm border border-brand-dark/10"
-                    : "text-brand-muted hover:text-brand-dark hover:bg-white/60"
-                )}
-              >
-                <List className="w-4 h-4" />
-                List
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("calendar")}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ease-out",
-                  viewMode === "calendar"
-                    ? "bg-white text-brand-dark shadow-sm border border-brand-dark/10"
-                    : "text-brand-muted hover:text-brand-dark hover:bg-white/60"
-                )}
-                aria-label="View bookings by day (calendar)"
-              >
-                <CalendarDays className="w-4 h-4" />
-                By day
-              </button>
+          <div className="flex flex-wrap gap-3 lg:justify-end">
+            <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Today</p>
+              <p className="mt-1 text-lg font-bold">{heroStats.todayTrips.toLocaleString()}</p>
+              <p className="text-[11px] text-white/60">Trips holding a slot</p>
+            </div>
+            <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Next 7 days</p>
+              <p className="mt-1 text-lg font-bold">{heroStats.upcoming.toLocaleString()}</p>
+              <p className="text-[11px] text-white/60">Upcoming in this list</p>
+            </div>
+            <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Other platforms</p>
+              <p className="mt-1 text-lg font-bold">{heroStats.marketplace.toLocaleString()}</p>
+              <p className="text-[11px] text-white/60">Boatsetter / Getmyboat / Viator</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-end gap-3 sm:gap-4">
-            <label htmlFor="customer-search" className="text-sm font-medium text-brand-dark sr-only sm:not-sr-only">Search customer</label>
-            <span className="relative flex items-center">
-              <Search className="absolute left-3 w-4 h-4 text-brand-muted pointer-events-none" aria-hidden />
-              <input
-                id="customer-search"
-                type="search"
-                placeholder="Search customer (name, email, phone)"
-                value={customerSearch}
-                onChange={(e) => setCustomerSearch(e.target.value)}
-                className={cn(inputClass, "min-w-[180px] sm:min-w-[200px] pl-9")}
-                aria-label="Search by customer name, email, or phone"
-              />
-            </span>
-          </div>
-          <div className="flex flex-wrap items-end gap-3 sm:gap-4">
-            <label htmlFor="experience-filter" className="text-sm font-medium text-brand-dark">Experience</label>
-            <select
-              id="experience-filter"
-              value={experienceFilter}
-              onChange={(e) => setExperienceFilter(e.target.value)}
-              className={cn(inputClass, "min-w-[180px] sm:min-w-[220px]")}
+        </div>
+        <div className="relative mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
+          <div className="inline-flex flex-wrap rounded-full bg-white/10 p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all",
+                viewMode === "list" ? "bg-white text-brand-dark shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white"
+              )}
             >
-              <option value="">All experiences</option>
-              {experiences.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.title}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-wrap items-end gap-3 sm:gap-4">
-            <label htmlFor="status" className="text-sm font-medium text-brand-dark">Status</label>
-            <select
-              id="status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={inputClass}
-              disabled={requiresManualReviewOnly}
+              <List className="h-3.5 w-3.5" aria-hidden />
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("calendar")}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all",
+                viewMode === "calendar" ? "bg-white text-brand-dark shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white"
+              )}
+              aria-label="View bookings by day (calendar)"
             >
-              <option value="">All</option>
-              <option value="paid">Paid (full)</option>
-              <option value="deposit_paid">Deposit paid</option>
-              <option value="final_due">Final due</option>
-              <option value="final_processing">Final processing</option>
-              <option value="final_paid">Final paid</option>
-              <option value="final_requires_action">Final requires action</option>
-              <option value="final_failed">Final failed</option>
-              <option value="canceled">Canceled</option>
-              <option value="refunded">Refunded</option>
-            </select>
-            <label className="flex items-center gap-2 text-sm text-brand-dark cursor-pointer select-none">
+              <CalendarDays className="h-3.5 w-3.5" aria-hidden />
+              By day
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex items-center gap-1.5 text-xs text-white/60">
               <input
                 type="checkbox"
-                checked={requiresManualReviewOnly}
-                onChange={(e) => {
-                  setRequiresManualReviewOnly(e.target.checked);
-                  setRefreshKey((k) => k + 1);
-                }}
-                className="rounded border-brand-dark/30"
+                checked={autoBackgroundRefresh}
+                onChange={(e) => setAutoBackgroundRefresh(e.target.checked)}
+                className="rounded border-white/30 bg-white/10"
               />
-              Manual payment review (pending refunds)
+              Auto-refresh {ADMIN_BOOKING_VISIBILITY_SLA_MS / 1000}s
             </label>
-          </div>
-          {requiresManualReviewOnly && (
-            <p className="w-full text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              Showing bookings tied to <code className="text-xs">pendingRefunds</code> rows flagged for review. Clear the checkbox to return to the normal list. URL:{" "}
-              <code className="text-xs">?requiresManualReview=true</code>
-            </p>
-          )}
-          <div className="border-l border-brand-dark/15 pl-4 sm:pl-6 flex flex-wrap items-end gap-3 sm:gap-4">
-            <span className="text-xs font-medium text-brand-muted uppercase tracking-wide w-full sm:w-auto">Booking date</span>
-            <div className="flex items-center gap-2">
-              <label htmlFor="from" className="text-sm text-brand-muted sr-only sm:not-sr-only sm:whitespace-nowrap">From</label>
-              <input
-                id="from"
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className={inputClass}
-                aria-label="Filter from date (booking created)"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="to" className="text-sm text-brand-muted sr-only sm:not-sr-only sm:whitespace-nowrap">To</label>
-              <input
-                id="to"
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className={inputClass}
-                aria-label="Filter to date (booking created)"
-              />
-            </div>
-          </div>
-          <div className="border-l border-brand-dark/15 pl-4 sm:pl-6 flex flex-wrap items-end gap-3 sm:gap-4">
-            <span className="text-xs font-medium text-brand-muted uppercase tracking-wide w-full sm:w-auto">Trip date</span>
-            <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
-              {(
-                [
-                  { key: "today" as const, label: "Today" },
-                  { key: "tomorrow" as const, label: "Tomorrow" },
-                  { key: "next7" as const, label: "Next 7 days" },
-                ] as const
-              ).map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => applyTripQuickFilter(key)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors shadow-sm",
-                    activeTripQuickFilter === key
-                      ? "border-brand-primary bg-brand-primary/10 text-brand-primary"
-                      : "border-brand-dark/20 bg-white text-brand-dark hover:border-brand-primary/60 hover:bg-brand-primary/5 hover:text-brand-primary"
-                  )}
-                  aria-pressed={activeTripQuickFilter === key}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="fromTrip" className="text-sm text-brand-muted sr-only sm:not-sr-only sm:whitespace-nowrap">From</label>
-              <input
-                id="fromTrip"
-                type="date"
-                value={fromTripDate}
-                onChange={(e) => setFromTripDate(e.target.value)}
-                className={inputClass}
-                aria-label="Filter from date (trip start)"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="toTrip" className="text-sm text-brand-muted sr-only sm:not-sr-only sm:whitespace-nowrap">To</label>
-              <input
-                id="toTrip"
-                type="date"
-                value={toTripDate}
-                onChange={(e) => setToTripDate(e.target.value)}
-                className={inputClass}
-                aria-label="Filter to date (trip start)"
-              />
-            </div>
-            <p className="w-full text-xs text-brand-muted max-w-2xl leading-relaxed">
-              <strong>Booking date</strong> filters when the reservation was created. <strong>Trip date</strong> filters when the charter starts; you can set only &quot;from&quot;, only &quot;to&quot;, or both.
-              If both booking-date and trip-date filters are set, a booking must match <em>both</em> (trip range is queried first, then booking created date is applied). The &quot;By day&quot; calendar loads by trip month, status, and experience; it does not use booking-date filters. Click <strong>Trip</strong> or <strong>Booked</strong> column headers to sort chronologically.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 ml-auto">
-            <Button type="button" variant="outline" size="sm" onClick={exportCsv} disabled={list.length === 0} className="transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
-              Export CSV
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={exportFinancialsCsv} disabled={list.length === 0} className="inline-flex items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" title="Tax-ready financial export (subtotal, tax, fees, total). Open in Excel or Google Sheets.">
-              <FileSpreadsheet className="w-4 h-4" aria-hidden />
-              Export financials (CSV)
-            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setRefreshKey((k) => k + 1);
+                setCalendarPollTick((t) => t + 1);
+              }}
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} aria-hidden />
+              Refresh
+            </button>
+            <button
+              type="button"
+              onClick={exportCsv}
+              disabled={list.length === 0}
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20 disabled:opacity-40"
+            >
+              <Download className="h-3.5 w-3.5" aria-hidden />
+              CSV
+            </button>
+            <button
+              type="button"
+              onClick={exportFinancialsCsv}
+              disabled={list.length === 0}
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20 disabled:opacity-40"
+              title="Tax-ready financial export (subtotal, tax, fees, total)."
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden />
+              Financials
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddBookingOpen(true)}
+              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-brand-primary px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-primary/90"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden />
+              Add booking
+            </button>
           </div>
         </div>
+      </section>
+
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-brand-dark/10 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
+        <div className="flex min-w-[220px] flex-1 items-center gap-2">
+          <Search className="h-4 w-4 shrink-0 text-brand-primary" aria-hidden />
+          <input
+            id="customer-search"
+            type="search"
+            placeholder="Search name, email, or phone"
+            value={customerSearch}
+            onChange={(e) => setCustomerSearch(e.target.value)}
+            className={cn(inputClass, "w-full")}
+            aria-label="Search by customer name, email, or phone"
+          />
+        </div>
+        <div className="flex min-w-[180px] items-center gap-2">
+          <label htmlFor="experience-filter" className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
+            Experience
+          </label>
+          <select
+            id="experience-filter"
+            value={experienceFilter}
+            onChange={(e) => setExperienceFilter(e.target.value)}
+            className={cn(inputClass, "min-w-[180px]")}
+          >
+            <option value="">All</option>
+            {experiences.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.title}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex min-w-[160px] items-center gap-2">
+          <label htmlFor="status" className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
+            Status
+          </label>
+          <select
+            id="status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className={inputClass}
+            disabled={requiresManualReviewOnly}
+          >
+            <option value="">All</option>
+            <option value="paid">Paid (full)</option>
+            <option value="deposit_paid">Deposit paid</option>
+            <option value="final_due">Final due</option>
+            <option value="final_processing">Final processing</option>
+            <option value="final_paid">Final paid</option>
+            <option value="final_requires_action">Final requires action</option>
+            <option value="final_failed">Final failed</option>
+            <option value="canceled">Canceled</option>
+            <option value="refunded">Refunded</option>
+          </select>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {(
+            [
+              { key: "today" as const, label: "Today" },
+              { key: "tomorrow" as const, label: "Tomorrow" },
+              { key: "next7" as const, label: "Next 7 days" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => applyTripQuickFilter(key)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                activeTripQuickFilter === key
+                  ? "border-brand-primary bg-brand-primary/10 text-brand-primary"
+                  : "border-brand-dark/15 bg-white text-brand-dark hover:border-brand-primary/50 hover:bg-brand-primary/5"
+              )}
+              aria-pressed={activeTripQuickFilter === key}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="fromTrip" className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
+            Trip
+          </label>
+          <input
+            id="fromTrip"
+            type="date"
+            value={fromTripDate}
+            onChange={(e) => setFromTripDate(e.target.value)}
+            className={inputClass}
+            aria-label="Filter from date (trip start)"
+          />
+          <span className="text-brand-muted">–</span>
+          <input
+            id="toTrip"
+            type="date"
+            value={toTripDate}
+            onChange={(e) => setToTripDate(e.target.value)}
+            className={inputClass}
+            aria-label="Filter to date (trip start)"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label htmlFor="from" className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
+            Booked
+          </label>
+          <input
+            id="from"
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className={inputClass}
+            aria-label="Filter from date (booking created)"
+          />
+          <span className="text-brand-muted">–</span>
+          <input
+            id="to"
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className={inputClass}
+            aria-label="Filter to date (booking created)"
+          />
+        </div>
+        <label className="flex min-h-[44px] items-center gap-2 text-sm text-brand-dark">
+          <input
+            type="checkbox"
+            checked={requiresManualReviewOnly}
+            onChange={(e) => {
+              setRequiresManualReviewOnly(e.target.checked);
+              setRefreshKey((k) => k + 1);
+            }}
+            className="rounded border-brand-dark/30"
+          />
+          Manual payment review
+        </label>
       </div>
+      {requiresManualReviewOnly && (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Showing bookings tied to pending refunds flagged for review. Clear the checkbox to return to the normal list.
+        </p>
+      )}
 
       {loadError && list.length > 0 && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {loadError}
           <Link href="/admin/login" className="ml-2 text-brand-primary hover:underline">Sign in</Link>
         </div>
       )}
 
       {loadMoreError && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {loadMoreError}
         </div>
       )}
 
       {showFatalBlock && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {loadError}
           <Link href="/admin/login" className="ml-2 text-brand-primary hover:underline">Sign in</Link>
         </div>
       )}
 
       {showInitialLoading && (
-        <div className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-8 text-center text-brand-muted text-sm">
-          Loading…
+        <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white px-6 py-16 text-center text-sm text-brand-muted shadow-sm">
+          Loading bookings…
         </div>
       )}
 
       {!loading && !loadError && list.length === 0 && viewMode === "list" && (
-        <div className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-8 text-center">
-          <p className="text-brand-muted text-sm">No bookings yet.</p>
-          <p className="mt-2 text-brand-muted text-xs max-w-md mx-auto">
-            When you have bookings, the list shows <strong>Trip</strong> (date & time), <strong>Party</strong> (guests), and more. Offer pets via add-ons on the experience. Click any row to see full details (add-ons, notes, payment breakdown).
-          </p>
-          <p className="mt-3 text-brand-muted text-xs max-w-md mx-auto">
-            If you have payments in Stripe but don&apos;t see them here, open <strong>Webhook events</strong> below and look for that payment&apos;s event — the <strong>error</strong> field explains why (e.g. Hold not found, Hold already converted).
+        <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white px-6 py-16 text-center shadow-sm">
+          <BookOpen className="mx-auto h-10 w-10 text-brand-primary/40" aria-hidden />
+          <p className="mt-3 text-sm font-medium text-brand-dark">No bookings yet</p>
+          <p className="mx-auto mt-2 max-w-md text-xs text-brand-muted">
+            When guests book, they show up here with trip time, party size, and payment details. Click a row for the full briefing.
           </p>
         </div>
       )}
 
       {!loading && !loadError && list.length > 0 && sortedFilteredList.length === 0 && viewMode === "list" && (
-        <div className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-8 text-center">
-          <p className="text-brand-muted text-sm">No bookings match your filters.</p>
-          <p className="mt-1 text-brand-muted text-xs">Try clearing customer search, experience, or date filters.</p>
+        <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white px-6 py-16 text-center shadow-sm">
+          <p className="text-sm font-medium text-brand-dark">No bookings match these filters</p>
+          <p className="mt-1 text-xs text-brand-muted">Clear search, experience, or date filters to widen the list.</p>
         </div>
       )}
 
       {!loading && !loadError && list.length > 0 && sortedFilteredList.length > 0 && viewMode === "list" && (
         <>
-          {/* Desktop table */}
-          <div className="hidden md:block rounded-2xl bg-white shadow-soft border border-brand-dark/10 overflow-hidden transition-shadow duration-200 hover:shadow-md">
-            {customerSearch.trim() && (
-              <p className="px-4 py-2 text-xs text-brand-muted bg-brand-bg/50 border-b border-brand-dark/10">
-                Showing {sortedFilteredList.length} of {list.length} bookings
-              </p>
-            )}
-            <div className="overflow-x-auto -mx-px">
-              <table className="w-full min-w-[800px] text-sm">
+          <div className="hidden overflow-hidden rounded-3xl border border-brand-dark/10 bg-white shadow-sm md:block">
+            <div className="flex items-center justify-between border-b border-brand-dark/10 px-5 py-4 sm:px-6">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-brand-dark">
+                <BookOpen className="h-5 w-5 text-brand-primary" aria-hidden />
+                {customerSearch.trim() ? `${sortedFilteredList.length} of ${list.length} bookings` : "All loaded bookings"}
+              </h2>
+              <p className="text-xs text-brand-muted">Click a row for guest, add-ons, and payment</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[980px] text-sm">
                 <thead>
-                  <tr className="border-b border-brand-dark/10 bg-brand-bg/50">
-                    <th className="px-3 py-3 sm:px-4 sm:py-4 text-left font-medium text-brand-dark">
+                  <tr className="border-b border-brand-dark/10 bg-brand-bg/50 text-left">
+                    <th className="px-4 py-3 font-medium text-brand-dark">
                       <button
                         type="button"
                         onClick={() => toggleSort("trip")}
@@ -1113,7 +1178,7 @@ export default function AdminBookingsPage() {
                         {renderSortIcon("trip")}
                       </button>
                     </th>
-                    <th className="px-3 py-3 sm:px-4 sm:py-4 text-left font-medium text-brand-dark">
+                    <th className="px-4 py-3 font-medium text-brand-dark">
                       <button
                         type="button"
                         onClick={() => toggleSort("created")}
@@ -1127,49 +1192,52 @@ export default function AdminBookingsPage() {
                         {renderSortIcon("created")}
                       </button>
                     </th>
-                    <th className="px-3 py-3 sm:px-4 sm:py-4 text-left font-medium text-brand-dark">Experience</th>
-                    <th className="px-3 py-3 sm:px-4 sm:py-4 text-left font-medium text-brand-dark">Party</th>
-                    <th className="px-3 py-3 sm:px-4 sm:py-4 text-left font-medium text-brand-dark">Customer</th>
-                    <th className="px-3 py-3 sm:px-4 sm:py-4 text-right font-medium text-brand-dark">Amount</th>
-                    <th className="px-3 py-3 sm:px-4 sm:py-4 text-left font-medium text-brand-dark">Status</th>
+                    <th className="px-4 py-3 font-medium text-brand-dark">Experience</th>
+                    <th className="px-4 py-3 font-medium text-brand-dark">Boat</th>
+                    <th className="px-4 py-3 font-medium text-brand-dark">Party</th>
+                    <th className="px-4 py-3 font-medium text-brand-dark">Customer</th>
+                    <th className="px-4 py-3 text-right font-medium text-brand-dark">Amount</th>
+                    <th className="px-4 py-3 font-medium text-brand-dark">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedFilteredList.map((b) => (
+                  {sortedFilteredList.map((b) => {
+                    const market = resolveMarketplaceSource(b);
+                    return (
                     <tr
                       key={b.id}
                       onClick={() => openBookingDetailFromList(b)}
-                      className="border-b border-brand-dark/5 hover:bg-brand-primary/5 cursor-pointer transition-all duration-200 ease-out hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]"
+                      className="cursor-pointer border-b border-brand-dark/5 transition-colors hover:bg-brand-bg/80"
+                      style={market ? { boxShadow: `inset 4px 0 0 ${market.rgb}` } : undefined}
                     >
-                      <td className="px-3 py-3 sm:px-4 sm:py-4 text-brand-dark whitespace-nowrap">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-brand-dark">
                         {formatTripDateYyyyMmDdShort(b.startDate ?? null)}
                         {(b.startTime ?? b.endTime) && (
-                          <span className="block text-brand-muted text-xs mt-0.5">
+                          <span className="mt-0.5 block text-xs text-brand-muted">
                             {[b.startTime, b.endTime].filter(Boolean).join(" – ")}
                             {b.durationHours != null && ` (${b.durationHours}h)`}
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-3 sm:px-4 sm:py-4 text-brand-muted whitespace-nowrap text-xs">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-xs text-brand-muted">
                         {b.createdAt
                           ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                           : "—"}
                       </td>
-                      <td className="px-3 py-3 sm:px-4 sm:py-4 text-brand-dark">
-                        {b.experienceName}
-                        {b.boatName && <span className="block text-brand-muted text-xs">{b.boatName}</span>}
-                      </td>
-                      <td className="px-3 py-3 sm:px-4 sm:py-4 text-brand-dark">
+                      <td className="px-4 py-3.5 text-brand-dark">{b.experienceName}</td>
+                      <td className="px-4 py-3.5 text-sm text-brand-muted">{b.boatName || "—"}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-brand-dark">
                         {b.partySize != null ? `${b.partySize} guest${b.partySize !== 1 ? "s" : ""}` : "—"}
                       </td>
-                      <td className="px-3 py-3 sm:px-4 sm:py-4">
-                        <span className="font-medium text-brand-dark">{b.customer?.name || "—"}</span>
-                        <span className="block text-brand-muted text-xs truncate max-w-[180px] sm:max-w-none">{b.customer?.email}</span>
+                      <td className="px-4 py-3.5">
+                        <span className="font-semibold text-brand-dark">{b.customer?.name || "—"}</span>
+                        <span className="mt-0.5 block max-w-[220px] truncate text-xs text-brand-muted">{b.customer?.email}</span>
+                        <MarketplaceSourceBadge booking={b} className="mt-1" />
                       </td>
-                      <td className="px-3 py-3 sm:px-4 sm:py-4 text-right font-medium text-brand-dark whitespace-nowrap">
+                      <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-brand-dark">
                         {b.pricing ? formatCents(b.pricing.totalCents) : "—"}
                       </td>
-                      <td className="px-3 py-3 sm:px-4 sm:py-4">
+                      <td className="px-4 py-3.5">
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${getAdminBookingStatusBadgeClass(b.status)}`}
                         >
@@ -1177,44 +1245,50 @@ export default function AdminBookingsPage() {
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* Mobile card list */}
-          <div className="md:hidden space-y-3">
+          <div className="space-y-3 md:hidden">
             {customerSearch.trim() && (
               <p className="text-xs text-brand-muted">
                 Showing {sortedFilteredList.length} of {list.length} bookings
               </p>
             )}
-            {sortedFilteredList.map((b) => (
+            {sortedFilteredList.map((b) => {
+              const market = resolveMarketplaceSource(b);
+              return (
               <button
                 key={b.id}
                 type="button"
                 onClick={() => openBookingDetailFromList(b)}
-                className="w-full text-left rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-4 space-y-2 hover:shadow-md transition-shadow"
+                className="w-full space-y-2 rounded-3xl border border-brand-dark/10 bg-white p-4 text-left shadow-sm transition hover:bg-brand-bg/50"
+                style={market ? { borderLeftWidth: 4, borderLeftColor: market.rgb } : undefined}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-semibold text-brand-dark text-sm">{b.customer?.name || "—"}</span>
+                  <span className="text-sm font-semibold text-brand-dark">{b.customer?.name || "—"}</span>
                   <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${getAdminBookingStatusBadgeClass(b.status)}`}
+                    className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${getAdminBookingStatusBadgeClass(b.status)}`}
                   >
                     {b.status}
                   </span>
                 </div>
+                <MarketplaceSourceBadge booking={b} />
                 <div className="text-xs text-brand-muted">
                   {formatTripDateYyyyMmDdShort(b.startDate ?? null)}
                   {(b.startTime ?? b.endTime) && ` · ${[b.startTime, b.endTime].filter(Boolean).join(" – ")}`}
                   {" · "}{b.experienceName}
+                  {b.boatName ? ` · ${b.boatName}` : ""}
                 </div>
-                <div className="text-right font-semibold text-brand-dark text-sm">
+                <div className="text-right text-sm font-bold text-brand-dark">
                   {b.pricing ? formatCents(b.pricing.totalCents) : "—"}
                 </div>
               </button>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
@@ -1226,7 +1300,7 @@ export default function AdminBookingsPage() {
             variant="outline"
             onClick={loadMore}
             disabled={loadingMore}
-            className="inline-flex items-center gap-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full"
           >
             {loadingMore ? (
               <>
@@ -1244,25 +1318,29 @@ export default function AdminBookingsPage() {
       )}
 
       {!loadError && viewMode === "calendar" && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-lg font-semibold text-brand-dark">Bookings by day</h2>
-            <p className="text-sm text-brand-muted mt-0.5">
-              Loaded for the visible month from the server (not limited to the list page size). Trip date, experience, and status filters apply; booking-date filters do not. Click any booking to open details.
+        <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white shadow-sm">
+          <div className="border-b border-brand-dark/10 px-5 py-4 sm:px-6">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-brand-dark">
+              <CalendarDays className="h-5 w-5 text-brand-primary" aria-hidden />
+              Bookings by day
+            </h2>
+            <p className="mt-1 text-xs text-brand-muted">
+              Loads the visible month from the server. Trip date, experience, and status filters apply; booking-date filters do not.
             </p>
           </div>
+          <div className="p-4 sm:p-5">
           {calendarError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{calendarError}</div>
+            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{calendarError}</div>
           )}
           {calendarLoading && calendarEvents.length === 0 && (
-            <div className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 p-6 text-center text-brand-muted text-sm">
+            <div className="py-12 text-center text-sm text-brand-muted">
               Loading calendar…
             </div>
           )}
           {!calendarError && (calendarEvents.length > 0 || !calendarLoading) && (
             <>
               {calendarEvents.length > 0 && filteredCalendarEvents.length === 0 && customerSearch.trim() && (
-                <p className="text-sm text-brand-muted">No bookings match your customer search for this month.</p>
+                <p className="mb-3 text-sm text-brand-muted">No bookings match your customer search for this month.</p>
               )}
               <AdminBookingCalendar
                 bookings={filteredCalendarEvents}
@@ -1271,18 +1349,18 @@ export default function AdminBookingsPage() {
               />
             </>
           )}
+          </div>
         </div>
       )}
 
-      {/* Webhook events – diagnose why Stripe charges don't create bookings */}
-      <section className="rounded-2xl bg-white shadow-soft border border-brand-dark/10 overflow-hidden transition-shadow duration-200 hover:shadow-md">
+      <section className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white shadow-sm">
         <button
           type="button"
           onClick={() => setWebhookEventsOpen((o) => !o)}
-          className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-brand-dark hover:bg-brand-bg/50 transition-colors duration-200"
+          className="flex w-full items-center justify-between gap-2 px-5 py-4 text-left text-sm font-semibold text-brand-dark transition-colors hover:bg-brand-bg/50 sm:px-6"
         >
           <span>Webhook events (Stripe → booking)</span>
-          {webhookEventsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {webhookEventsOpen ? <ChevronUp className="h-4 w-4 text-brand-muted" /> : <ChevronDown className="h-4 w-4 text-brand-muted" />}
         </button>
         {webhookEventsOpen && (
           <div className="border-t border-brand-dark/10 p-4">
@@ -1379,9 +1457,6 @@ export default function AdminBookingsPage() {
           setDetailOpen(open);
           if (!open) {
             setSelectedBooking(null);
-            setRescheduleDate("");
-            setRescheduleHour("7");
-            setRescheduleConfirmPricing(false);
             setCancelConfirmOpen(false);
             setCancelRefund(true);
             setCancelOverridePolicy(false);
@@ -1391,110 +1466,123 @@ export default function AdminBookingsPage() {
             setCalendarPollTick((t) => t + 1);
           }
         }}
-        title={selectedBooking ? `Booking — ${selectedBooking.customer?.name ?? "Customer"}` : undefined}
+        title={selectedBooking ? selectedBooking.customer?.name ?? "Booking" : undefined}
+        description={
+          selectedBooking
+            ? `${selectedBooking.experienceName}${selectedBooking.startDate ? ` · ${formatTripDateYyyyMmDd(selectedBooking.startDate)}` : ""}${selectedBooking.startTime ? ` · ${selectedBooking.startTime}` : ""}`
+            : undefined
+        }
         fullScreenOnMobile
+        bodyScroll={false}
+        className="sm:max-w-3xl sm:max-h-[90vh]"
       >
+        <div className="flex min-h-0 flex-1 flex-col">
         {!selectedBooking && detailOpen && (
           <div className="py-12 text-center text-brand-muted text-sm">Loading booking…</div>
         )}
         {selectedBooking && (
-          <div className="space-y-6 text-sm max-h-[80vh] overflow-y-auto">
-            {/* Status + Trip */}
-            <div className="flex flex-wrap items-center gap-3 border-b border-brand-dark/10 pb-4">
-              <span
-                className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getAdminBookingStatusBadgeClass(selectedBooking.status)}`}
-              >
-                {selectedBooking.status}
-              </span>
-              <span className="text-brand-muted">
-                Booked {selectedBooking.createdAt ? formatDate(selectedBooking.createdAt) : "—"}
-              </span>
-            </div>
-
+          <div className="min-h-0 min-w-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain text-sm pr-1 pb-2">
             {BOOKING_STATUSES_SLOT_TAKEN.has(selectedBooking.status as never) &&
+              bookingExpectsWebsiteGuestConfirmation(selectedBooking) &&
               !selectedBooking.confirmationSentAt &&
               selectedBooking.createdAt &&
               Date.now() - new Date(selectedBooking.createdAt).getTime() > 15 * 60 * 1000 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950" role="status">
-                  <strong>Confirmation email not on file</strong> after the usual cron window. Check the notification outbox on the
-                  dashboard or resend confirmation if the guest did not receive it.
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950" role="status">
+                  Confirmation email is not on file yet. You can resend it below.
                 </div>
               )}
 
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Trip</h3>
-              <dl className="grid gap-2 sm:grid-cols-2">
-                <dt className="text-brand-muted">Experience</dt>
-                <dd className="text-brand-dark font-medium">
-                  {selectedBooking.experienceName}
-                  {selectedBooking.boatName && (
-                    <span className="block text-brand-muted text-xs mt-0.5">Boat: {selectedBooking.boatName}</span>
-                  )}
-                </dd>
-                <dt className="text-brand-muted">Date & time</dt>
-                <dd className="text-brand-dark">
-                  {formatTripDateYyyyMmDd(selectedBooking.startDate ?? null)}
-                  {(selectedBooking.startTime ?? selectedBooking.endTime) && (
-                    <span className="block text-brand-muted text-xs mt-0.5">
-                      {[selectedBooking.startTime, selectedBooking.endTime].filter(Boolean).join(" – ")}
-                      {selectedBooking.durationHours != null && ` · ${selectedBooking.durationHours}h`}
-                    </span>
-                  )}
-                </dd>
-              </dl>
-            </section>
-
-            {selectedBooking.waiver && (
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Waiver</h3>
-                <div className="flex flex-wrap items-center gap-2">
+            <section className="rounded-2xl border border-brand-dark/10 bg-brand-bg/50 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${getAdminBookingStatusBadgeClass(selectedBooking.status)}`}
+                >
+                  {formatStatusLabel(selectedBooking.status)}
+                </span>
+                <MarketplaceSourceBadge booking={selectedBooking} className="text-[11px] px-2.5 py-0.5" />
+                {(selectedBooking.rescheduleCount ?? 0) > 0 && (
+                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-900">
+                    Rescheduled
+                  </span>
+                )}
+                {selectedBooking.waiver?.status === "signed" && (
+                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800">
+                    Waiver signed
+                  </span>
+                )}
+                {selectedBooking.waiver && selectedBooking.waiver.status !== "signed" && (
                   <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      selectedBooking.waiver.status === "signed"
-                        ? "bg-green-100 text-green-800"
-                        : selectedBooking.waiver.status === "partial"
-                          ? "bg-amber-100 text-amber-900"
-                          : selectedBooking.waiver.status === "pending"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-600"
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      selectedBooking.waiver.status === "partial"
+                        ? "bg-amber-100 text-amber-900"
+                        : selectedBooking.waiver.status === "pending"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-gray-100 text-gray-600"
                     }`}
                   >
-                    {selectedBooking.waiver.status}
+                    Waiver {selectedBooking.waiver.status}
                   </span>
+                )}
+              </div>
+              <p className="mt-3 text-lg font-semibold text-brand-dark leading-snug">{selectedBooking.experienceName}</p>
+              {selectedBooking.boatName && (
+                <p className="text-xs text-brand-muted mt-0.5">{selectedBooking.boatName}</p>
+              )}
+              <MarketplaceBookingOrigin booking={selectedBooking} />
+              <div className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-muted">When</p>
+                  <p className="mt-0.5 font-medium text-brand-dark">
+                    {formatTripDateYyyyMmDd(selectedBooking.startDate ?? null)}
+                  </p>
+                  <p className="text-sm text-brand-muted">
+                    {[selectedBooking.startTime, selectedBooking.endTime].filter(Boolean).join(" – ")}
+                    {selectedBooking.durationHours != null ? ` · ${selectedBooking.durationHours}h` : ""}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-brand-muted">Party</p>
+                  <p className="mt-0.5 font-medium text-brand-dark">
+                    {selectedBooking.partySize != null
+                      ? `${selectedBooking.partySize} guest${selectedBooking.partySize !== 1 ? "s" : ""}`
+                      : "—"}
+                  </p>
+                  <p className="text-xs text-brand-muted">
+                    Booked {selectedBooking.createdAt ? formatDate(selectedBooking.createdAt) : "—"}
+                  </p>
+                </div>
+              </div>
+              {(selectedBooking.rescheduleCount ?? 0) > 0 && selectedBooking.rescheduledFromSlotId && (
+                <p className="mt-2 text-xs text-amber-800">
+                  Moved from {formatSlotIdAdminLabel(selectedBooking.rescheduledFromSlotId)}
+                </p>
+              )}
+              {selectedBooking.waiver && (
+                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
                   <Link
                     href={`/admin/waivers/requests/${selectedBooking.waiver.requestId}`}
-                    className="text-sm text-brand-primary hover:underline"
+                    className="text-brand-primary hover:underline"
                   >
-                    View request
+                    View waiver
                   </Link>
                   {(selectedBooking.waiver.status === "signed" || selectedBooking.waiver.status === "partial") && (
                     <a
                       href={`/api/waiver/pdf/${selectedBooking.waiver.requestId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-brand-primary hover:underline"
+                      className="text-brand-primary hover:underline"
                     >
-                      View waiver document
+                      Open PDF
                     </a>
                   )}
                 </div>
-              </section>
-            )}
-
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Party</h3>
-              <dl className="grid gap-2 sm:grid-cols-2">
-                <dt className="text-brand-muted">Guests</dt>
-                <dd className="text-brand-dark">
-                  {selectedBooking.partySize != null ? `${selectedBooking.partySize} guest${selectedBooking.partySize !== 1 ? "s" : ""}` : "—"}
-                </dd>
-              </dl>
+              )}
             </section>
 
             {selectedBooking.addonsWithNames && selectedBooking.addonsWithNames.length > 0 && (
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Add-ons</h3>
-                <ul className="space-y-1">
+              <section className="rounded-2xl border border-brand-dark/10 px-4 py-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Add-ons</h3>
+                <ul className="mt-2 space-y-1">
                   {selectedBooking.addonsWithNames.map((a) => (
                     <li key={a.addonId} className="flex justify-between text-brand-dark">
                       <span>{a.name}</span>
@@ -1505,40 +1593,36 @@ export default function AdminBookingsPage() {
               </section>
             )}
 
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Customer</h3>
-              <dl className="space-y-1">
-                <div>
-                  <dt className="text-brand-muted">Name</dt>
-                  <dd className="text-brand-dark font-medium">{selectedBooking.customer?.name ?? "—"}</dd>
-                </div>
-                {selectedBooking.customer?.email && (
-                  <div>
-                    <dt className="text-brand-muted">Email</dt>
-                    <dd>
-                      <a href={`mailto:${selectedBooking.customer.email}`} className="text-brand-primary hover:underline">
-                        {selectedBooking.customer.email}
-                      </a>
-                    </dd>
-                  </div>
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+              <section className="rounded-2xl border border-brand-dark/10 p-4 min-w-0">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Guest</h3>
+              <p className="mt-2 font-semibold text-brand-dark">{selectedBooking.customer?.name ?? "—"}</p>
+              <div className="mt-2 space-y-1.5">
+                {guestEmailDisplay && (
+                  <a
+                    href={`mailto:${guestEmailDisplay}`}
+                    className="flex items-center gap-2 text-sm text-brand-primary hover:underline break-all"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {guestEmailDisplay}
+                  </a>
                 )}
                 {selectedBooking.customer?.phone && (
-                  <div>
-                    <dt className="text-brand-muted">Phone</dt>
-                    <dd>
-                      <a href={`tel:${selectedBooking.customer.phone}`} className="text-brand-dark">
-                        {selectedBooking.customer.phone}
-                      </a>
-                    </dd>
-                  </div>
+                  <a
+                    href={`tel:${selectedBooking.customer.phone}`}
+                    className="flex items-center gap-2 text-sm text-brand-dark hover:underline"
+                  >
+                    <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {formatPhoneDisplay(selectedBooking.customer.phone)}
+                  </a>
                 )}
-              </dl>
+              </div>
             </section>
 
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Payment</h3>
+            <section className="rounded-2xl border border-brand-dark/10 p-4 min-w-0">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Payment</h3>
               {selectedBooking.pricing && (
-                <dl className="space-y-1">
+                <dl className="mt-2 space-y-1">
                   {selectedBooking.pricing.subtotalCents != null && (
                     <div className="flex justify-between">
                       <dt className="text-brand-muted">Subtotal</dt>
@@ -1580,16 +1664,62 @@ export default function AdminBookingsPage() {
                         <dd className="text-brand-dark">{formatCents(selectedBooking.tipCents)}</dd>
                       </div>
                     )}
-                  <div className="flex justify-between font-medium pt-2 border-t border-brand-dark/10">
+                  <div className="flex justify-between font-semibold pt-2 border-t border-brand-dark/10">
                     <dt className="text-brand-dark">Total</dt>
                     <dd className="text-brand-dark">{formatCents(selectedBooking.pricing.totalCents)}</dd>
                   </div>
                 </dl>
               )}
+              {resolveMarketplaceSource(selectedBooking) && (selectedBooking.pricing?.totalCents ?? 0) <= 0 && (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 space-y-2">
+                  <p className="text-xs text-amber-950">
+                    Marketplace payout was missing from the first email. Enter the payout you received, or fill it from the saved email if the amount is in the notes below.
+                  </p>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <label className="text-xs text-brand-muted">
+                      Payout
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="81.90"
+                        value={marketplacePayoutDollars}
+                        onChange={(e) => setMarketplacePayoutDollars(e.target.value)}
+                        className="mt-1 block w-28 rounded border border-brand-dark/20 px-2 py-1 text-sm text-brand-dark"
+                      />
+                    </label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={marketplacePayoutBusy || !marketplacePayoutDollars.trim()}
+                      onClick={() => void saveMarketplacePayout({})}
+                    >
+                      {marketplacePayoutBusy ? "Saving…" : "Save payout"}
+                    </Button>
+                    {(selectedBooking.marketplaceEmailExcerpt || selectedBooking.marketplaceDetails) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={marketplacePayoutBusy}
+                        onClick={() => void saveMarketplacePayout({ fromStoredEmail: true })}
+                      >
+                        Fill from saved email
+                      </Button>
+                    )}
+                  </div>
+                  {marketplacePayoutError && <p className="text-xs text-red-700">{marketplacePayoutError}</p>}
+                </div>
+              )}
               {selectedBooking.stripe?.paymentIntentId && (
-                <p className="mt-2 text-brand-muted text-xs font-mono truncate" title={selectedBooking.stripe.paymentIntentId}>
-                  Stripe PI: {selectedBooking.stripe.paymentIntentId}
-                </p>
+                <a
+                  href={`https://dashboard.stripe.com/payments/${selectedBooking.stripe.paymentIntentId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 block truncate text-[11px] font-mono text-brand-muted hover:text-brand-primary hover:underline"
+                  title={selectedBooking.stripe.paymentIntentId}
+                >
+                  Stripe {selectedBooking.stripe.paymentIntentId}
+                </a>
               )}
               {(selectedBooking.stripe?.depositPaymentIntentId ?? selectedBooking.stripe?.depositAmountCents != null) && (
                 <div className="mt-3 pt-3 border-t border-brand-dark/10 space-y-1">
@@ -1636,79 +1766,30 @@ export default function AdminBookingsPage() {
                 </div>
               )}
             </section>
+            </div>
 
-            {(selectedBooking.specialNotes || (selectedBooking.answers && Object.keys(selectedBooking.answers).length > 0)) && (
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Notes & answers</h3>
-                <dl className="space-y-2">
-                  {selectedBooking.specialNotes && (
-                    <>
-                      <dt className="text-brand-muted text-xs">Special requests</dt>
-                      <dd className="text-brand-dark mt-0.5 rounded-lg bg-brand-bg/50 px-3 py-2">{selectedBooking.specialNotes}</dd>
-                    </>
-                  )}
-                  {selectedBooking.answers && Object.entries(selectedBooking.answers).map(([key, value]) =>
-                    value ? (
-                      <Fragment key={key}>
-                        <dt className="text-brand-muted text-xs capitalize">{key.replace(/_/g, " ")}</dt>
-                        <dd className="text-brand-dark mt-0.5">{value}</dd>
-                      </Fragment>
-                    ) : null
-                  )}
-                </dl>
-              </section>
+            {selectedBooking.slotId && BOOKING_STATUSES_SLOT_TAKEN.has(selectedBooking.status as never) && (
+              <RescheduleBookingControls
+                booking={selectedBooking}
+                notifyGuest={bookingExpectsWebsiteGuestConfirmation(selectedBooking)}
+                onMoved={() => {
+                  setRefreshKey((k) => k + 1);
+                  setCalendarPollTick((t) => t + 1);
+                  void (async () => {
+                    try {
+                      const res = await fetch(`/api/admin/bookings/${selectedBooking.id}`, { credentials: "include" });
+                      const data = await res.json().catch(() => ({}));
+                      if (res.ok) setSelectedBooking(data as BookingItem);
+                    } catch {
+                      /* list refresh still ran */
+                    }
+                  })();
+                }}
+              />
             )}
 
-            {/* Actions */}
-            <section className="border-t border-brand-dark/10 pt-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-3">Actions</h3>
-              {selectedBooking.slotId && BOOKING_STATUSES_SLOT_TAKEN.has(selectedBooking.status as never) && (
-                <div className="mb-3 rounded-lg border border-brand-dark/10 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-muted mb-2">Reschedule</p>
-                  <div className="flex flex-wrap items-end gap-2">
-                    <label className="text-xs text-brand-muted">
-                      Date
-                      <input
-                        type="date"
-                        value={rescheduleDate}
-                        onChange={(e) => setRescheduleDate(e.target.value)}
-                        className="mt-1 block rounded border border-brand-dark/20 px-2 py-1 text-sm"
-                      />
-                    </label>
-                    <label className="text-xs text-brand-muted">
-                      Start hour
-                      <select
-                        value={rescheduleHour}
-                        onChange={(e) => setRescheduleHour(e.target.value)}
-                        className="mt-1 block rounded border border-brand-dark/20 px-2 py-1 text-sm"
-                      >
-                        {Array.from({ length: 13 }, (_, i) => i + 7).map((h) => (
-                          <option key={h} value={String(h)}>{h}:00</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="text-xs text-brand-muted flex items-center gap-1.5 mb-1">
-                      <input
-                        type="checkbox"
-                        checked={rescheduleConfirmPricing}
-                        onChange={(e) => setRescheduleConfirmPricing(e.target.checked)}
-                        className="rounded border-brand-dark/30"
-                      />
-                      confirm pricing change
-                    </label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={rescheduleLoading || !rescheduleDate}
-                      onClick={() => void submitReschedule()}
-                    >
-                      {rescheduleLoading ? "Rescheduling..." : "Reschedule"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
+            <div className="flex min-w-0 flex-wrap gap-2">
+                {bookingExpectsWebsiteGuestConfirmation(selectedBooking) && (
                 <Button
                   type="button"
                   variant="outline"
@@ -1734,11 +1815,12 @@ export default function AdminBookingsPage() {
                       setResendLoading(false);
                     }
                   }}
-                  className="inline-flex items-center gap-1.5"
+                  className="inline-flex max-w-full h-auto whitespace-normal items-center gap-1.5 py-2"
                 >
-                  <Mail className="w-4 h-4" aria-hidden />
-                  {resendLoading ? "Sending…" : "Resend confirmation (resets dead letter if needed)"}
+                  <Mail className="w-4 h-4 shrink-0" aria-hidden />
+                  {resendLoading ? "Sending…" : "Resend confirmation"}
                 </Button>
+                )}
                 {["final_due", "final_requires_action", "final_failed"].includes(selectedBooking.status) &&
                   (selectedBooking.stripe?.finalAmountCents ?? 0) > 0 && (
                   <Button
@@ -1766,9 +1848,9 @@ export default function AdminBookingsPage() {
                         setResendFinalLoading(false);
                       }
                     }}
-                    className="inline-flex items-center gap-1.5"
+                    className="inline-flex max-w-full h-auto whitespace-normal items-center gap-1.5 py-2"
                   >
-                    <Mail className="w-4 h-4" aria-hidden />
+                    <Mail className="w-4 h-4 shrink-0" aria-hidden />
                     {resendFinalLoading ? "Sending…" : "Resend final payment request"}
                   </Button>
                 )}
@@ -1777,17 +1859,73 @@ export default function AdminBookingsPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="inline-flex items-center gap-1.5 text-amber-700 border-amber-300 hover:bg-amber-50"
+                    className="inline-flex max-w-full h-auto whitespace-normal items-center gap-1.5 py-2 text-amber-700 border-amber-300 hover:bg-amber-50"
                     onClick={() => setCancelConfirmOpen(true)}
                   >
                     <Ban className="w-4 h-4" aria-hidden />
                     Cancel booking
                   </Button>
                 )}
-              </div>
-            </section>
+            </div>
+
+            <div className="space-y-3">
+              <AssignCaptainControl
+                bookingId={selectedBooking.id}
+                current={selectedBooking.assignedCaptain ?? null}
+                onAssigned={(next) => {
+                  setSelectedBooking((prev) => (prev ? { ...prev, assignedCaptain: next } : prev));
+                  setList((prev) =>
+                    prev.map((b) => (b.id === selectedBooking.id ? { ...b, assignedCaptain: next } : b))
+                  );
+                }}
+              />
+              <OperatorNotesControl
+                bookingId={selectedBooking.id}
+                current={selectedBooking.operatorNotes ?? null}
+                updatedAt={selectedBooking.operatorNotesUpdatedAt ?? null}
+                updatedBy={selectedBooking.operatorNotesBy ?? null}
+                log={selectedBooking.operatorNotesLog}
+                captainAssigned={Boolean(selectedBooking.assignedCaptain?.email)}
+                onSaved={(next) => {
+                  setSelectedBooking((prev) => (prev ? { ...prev, ...next } : prev));
+                  setList((prev) =>
+                    prev.map((b) => (b.id === selectedBooking.id ? { ...b, ...next } : b))
+                  );
+                }}
+              />
+            </div>
+
+            {(selectedBooking.specialNotes || (selectedBooking.answers && Object.keys(selectedBooking.answers).length > 0)) && (
+              <section className="rounded-2xl border border-brand-dark/10 p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-brand-muted">Guest notes</h3>
+                <dl className="mt-2 space-y-2">
+                  {selectedBooking.specialNotes && (
+                    <>
+                      <dt className="text-brand-muted text-xs">Special requests</dt>
+                      <dd className="text-brand-dark mt-0.5 rounded-lg bg-brand-bg/50 px-3 py-2 whitespace-pre-wrap">
+                        {selectedBooking.specialNotes}
+                      </dd>
+                    </>
+                  )}
+                  {selectedBooking.answers && Object.entries(selectedBooking.answers).map(([key, value]) =>
+                    value ? (
+                      <Fragment key={key}>
+                        <dt className="text-brand-muted text-xs capitalize">{key.replace(/_/g, " ")}</dt>
+                        <dd className="text-brand-dark mt-0.5">{value}</dd>
+                      </Fragment>
+                    ) : null
+                  )}
+                </dl>
+              </section>
+            )}
+
+            <MarketplaceEmailDetails
+              details={selectedBooking.marketplaceDetails}
+              excerpt={selectedBooking.marketplaceEmailExcerpt}
+            />
           </div>
         )}
+        </div>
       </Dialog>
 
       {/* Cancel booking confirmation */}

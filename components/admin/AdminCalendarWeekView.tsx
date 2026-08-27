@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { getSlotStartEnd, getCentralCalendarDayBounds } from "@/lib/booking/experience-slots";
+import { isPontoonSlug } from "@/lib/booking/experience-aliases";
+import { resolveMarketplaceSource } from "@/lib/admin/marketplace-source";
+import { MarketplaceSourceBadge } from "@/components/admin/MarketplaceSourceBadge";
 
 const CHICAGO = BUSINESS_TIMEZONE;
 /** `<input type="datetime-local" />` step in seconds — 10-minute increments for block start/end. */
@@ -18,6 +21,19 @@ const HOUR_END = Math.max(HOUR_START + 1, Math.ceil(getOperatingEndHour()));
 const HOURS = Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i);
 const CELL_H = 56; // px per hour
 const TOTAL_GRID_H = HOURS.length * CELL_H;
+
+function pickPontoonExperienceId(
+  ids: string[],
+  namesById: Record<string, string>,
+  preferredId?: string,
+): string {
+  if (ids.length <= 1) return ids[0] ?? "";
+  if (preferredId && ids.includes(preferredId)) return preferredId;
+  const bySlug = ids.find((id) => isPontoonSlug(id));
+  if (bySlug) return bySlug;
+  const byName = ids.find((id) => /pontoon/i.test(namesById[id] ?? ""));
+  return byName ?? ids[0] ?? "";
+}
 
 /** Minutes since HOUR_START in the business timezone for an ISO string. */
 function minutesSinceHourStartChicago(iso: string): number {
@@ -33,7 +49,7 @@ function minutesSinceHourStartChicago(iso: string): number {
   return hour * 60 + minute - HOUR_START * 60;
 }
 
-/** Format a Date in America/Mazatlan as YYYY-MM-DDTHH:MM for datetime-local input. */
+/** Format a Date in the business timezone as YYYY-MM-DDTHH:MM for datetime-local input. */
 function toCentralDatetimeLocal(d: Date): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: CHICAGO,
@@ -48,7 +64,7 @@ function toCentralDatetimeLocal(d: Date): string {
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
 
-/** Parse YYYY-MM-DDTHH:MM as America/Mazatlan and return a Date (for form submit). */
+/** Parse YYYY-MM-DDTHH:MM as business timezone and return a Date (for form submit). */
 function parseCentralDatetimeLocal(s: string): Date {
   const [datePart, timePart] = s.split("T");
   if (!datePart || !timePart || !/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return new Date(s);
@@ -70,10 +86,15 @@ type CalendarEvent = {
   boatId: string | null;
   boatName: string | null;
   title: string;
+  experienceName?: string | null;
   note?: string | null;
   bookingId?: string;
   blockId?: string;
   status?: string;
+  source?: string | null;
+  externalProvider?: string | null;
+  externalBookingId?: string | null;
+  specialNotes?: string | null;
 };
 
 type PositionedEvent = CalendarEvent & {
@@ -125,6 +146,8 @@ interface AdminCalendarWeekViewProps {
   experienceNamesById?: Record<string, string>;
   /** Firestore experience ids with pricingType ticketed — enables partial ticket holdbacks. */
   ticketedExperienceIds?: string[];
+  /** Preferred trip type when opening a new block (pontoon). */
+  defaultExperienceId?: string;
   boatList: { id: string; name: string }[];
   weekStart: Date;
   selectedBoatIds?: string[];
@@ -141,6 +164,7 @@ export function AdminCalendarWeekView({
   experienceIds,
   experienceNamesById = {},
   ticketedExperienceIds = [],
+  defaultExperienceId,
   boatList,
   weekStart,
   selectedBoatIds,
@@ -159,7 +183,9 @@ export function AdminCalendarWeekView({
       : [];
   const hasSingleExperienceContext = resolvedExperienceIds.length === 1;
   const [newBlockExperienceId, setNewBlockExperienceId] = useState(
-    hasSingleExperienceContext ? resolvedExperienceIds[0] ?? "" : ""
+    hasSingleExperienceContext
+      ? resolvedExperienceIds[0] ?? ""
+      : pickPontoonExperienceId(resolvedExperienceIds, experienceNamesById, defaultExperienceId)
   );
 
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -170,6 +196,7 @@ export function AdminCalendarWeekView({
   const [newBlockBoatId, setNewBlockBoatId] = useState("");
   const [newBlockNote, setNewBlockNote] = useState("");
   const [newBlockTicketsHeld, setNewBlockTicketsHeld] = useState("");
+  const [newBlockApplyAcross, setNewBlockApplyAcross] = useState(false);
   const [newBlockSaving, setNewBlockSaving] = useState(false);
   const [blockNotice, setBlockNotice] = useState<string | null>(null);
   const [blockDetailOpen, setBlockDetailOpen] = useState(false);
@@ -225,9 +252,9 @@ export function AdminCalendarWeekView({
     if (hasSingleExperienceContext) {
       setNewBlockExperienceId(resolvedExperienceIds[0] ?? "");
     } else if (!resolvedExperienceIds.includes(newBlockExperienceId)) {
-      setNewBlockExperienceId("");
+      setNewBlockExperienceId(pickPontoonExperienceId(resolvedExperienceIds, experienceNamesById, defaultExperienceId));
     }
-  }, [hasSingleExperienceContext, resolvedExperienceIds, newBlockExperienceId]);
+  }, [hasSingleExperienceContext, resolvedExperienceIds, newBlockExperienceId, experienceNamesById, defaultExperienceId]);
 
   useEffect(() => {
     return () => {
@@ -267,7 +294,7 @@ export function AdminCalendarWeekView({
     return d;
   });
 
-  /** Convert an ISO time to top-offset px and height px within the grid (America/Mazatlan). */
+  /** Convert an ISO time to top-offset px and height px within the grid (business timezone). */
   function eventPx(startIso: string, endIso: string): { top: number; height: number } {
     const startMin = minutesSinceHourStartChicago(startIso);
     const endMin = minutesSinceHourStartChicago(endIso);
@@ -281,7 +308,7 @@ export function AdminCalendarWeekView({
     return events.filter((ev) => !ev.boatId || selectedBoatIds.includes(ev.boatId));
   }, [events, selectedBoatIds]);
 
-  /** Day keys (YYYY-MM-DD) for the week in America/Mazatlan, so events group to the correct column. */
+  /** Day keys (YYYY-MM-DD) for the week in the business timezone, so events group to the correct column. */
   const weekDayKeys = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart);
@@ -334,9 +361,13 @@ export function AdminCalendarWeekView({
     setNewBlockEnd(toCentralDatetimeLocal(slotEnd));
     setNewBlockBoatId("");
     setNewBlockNote("");
+    setNewBlockTicketsHeld("");
+    setNewBlockApplyAcross(false);
     setBlockError(null);
     setBlockNotice(null);
-    if (resolvedExperienceIds.length > 1) setNewBlockExperienceId("");
+    if (resolvedExperienceIds.length > 1) {
+      setNewBlockExperienceId(pickPontoonExperienceId(resolvedExperienceIds, experienceNamesById, defaultExperienceId));
+    }
     setNewBlockConfirmStep(false);
     setNewBlockOpen(true);
   };
@@ -352,19 +383,18 @@ export function AdminCalendarWeekView({
       setBlockError("Select which experience to block for this time slot.");
       return;
     }
-    const ticketsHeldRaw = newBlockTicketsHeld.trim();
+    const isTicketedQuickBlock = ticketedExperienceIds.includes(newBlockExperienceId);
     let ticketsBlocked: number | undefined;
-    if (ticketsHeldRaw) {
-      if (!ticketedExperienceIds.includes(newBlockExperienceId)) {
-        setBlockError("Ticket holdbacks apply to ticketed trip types only.");
-        return;
+    if (isTicketedQuickBlock) {
+      const raw = newBlockTicketsHeld.trim();
+      if (raw) {
+        const n = Number.parseInt(raw, 10);
+        if (!Number.isFinite(n) || n < 1) {
+          setBlockError("Enter how many tickets to take off sale, or leave blank to close the departure.");
+          return;
+        }
+        ticketsBlocked = n;
       }
-      const n = Number.parseInt(ticketsHeldRaw, 10);
-      if (!Number.isFinite(n) || n < 1) {
-        setBlockError("Tickets to hold back must be a positive whole number.");
-        return;
-      }
-      ticketsBlocked = n;
     }
     setNewBlockSaving(true);
     try {
@@ -376,8 +406,9 @@ export function AdminCalendarWeekView({
           experienceId: newBlockExperienceId,
           startAt: startDate.toISOString(),
           endAt: endDate.toISOString(),
-          boatId: newBlockBoatId || undefined,
+          boatId: isTicketedQuickBlock ? undefined : (newBlockBoatId || undefined),
           note: newBlockNote.trim() || undefined,
+          applyAcrossTripTypes: !isTicketedQuickBlock && Boolean(newBlockBoatId) && newBlockApplyAcross,
           ...(ticketsBlocked != null ? { ticketsBlocked } : {}),
         }),
       });
@@ -389,7 +420,9 @@ export function AdminCalendarWeekView({
       setBlockNotice(
         ticketsBlocked != null
           ? `Held back ${ticketsBlocked} ticket${ticketsBlocked === 1 ? "" : "s"} for ${experienceLabel}.`
-          : `Blocked time for ${experienceLabel}.`,
+          : isTicketedQuickBlock
+            ? `Closed ${experienceLabel} for this window.`
+            : `Blocked time for ${experienceLabel}.`,
       );
       setNewBlockOpen(false);
       setNewBlockConfirmStep(false);
@@ -636,7 +669,7 @@ export function AdminCalendarWeekView({
                         type="button"
                         onClick={() => handleCellClick(dayIndex, hour)}
                         aria-label={`Add block ${d.toLocaleDateString()} ${hour}:00`}
-                        className="absolute inset-x-0 border-b border-brand-dark/[0.06] hover:bg-brand-primary/5 transition-colors"
+                        className="absolute inset-x-0 z-0 border-b border-brand-dark/[0.06] hover:bg-brand-primary/5 transition-colors"
                         style={{
                           top: (hour - HOUR_START) * CELL_H,
                           height: CELL_H,
@@ -651,6 +684,7 @@ export function AdminCalendarWeekView({
                       const boatIdx = ev.boatId
                         ? boatList.findIndex((b) => b.id === ev.boatId)
                         : -1;
+                      const market = isBooking ? resolveMarketplaceSource(ev) : null;
                       const accentColor =
                         boatIdx >= 0 && boatColorByIndex[boatIdx]
                           ? boatColorByIndex[boatIdx]
@@ -676,7 +710,7 @@ export function AdminCalendarWeekView({
                             }
                           }}
                           className={cn(
-                            "absolute z-10 overflow-hidden rounded-md text-left transition-opacity hover:opacity-90 active:opacity-75",
+                            "absolute z-20 overflow-hidden rounded-md text-left cursor-pointer transition-opacity hover:opacity-90 active:opacity-75",
                             "flex flex-col justify-start"
                           )}
                           style={{
@@ -690,12 +724,25 @@ export function AdminCalendarWeekView({
                             padding: "3px 5px",
                           }}
                         >
-                          <span
-                            className="block text-[11px] font-semibold leading-tight truncate"
-                            style={{ color: accentColor }}
-                          >
-                            {ev.title}
-                          </span>
+                          <div className="flex items-start justify-between gap-1 min-w-0">
+                            <span
+                              className="min-w-0 block text-[11px] font-semibold leading-tight truncate"
+                              style={{ color: accentColor }}
+                            >
+                              {ev.title}
+                            </span>
+                            {market && (
+                              <MarketplaceSourceBadge source={market} className="px-1.5 py-0.5 text-[8px]" />
+                            )}
+                          </div>
+                          {height > 38 && ev.experienceName && (
+                            <span
+                              className="block text-[10px] leading-tight truncate mt-0.5 opacity-80"
+                              style={{ color: accentColor }}
+                            >
+                              {ev.experienceName}
+                            </span>
+                          )}
                           {height > 38 && (
                             <span
                               className="block text-[10px] leading-tight truncate mt-0.5 opacity-80"
@@ -733,16 +780,67 @@ export function AdminCalendarWeekView({
             setNewBlockConfirmStep(false);
           }
         }}
-        title="New block"
-        description="Block this time slot so it's not bookable."
+        title={ticketedExperienceIds.includes(newBlockExperienceId) ? "Tickets" : "New block"}
+        description={
+          ticketedExperienceIds.includes(newBlockExperienceId)
+            ? "Take a number of tickets off sale, or close the whole departure. Other trip types stay bookable."
+            : "Block this time slot so it's not bookable."
+        }
         fullScreenOnMobile
       >
         <div className="space-y-4">
           <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-            Creating this block will prevent customers from booking this time slot. This takes effect immediately.
+            {ticketedExperienceIds.includes(newBlockExperienceId)
+              ? "This takes effect immediately. Other trip types stay bookable."
+              : "Creating this block will prevent customers from booking this time slot. This takes effect immediately."}
           </p>
           {!newBlockConfirmStep ? (
             <>
+          {resolvedExperienceIds.length > 0 && (
+            <label className="block">
+              <span className="text-xs font-medium text-brand-muted">Trip type</span>
+              <select
+                value={newBlockExperienceId}
+                onChange={(e) => {
+                  setNewBlockExperienceId(e.target.value);
+                  setNewBlockBoatId("");
+                  setNewBlockApplyAcross(false);
+                  setNewBlockTicketsHeld("");
+                }}
+                className="mt-1 w-full rounded-lg border border-brand-dark/20 px-3 py-2 text-sm"
+              >
+                {resolvedExperienceIds.length > 1 && <option value="">Select trip type</option>}
+                {resolvedExperienceIds.map((id) => (
+                  <option key={id} value={id}>
+                    {experienceNamesById[id] ?? id}
+                    {ticketedExperienceIds.includes(id) ? " · tickets" : " · charter"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {ticketedExperienceIds.includes(newBlockExperienceId) ? (
+            <>
+              <label className="block">
+                <span className="text-xs font-medium text-brand-muted">Tickets to take off sale</span>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={newBlockTicketsHeld}
+                  onChange={(e) => setNewBlockTicketsHeld(e.target.value)}
+                  placeholder="e.g. 2 — leave blank to close all"
+                  className="mt-1 w-full rounded-lg border border-brand-dark/20 px-3 py-2 text-sm"
+                />
+                <span className="mt-1 block text-[11px] text-brand-muted">
+                  Enter a number to hold that many tickets. Leave blank to close the whole departure.
+                </span>
+              </label>
+              <p className="text-[11px] text-brand-muted">
+                The window below must overlap the departure. Open the day to pick the exact departure without guessing times.
+              </p>
+            </>
+          ) : null}
           <label className="block">
             <span className="text-xs font-medium text-brand-muted">Start</span>
             <input
@@ -763,43 +861,15 @@ export function AdminCalendarWeekView({
               className="mt-1 w-full rounded-lg border border-brand-dark/20 px-3 py-2 text-sm"
             />
           </label>
-          {resolvedExperienceIds.length > 0 && (
-            <label className="block">
-              <span className="text-xs font-medium text-brand-muted">Trip type</span>
-              <select
-                value={newBlockExperienceId}
-                onChange={(e) => setNewBlockExperienceId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-brand-dark/20 px-3 py-2 text-sm"
-              >
-                {resolvedExperienceIds.length > 1 && <option value="">Select trip type</option>}
-                {resolvedExperienceIds.map((id) => (
-                  <option key={id} value={id}>
-                    {experienceNamesById[id] ?? id}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {ticketedExperienceIds.includes(newBlockExperienceId) && (
-            <label className="block">
-              <span className="text-xs font-medium text-brand-muted">Tickets to hold back (optional)</span>
-              <input
-                type="number"
-                min={1}
-                step={1}
-                value={newBlockTicketsHeld}
-                onChange={(e) => setNewBlockTicketsHeld(e.target.value)}
-                placeholder="Leave blank to block entire departure"
-                className="mt-1 w-full rounded-lg border border-brand-dark/20 px-3 py-2 text-sm"
-              />
-            </label>
-          )}
-          {boatList.length > 0 && (
+          {!ticketedExperienceIds.includes(newBlockExperienceId) && boatList.length > 0 && (
             <label className="block">
               <span className="text-xs font-medium text-brand-muted">Boat (optional)</span>
               <select
                 value={newBlockBoatId}
-                onChange={(e) => setNewBlockBoatId(e.target.value)}
+                onChange={(e) => {
+                  setNewBlockBoatId(e.target.value);
+                  if (!e.target.value) setNewBlockApplyAcross(false);
+                }}
                 className="mt-1 w-full rounded-lg border border-brand-dark/20 px-3 py-2 text-sm"
               >
                 <option value="">All boats for this trip type</option>
@@ -811,16 +881,31 @@ export function AdminCalendarWeekView({
               </select>
             </label>
           )}
-          <p className="text-[11px] text-brand-muted">
-            Blocking one boat applies on every trip type that uses that boat on the public site.
-          </p>
+          {!ticketedExperienceIds.includes(newBlockExperienceId) && (
+            newBlockBoatId ? (
+              <label className="flex items-start gap-2 text-sm text-brand-dark">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 rounded border-brand-dark/30"
+                  checked={newBlockApplyAcross}
+                  onChange={(e) => setNewBlockApplyAcross(e.target.checked)}
+                />
+                <span>
+                  Also block this boat on other trip types
+                  <span className="block text-[11px] text-brand-muted">Leave unchecked to only block this trip type.</span>
+                </span>
+              </label>
+            ) : (
+              <p className="text-[11px] text-brand-muted">Only this trip type is blocked. Other listings stay bookable.</p>
+            )
+          )}
           <label className="block">
             <span className="text-xs font-medium text-brand-muted">Note (optional)</span>
             <input
               type="text"
               value={newBlockNote}
               onChange={(e) => setNewBlockNote(e.target.value)}
-              placeholder="e.g. Maintenance"
+              placeholder={ticketedExperienceIds.includes(newBlockExperienceId) ? "e.g. Private buyout, weather" : "e.g. Maintenance"}
               className="mt-1 w-full rounded-lg border border-brand-dark/20 px-3 py-2 text-sm"
             />
           </label>
@@ -845,7 +930,13 @@ export function AdminCalendarWeekView({
           ) : (
             <>
               <p className="text-sm text-brand-dark">
-                Are you sure you want to block this time? Customers will not be able to book it until the block is removed.
+                {ticketedExperienceIds.includes(newBlockExperienceId)
+                  ? newBlockTicketsHeld.trim()
+                    ? "Those tickets will come off the site. The rest stay on sale."
+                    : "This trip type will be closed for the selected window. Other trip types stay bookable."
+                  : newBlockApplyAcross && newBlockBoatId
+                    ? "This boat will be blocked on every trip type for this window."
+                    : "Only the selected trip type will be blocked. Other trip types stay bookable."}
               </p>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" size="sm" type="button" onClick={() => setNewBlockConfirmStep(false)}>
@@ -862,7 +953,13 @@ export function AdminCalendarWeekView({
                     (resolvedExperienceIds.length > 1 && !newBlockExperienceId)
                   }
                 >
-                  {newBlockSaving ? "Saving…" : "Create block and make unavailable"}
+                  {newBlockSaving
+                    ? "Saving…"
+                    : ticketedExperienceIds.includes(newBlockExperienceId)
+                      ? newBlockTicketsHeld.trim()
+                        ? "Hold tickets"
+                        : "Close departure"
+                      : "Create block and make unavailable"}
                 </Button>
               </div>
             </>

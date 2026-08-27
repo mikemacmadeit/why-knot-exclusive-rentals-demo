@@ -37,20 +37,24 @@ export default function NewWaiverTemplatePage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Link href="/admin/waivers/templates" className="text-brand-muted hover:text-brand-dark">
-          Templates
-        </Link>
-        <span className="text-brand-muted">/</span>
-        <span className="text-brand-dark font-medium">New waiver</span>
-      </div>
-      <div>
-        <h1 className="text-2xl font-bold text-brand-dark">Create waiver template</h1>
-        <p className="mt-1 text-sm text-brand-muted">
-          Set up the waiver guests will sign. You can edit it later and manage requests from the Waivers section.
-        </p>
-      </div>
+    <div className="space-y-6 sm:space-y-8">
+      <section className="relative overflow-hidden rounded-3xl bg-brand-dark px-5 py-6 text-white shadow-premium sm:px-8 sm:py-8">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-brand-secondary/20 blur-3xl" />
+        <div className="relative">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-primary">Waivers</p>
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">Create template</h1>
+          <p className="mt-2 max-w-xl text-sm text-white/70">
+            Set up the waiver guests will sign. You can edit it later and track signatures from Tracking.
+          </p>
+          <Link
+            href="/admin/waivers/templates"
+            className="mt-5 inline-flex text-xs font-semibold text-brand-primary hover:underline"
+          >
+            ← Back to templates
+          </Link>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">

@@ -5,6 +5,10 @@ import type { Booking, AddonSelection } from "@/lib/booking/types";
 import { parseSlotIdRelaxed, getSlotStartEnd } from "@/lib/booking/experience-slots";
 import { formatBookingTime } from "@/lib/booking/format-booking-datetime";
 import { pickAdminBookingDiscountFields } from "@/lib/booking/admin-booking-discount-fields";
+import { pickAdminRescheduleFields } from "@/lib/booking/admin-reschedule";
+import { customerContactForAdminApi, pickMarketplaceBookingApiFields } from "@/lib/admin/marketplace-source";
+import { pickAssignedCaptainApiFields } from "@/lib/admin/assigned-captain";
+import { pickOperatorNotesApiFields } from "@/lib/admin/operator-notes";
 
 function toDate(ts: { seconds?: number; nanoseconds?: number; toDate?: () => Date }): string | null {
   if (ts.toDate) return ts.toDate().toISOString();
@@ -153,10 +157,13 @@ export async function GET(
       experienceName,
       boatId,
       boatName,
-      customer: b.customer,
+      customer: customerContactForAdminApi(b.customer),
       partySize: b.partySize ?? null,
       petsCount: b.petsCount ?? 0,
       specialNotes: b.specialNotes ?? null,
+      ...pickMarketplaceBookingApiFields(b),
+      ...pickAssignedCaptainApiFields(b),
+      ...pickOperatorNotesApiFields(b),
       answers: b.answers ?? {},
       addonSelections: b.addonSelections ?? [],
       addonsWithNames,
@@ -166,6 +173,7 @@ export async function GET(
       pricing: b.pricing,
       tipCents: (b as { tipCents?: number }).tipCents ?? null,
       ...pickAdminBookingDiscountFields(b as { discountCode?: string; discountCents?: number }),
+      ...pickAdminRescheduleFields(b),
       status: b.status,
       stripe: b.stripe ?? undefined,
       card: bWithExt.card ?? undefined,
@@ -190,5 +198,57 @@ export async function GET(
       { error: message, ...(isFirebaseConfig && { hint: FIREBASE_SETUP_HINT }) },
       { status: isFirebaseConfig ? 503 : 500 }
     );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const unauthorized = await requireAdminSession(request.headers.get("cookie"));
+  if (unauthorized) return unauthorized;
+  const { id } = await params;
+  if (!id) return NextResponse.json({ error: "Booking id required" }, { status: 400 });
+  const body = (await request.json().catch(() => ({}))) as {
+    marketplacePayoutCents?: number;
+    marketplacePayoutDollars?: string;
+    fromStoredEmail?: boolean;
+  };
+  try {
+    const {
+      applyMarketplacePayoutCents,
+      backfillZeroDollarMarketplacePayouts,
+    } = await import("@/lib/integrations/marketplaces/booking-service");
+    if (body.fromStoredEmail === true) {
+      const result = await backfillZeroDollarMarketplacePayouts({ bookingId: id });
+      if (result.updated === 0) {
+        return NextResponse.json(
+          { error: "No payout found in the saved marketplace email for this booking." },
+          { status: 422 }
+        );
+      }
+      return NextResponse.json({ ok: true, ...result });
+    }
+    let cents =
+      typeof body.marketplacePayoutCents === "number" ? Math.round(body.marketplacePayoutCents) : NaN;
+    if (!Number.isFinite(cents) && typeof body.marketplacePayoutDollars === "string") {
+      const n = Number.parseFloat(body.marketplacePayoutDollars.replace(/[$,]/g, "").trim());
+      cents = Number.isFinite(n) ? Math.round(n * 100) : NaN;
+    }
+    if (!Number.isFinite(cents) || cents < 1) {
+      return NextResponse.json({ error: "Enter a payout amount, like 81.90" }, { status: 400 });
+    }
+    const result = await applyMarketplacePayoutCents(id, cents, "admin");
+    const { writeAdminAuditLog } = await import("@/lib/booking/admin-audit-log");
+    const { getAdminEmailFromSessionCookie } = await import("@/lib/admin-auth-firebase");
+    await writeAdminAuditLog("marketplace_payout_set", {
+      bookingId: id,
+      totalCents: result.totalCents,
+      adminEmail: (await getAdminEmailFromSessionCookie(request.headers.get("cookie"))) ?? null,
+    });
+    return NextResponse.json({ ok: true, ...result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminSession, FIREBASE_SETUP_HINT } from "@/lib/admin-auth-firebase";
+import { requireAdminSession, FIREBASE_SETUP_HINT, getAdminPrincipalFromSessionCookie } from "@/lib/admin-auth-firebase";
 import { getDb } from "@/lib/booking/firebase-admin";
 import type { Booking, Experience } from "@/lib/booking/types";
 import {
@@ -9,6 +9,7 @@ import {
 import { parseSlotId, getSlotStartEnd, getDateStrInSlotTimezone } from "@/lib/booking/experience-slots";
 import { formatBookingTime } from "@/lib/booking/format-booking-datetime";
 import { getNotificationOutboxStats } from "@/lib/booking/notification-outbox";
+import { displayMarketplaceGuestEmail, pickMarketplaceBookingApiFields } from "@/lib/admin/marketplace-source";
 
 export const maxDuration = 26;
 
@@ -21,6 +22,10 @@ function toDate(ts: { seconds?: number; toDate?: () => Date }): Date | null {
 function formatTimeLabel(dateStr: string, startHour: number, durationHours: number, startMinute = 0): string {
   const { start } = getSlotStartEnd(dateStr, startHour, durationHours, startMinute);
   return formatBookingTime(start);
+}
+
+function marketplaceFieldsFromBooking(b: Booking) {
+  return pickMarketplaceBookingApiFields(b);
 }
 
 /** Firestore Timestamp-shaped value on operationalAlerts documents. */
@@ -37,6 +42,10 @@ function operationalAlertCreatedAtMs(data: {
 export async function GET(request: NextRequest) {
   const unauthorized = await requireAdminSession(request.headers.get("cookie"));
   if (unauthorized) return unauthorized;
+  const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
+  if (principal?.role === "captain") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const db = getDb();
@@ -127,7 +136,16 @@ export async function GET(request: NextRequest) {
     const revenueThisMonthCents = thisMonthSnap.exists ? ((thisMonthSnap.data() as { revenueCents?: number })?.revenueCents ?? 0) : 0;
     const revenueLastMonthCents = lastMonthSnap.exists ? ((lastMonthSnap.data() as { revenueCents?: number })?.revenueCents ?? 0) : 0;
 
-    type RecentRow = { id: string; createdAt: string; customerEmail: string; customerName: string; totalCents: number; status: string; experienceName: string };
+    type MarketplaceRowFields = ReturnType<typeof pickMarketplaceBookingApiFields>;
+    type RecentRow = {
+      id: string;
+      createdAt: string;
+      customerEmail: string;
+      customerName: string;
+      totalCents: number;
+      status: string;
+      experienceName: string;
+    } & MarketplaceRowFields;
     type UpcomingRow = {
       id: string;
       tripDateStr: string;
@@ -136,9 +154,10 @@ export async function GET(request: NextRequest) {
       customerName: string;
       customerEmail: string;
       totalCents: number;
-      /** Slot start instant (America/Mazatlan grid); used server-side for sort only — omitted from JSON. */
+      /** Slot start instant (America/Chicago grid); used server-side for sort only — omitted from JSON. */
       slotStartMs: number;
-    };
+    } & MarketplaceRowFields;
+
     const recentBookings: RecentRow[] = [];
     const upcomingBookings: UpcomingRow[] = [];
 
@@ -149,11 +168,12 @@ export async function GET(request: NextRequest) {
       recentBookings.push({
         id: d.id,
         createdAt: createdAt?.toISOString() ?? "",
-        customerEmail: b.customer?.email ?? "",
+        customerEmail: displayMarketplaceGuestEmail(b.customer?.email),
         customerName: b.customer?.name ?? "",
         totalCents: (b.stripe?.totalAmountCents ?? b.pricing?.totalCents) ?? 0,
         status: b.status ?? "",
         experienceName: expName,
+        ...marketplaceFieldsFromBooking(b),
       });
     });
 
@@ -173,9 +193,10 @@ export async function GET(request: NextRequest) {
         timeLabel: formatTimeLabel(dateStr, parsed.startHour, parsed.durationHours, parsed.startMinute),
         experienceName: expName,
         customerName: b.customer?.name ?? "",
-        customerEmail: b.customer?.email ?? "",
+        customerEmail: displayMarketplaceGuestEmail(b.customer?.email),
         totalCents: (b.stripe?.totalAmountCents ?? b.pricing?.totalCents) ?? 0,
         slotStartMs: start.getTime(),
+        ...marketplaceFieldsFromBooking(b),
       });
     });
 
@@ -235,47 +256,74 @@ export async function GET(request: NextRequest) {
       if (row.type === "booking_confirmation") confirmationDeadLetterCount++;
     });
 
+    const upcomingRows = upcomingBookings.slice(0, 14).map(
+      ({
+        id,
+        tripDateStr,
+        timeLabel,
+        experienceName,
+        customerName,
+        customerEmail,
+        totalCents,
+        source,
+        externalProvider,
+        externalBookingId,
+        externalListingName,
+        marketplaceDetails,
+        marketplaceEmailExcerpt,
+        externalKey,
+      }) => ({
+        id,
+        tripDateStr,
+        timeLabel,
+        experienceName,
+        customerName,
+        customerEmail,
+        totalCents,
+        source,
+        externalProvider,
+        externalBookingId,
+        externalListingName,
+        marketplaceDetails,
+        marketplaceEmailExcerpt,
+        externalKey,
+      })
+    );
+    const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
+    const hideFinancials = principal?.role === "operator";
     return NextResponse.json({
-      totalRevenueCents,
-      revenueThisMonthCents,
-      revenueLastMonthCents,
+      hideFinancials,
+      totalRevenueCents: hideFinancials ? 0 : totalRevenueCents,
+      revenueThisMonthCents: hideFinancials ? 0 : revenueThisMonthCents,
+      revenueLastMonthCents: hideFinancials ? 0 : revenueLastMonthCents,
       slotTakenBookingsCount,
       slotTakenBookingStatuses: slotTakenStatuses,
-      summaryIncrementedBookingCount,
+      summaryIncrementedBookingCount: hideFinancials ? 0 : summaryIncrementedBookingCount,
       uniqueCustomerCount,
       listingCount: experiencesSnap.size,
-      recentBookings,
-      upcomingBookings: upcomingBookings.slice(0, 14).map(
-        ({ id, tripDateStr, timeLabel, experienceName, customerName, customerEmail, totalCents }) => ({
-          id,
-          tripDateStr,
-          timeLabel,
-          experienceName,
-          customerName,
-          customerEmail,
-          totalCents,
-        })
-      ),
-      confirmationDeadLetterCount,
-      /** Among the last 500 bookings (by createdAt): slot-taken rows missing boatId where per-boat occupancy applies (excludes shared ticketed inventory). */
-      recentBookingsMissingBoatId,
-      finalFailedBeyondGraceCount,
-      /** Capped at 400 documents; sum/count are for that page only (same pattern as final-failed scan). */
-      finalDueCount,
-      finalDueTotalCents,
-      finalDuePastDueCount,
+      recentBookings: hideFinancials
+        ? recentBookings.map((row) => ({ ...row, totalCents: 0 }))
+        : recentBookings,
+      upcomingBookings: hideFinancials ? upcomingRows.map((row) => ({ ...row, totalCents: 0 })) : upcomingRows,
+      confirmationDeadLetterCount: hideFinancials ? 0 : confirmationDeadLetterCount,
+      recentBookingsMissingBoatId: hideFinancials ? 0 : recentBookingsMissingBoatId,
+      finalFailedBeyondGraceCount: hideFinancials ? 0 : finalFailedBeyondGraceCount,
+      finalDueCount: hideFinancials ? 0 : finalDueCount,
+      finalDueTotalCents: hideFinancials ? 0 : finalDueTotalCents,
+      finalDuePastDueCount: hideFinancials ? 0 : finalDuePastDueCount,
       finalFailedReleaseSlaHours,
-      missingBookingStartDateStrCount,
-      missingHoldsStartDateStrCount,
-      /** Recent operational alerts: legacy cancels where summary revenue was not decremented (investigate in Firestore operationalAlerts). */
-      adminCancelSummaryAdjustmentSkippedCount,
-      notificationOutboxStats: {
-        byType: notificationOutboxStats.byType,
-        staleClaimCountsByTemplate: notificationOutboxStats.staleClaimCountsByTemplate,
-        deadLetterTotal: notificationOutboxStats.deadLetter,
-        pendingTotal: notificationOutboxStats.pending,
-        stuckClaimsTotal: notificationOutboxStats.stuckClaims,
-      },
+      missingBookingStartDateStrCount: hideFinancials ? 0 : missingBookingStartDateStrCount,
+      missingHoldsStartDateStrCount: hideFinancials ? 0 : missingHoldsStartDateStrCount,
+      adminCancelSummaryAdjustmentSkippedCount: hideFinancials ? 0 : adminCancelSummaryAdjustmentSkippedCount,
+      notificationOutboxStats: hideFinancials
+        ? undefined
+        : {
+            byType: notificationOutboxStats.byType,
+            staleClaimCountsByTemplate: notificationOutboxStats.staleClaimCountsByTemplate,
+            deadLetterTotal: notificationOutboxStats.deadLetter,
+            pendingTotal: notificationOutboxStats.pending,
+            stuckClaimsTotal: notificationOutboxStats.stuckClaims,
+          },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

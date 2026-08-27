@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useAdminPrincipal } from "./AdminShell";
+import { CaptainDashboardClient } from "@/components/admin/CaptainDashboardClient";
+import { cn } from "@/lib/utils";
 import { getAdminBookingStatusBadgeClass } from "@/lib/admin/admin-booking-status-badge";
+import { MarketplaceSourceBadge } from "@/components/admin/MarketplaceSourceBadge";
+import { hasFeature } from "@/lib/plan";
 import {
   DollarSign,
   Calendar,
@@ -12,15 +16,15 @@ import {
   List,
   TrendingUp,
   TrendingDown,
-  Minus,
   Ship,
   Mail,
   ChevronRight,
   Sparkles,
+  Activity,
 } from "lucide-react";
-import { hasFeature } from "@/lib/plan";
 
 type DashboardStats = {
+  hideFinancials?: boolean;
   totalRevenueCents: number;
   revenueThisMonthCents: number;
   revenueLastMonthCents: number;
@@ -45,6 +49,13 @@ type DashboardStats = {
     totalCents: number;
     status: string;
     experienceName: string;
+    source?: string | null;
+    externalProvider?: string | null;
+    externalBookingId?: string | null;
+    externalListingName?: string | null;
+    externalKey?: string | null;
+    marketplaceDetails?: Record<string, string> | null;
+    marketplaceEmailExcerpt?: string | null;
   }[];
   upcomingBookings: {
     id: string;
@@ -54,6 +65,13 @@ type DashboardStats = {
     customerName: string;
     customerEmail: string;
     totalCents: number;
+    source?: string | null;
+    externalProvider?: string | null;
+    externalBookingId?: string | null;
+    externalListingName?: string | null;
+    externalKey?: string | null;
+    marketplaceDetails?: Record<string, string> | null;
+    marketplaceEmailExcerpt?: string | null;
   }[];
   notificationOutboxStats?: {
     byType: {
@@ -69,12 +87,26 @@ type DashboardStats = {
   };
 };
 
-function StatCard({
+function dashboardMarketplaceBooking(b: {
+  customerEmail: string;
+  source?: string | null;
+  externalProvider?: string | null;
+  externalBookingId?: string | null;
+  externalListingName?: string | null;
+  externalKey?: string | null;
+  marketplaceDetails?: Record<string, string> | null;
+  marketplaceEmailExcerpt?: string | null;
+}) {
+  return { ...b, customer: { email: b.customerEmail } };
+}
+
+function MetricCard({
   href,
   label,
   value,
   sub,
   icon: Icon,
+  tone = "teal",
   trend,
 }: {
   href: string;
@@ -82,54 +114,89 @@ function StatCard({
   value: string | number;
   sub?: string;
   icon: React.ComponentType<{ className?: string }>;
-  trend?: "up" | "down" | "flat";
+  tone?: "teal" | "pink" | "navy" | "amber";
+  trend?: { dir: "up" | "down" | "flat"; text: string };
 }) {
+  const toneClass =
+    tone === "pink"
+      ? "bg-brand-secondary/10 text-brand-secondary"
+      : tone === "navy"
+        ? "bg-brand-dark/10 text-brand-dark"
+        : tone === "amber"
+          ? "bg-amber-100 text-amber-800"
+          : "bg-brand-primary/10 text-brand-primary";
+  const barClass =
+    tone === "pink"
+      ? "from-brand-secondary to-brand-secondary/40"
+      : tone === "amber"
+        ? "from-amber-400 to-amber-200"
+        : tone === "navy"
+          ? "from-brand-dark to-brand-primary"
+          : "from-brand-primary to-brand-primary/40";
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-2xl border border-brand-dark/10 bg-white p-5 shadow-sm transition-all hover:border-brand-primary/25 hover:shadow-md sm:p-6"
+      className="group relative overflow-hidden rounded-2xl border border-brand-dark/10 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
     >
+      <div className={cn("absolute inset-x-0 top-0 h-1 bg-gradient-to-r", barClass)} />
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand-muted">{label}</p>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-brand-dark sm:text-3xl">{value}</p>
-          {sub != null && sub !== "" && (
-            <p className="mt-1 text-sm text-brand-muted">{sub}</p>
-          )}
-          {trend !== undefined && (
-            <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium">
-              {trend === "up" && <TrendingUp className="h-4 w-4 text-emerald-600" aria-hidden />}
-              {trend === "down" && <TrendingDown className="h-4 w-4 text-amber-600" aria-hidden />}
-              {trend === "flat" && <Minus className="h-4 w-4 text-brand-muted" aria-hidden />}
-              {trend === "up" && <span className="text-emerald-700">vs last month</span>}
-              {trend === "down" && <span className="text-amber-700">vs last month</span>}
-              {trend === "flat" && <span className="text-brand-muted">vs last month</span>}
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-muted">{label}</p>
+          <p className="mt-2 font-display text-2xl font-bold tracking-tight text-brand-dark sm:text-[1.65rem]">{value}</p>
+          {sub ? <p className="mt-1 text-xs leading-relaxed text-brand-muted">{sub}</p> : null}
+          {trend ? (
+            <span
+              className={cn(
+                "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                trend.dir === "up"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : trend.dir === "down"
+                    ? "bg-amber-50 text-amber-800"
+                    : "bg-brand-dark/5 text-brand-muted"
+              )}
+            >
+              {trend.dir === "up" && <TrendingUp className="h-3.5 w-3.5" aria-hidden />}
+              {trend.dir === "down" && <TrendingDown className="h-3.5 w-3.5" aria-hidden />}
+              {trend.text}
             </span>
-          )}
+          ) : null}
         </div>
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-colors group-hover:bg-brand-primary/20">
-          <Icon className="h-6 w-6" aria-hidden />
+        <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", toneClass)}>
+          <Icon className="h-5 w-5" aria-hidden />
         </div>
       </div>
-      <span className="absolute right-4 top-4 opacity-0 transition-opacity group-hover:opacity-100">
-        <ChevronRight className="h-5 w-5 text-brand-muted" aria-hidden />
-      </span>
+      <ChevronRight className="absolute right-4 top-4 h-4 w-4 text-brand-muted opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
     </Link>
   );
 }
 
-function SkeletonCard() {
+function DashboardSkeleton() {
   return (
-    <div className="rounded-2xl border border-brand-dark/10 bg-white p-5 sm:p-6 animate-pulse">
-      <div className="h-4 w-24 rounded bg-brand-dark/10" />
-      <div className="mt-3 h-8 w-32 rounded bg-brand-dark/15" />
-      <div className="mt-2 h-4 w-16 rounded bg-brand-dark/10" />
+    <div className="space-y-6 sm:space-y-8 animate-pulse">
+      <div className="h-56 rounded-3xl bg-brand-dark/90" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-28 rounded-2xl border border-brand-dark/10 bg-white" />
+        ))}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="h-72 rounded-3xl border border-brand-dark/10 bg-white" />
+        <div className="h-72 rounded-3xl border border-brand-dark/10 bg-white" />
+      </div>
     </div>
   );
 }
 
 export default function AdminHomePage() {
-  const router = useRouter();
+  const { role } = useAdminPrincipal();
+  if (role === "captain") return <CaptainDashboardClient />;
+  return <OperatorAdminHomePage />;
+}
+
+function OperatorAdminHomePage() {
+  const { displayName, role } = useAdminPrincipal();
+  const firstName = displayName?.trim() || "there";
+  const showFinancials = role !== "operator" && hasFeature("financials");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -170,20 +237,18 @@ export default function AdminHomePage() {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(cents / 100);
   }
 
-  function revenueTrend(thisMonth: number, lastMonth: number): "up" | "down" | "flat" {
-    if (lastMonth === 0) return thisMonth > 0 ? "up" : "flat";
-    const pct = ((thisMonth - lastMonth) / lastMonth) * 100;
-    if (pct > 2) return "up";
-    if (pct < -2) return "down";
-    return "flat";
+  function monthTrendInfo(thisMonth: number, lastMonth: number): { dir: "up" | "down" | "flat"; text: string } {
+    const pct = lastMonth === 0 ? (thisMonth > 0 ? 100 : 0) : Math.round(((thisMonth - lastMonth) / lastMonth) * 100);
+    const dir: "up" | "down" | "flat" = pct > 2 ? "up" : pct < -2 ? "down" : "flat";
+    return { dir, text: `${pct > 0 ? "+" : ""}${pct}% vs last month` };
   }
 
   const greeting = (() => {
-    if (!headerNow) return "Welcome back";
+    if (!headerNow) return `Welcome back, ${firstName}`;
     const h = headerNow.getHours();
-    if (h < 12) return "Good morning";
-    if (h < 18) return "Good afternoon";
-    return "Good evening";
+    if (h < 12) return `Good morning, ${firstName}`;
+    if (h < 18) return `Good afternoon, ${firstName}`;
+    return `Good evening, ${firstName}`;
   })();
   const dateLabel =
     headerNow?.toLocaleDateString("en-US", {
@@ -193,69 +258,27 @@ export default function AdminHomePage() {
       year: "numeric",
     }) ?? "Today";
 
-  return (
-    <div className="space-y-8 sm:space-y-10">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-dark sm:text-3xl">Dashboard</h1>
-          <p className="mt-1 flex items-center gap-2 text-sm text-brand-muted">
-            <Sparkles className="h-4 w-4 text-brand-primary" aria-hidden />
-            {greeting} — {dateLabel}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={checkBookingHealth}
-          disabled={healthLoading}
-          className="rounded-xl border border-brand-dark/15 bg-white px-4 py-2 text-sm font-medium text-brand-dark shadow-sm transition-colors hover:bg-brand-bg disabled:opacity-60"
-        >
-          {healthLoading ? "Checking…" : "Check booking health"}
-        </button>
-      </div>
-      {healthResult != null && (
-        <div className="space-y-3">
-          {(healthResult as Record<string, unknown>).manageBookingSecret === "not_configured" && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900" role="alert">
-              <p className="font-semibold">MANAGE_BOOKING_SECRET not set</p>
-              <p className="mt-1 text-sm">
-                Receipt links, manage-booking links, and release-token signing are degraded or unavailable. Set MANAGE_BOOKING_SECRET in your environment so confirmation emails and customer links work correctly.
-              </p>
-            </div>
-          )}
-          <div className="rounded-2xl border border-brand-dark/10 bg-white p-4 font-mono text-xs text-brand-dark overflow-x-auto">
-            <pre className="whitespace-pre-wrap break-words">{JSON.stringify(healthResult, null, 2)}</pre>
-          </div>
-        </div>
-      )}
+  const quickActions: {
+    href: string;
+    label: string;
+    sub: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tone: "teal" | "pink" | "navy" | "amber";
+    primary?: boolean;
+  }[] = [
+    { href: "/admin/experiences/new", label: "Create listing", sub: "New experience", icon: Sparkles, tone: "teal", primary: true },
+    { href: "/admin/experiences", label: "Listings", sub: stats ? `${stats.listingCount} live` : "Manage", icon: List, tone: "navy" },
+    { href: "/admin/boats", label: "Boats", sub: "Fleet & occupancy", icon: Ship, tone: "pink" },
+    { href: "/admin/bookings", label: "Bookings", sub: "Trips & guests", icon: BookOpen, tone: "amber" },
+    ...(showFinancials
+      ? [{ href: "/admin/financials", label: "Financials", sub: "Revenue & payouts", icon: DollarSign, tone: "teal" as const }]
+      : []),
+    { href: "/admin/emails", label: "Emails", sub: "Templates & log", icon: Mail, tone: "navy" },
+  ];
 
-      {loading && (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-brand-dark/10 bg-white p-6 animate-pulse">
-              <div className="h-6 w-40 rounded bg-brand-dark/10" />
-              <div className="mt-4 space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-14 rounded-lg bg-brand-dark/5" />
-                ))}
-              </div>
-            </div>
-            <div className="rounded-2xl border border-brand-dark/10 bg-white p-6 animate-pulse">
-              <div className="h-6 w-32 rounded bg-brand-dark/10" />
-              <div className="mt-4 space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-12 rounded-lg bg-brand-dark/5" />
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+  return (
+    <div className="space-y-6 sm:space-y-8">
+      {loading && <DashboardSkeleton />}
 
       {error && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-800 shadow-sm">
@@ -270,7 +293,89 @@ export default function AdminHomePage() {
 
       {!loading && stats && (
         <>
-          {(stats.confirmationDeadLetterCount ?? 0) > 0 && (
+          <section className="relative overflow-hidden rounded-3xl bg-brand-dark px-5 py-6 text-white shadow-premium sm:px-8 sm:py-8">
+            <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-primary/25 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-brand-secondary/20 blur-3xl" />
+            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-primary">Dashboard</h1>
+                <p className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+                  {greeting}
+                </p>
+                <p className="mt-2 text-sm text-white/70">{dateLabel}</p>
+                {showFinancials ? (
+                  <>
+                    <p className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                      {formatCents(stats.totalRevenueCents)}
+                    </p>
+                    <p className="mt-2 text-sm text-white/80">All-time attributed revenue</p>
+                  </>
+                ) : (
+                  <p className="mt-4 text-sm text-white/80">Calendar, bookings, customers, and waivers</p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-3 lg:justify-end">
+                {showFinancials && (
+                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">This month</p>
+                  <p className="mt-1 text-lg font-bold">{formatCents(stats.revenueThisMonthCents)}</p>
+                  <p className="text-[11px] text-white/60">Last {formatCents(stats.revenueLastMonthCents ?? 0)}</p>
+                </div>
+                )}
+                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Active bookings</p>
+                  <p className="mt-1 text-lg font-bold">{stats.slotTakenBookingsCount.toLocaleString()}</p>
+                  <p className="text-[11px] text-white/60">Holding a slot</p>
+                </div>
+                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Customers</p>
+                  <p className="mt-1 text-lg font-bold">{stats.uniqueCustomerCount.toLocaleString()}</p>
+                  <p className="text-[11px] text-white/60">Last 500 bookings</p>
+                </div>
+                <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Listings</p>
+                  <p className="mt-1 text-lg font-bold">{stats.listingCount.toLocaleString()}</p>
+                  <p className="text-[11px] text-white/60">Experiences</p>
+                </div>
+              </div>
+            </div>
+            <div className="relative mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
+              <p className="max-w-xl text-xs leading-relaxed text-white/55">
+                {showFinancials
+                  ? "Snapshot of revenue, upcoming trips, and recent bookings. Open Financials for date filters, platforms, and Stripe."
+                  : "Upcoming trips and recent bookings. Dollar amounts are hidden for Operator accounts."}
+              </p>
+              {showFinancials && (
+              <button
+                type="button"
+                onClick={checkBookingHealth}
+                disabled={healthLoading}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20 disabled:opacity-40"
+              >
+                <Activity className={cn("h-3.5 w-3.5", healthLoading && "animate-pulse")} aria-hidden />
+                {healthLoading ? "Checking…" : "Check booking health"}
+              </button>
+              )}
+            </div>
+          </section>
+
+          {showFinancials && healthResult != null && (
+            <div className="space-y-3">
+              {(healthResult as Record<string, unknown>).manageBookingSecret === "not_configured" && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900" role="alert">
+                  <p className="font-semibold">MANAGE_BOOKING_SECRET not set</p>
+                  <p className="mt-1 text-sm">
+                    Receipt links, manage-booking links, and release-token signing are degraded or unavailable. Set MANAGE_BOOKING_SECRET in your environment so confirmation emails and customer links work correctly.
+                  </p>
+                </div>
+              )}
+              <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white p-4 font-mono text-xs text-brand-dark shadow-sm">
+                <pre className="whitespace-pre-wrap break-words overflow-x-auto">{JSON.stringify(healthResult, null, 2)}</pre>
+              </div>
+            </div>
+          )}
+
+          {showFinancials && (stats.confirmationDeadLetterCount ?? 0) > 0 && (
             <div
               className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 sm:px-5 sm:py-4"
               role="status"
@@ -287,7 +392,7 @@ export default function AdminHomePage() {
               </p>
             </div>
           )}
-          {(stats.adminCancelSummaryAdjustmentSkippedCount ?? 0) > 0 && (
+          {showFinancials && (stats.adminCancelSummaryAdjustmentSkippedCount ?? 0) > 0 && (
             <div
               className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-950 sm:px-5 sm:py-4"
               role="alert"
@@ -307,10 +412,10 @@ export default function AdminHomePage() {
               </p>
             </div>
           )}
-          {stats.notificationOutboxStats && (
-            <div className="rounded-2xl border border-brand-dark/10 bg-white px-4 py-3 text-sm shadow-sm sm:px-5">
-              <p className="font-semibold text-brand-dark">Notification outbox</p>
-              <p className="mt-1 text-brand-muted">
+          {showFinancials && stats.notificationOutboxStats && (
+            <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white px-5 py-4 text-sm shadow-sm sm:px-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-muted">Notification outbox</p>
+              <p className="mt-2 text-brand-dark">
                 Booking confirmations — pending: {stats.notificationOutboxStats.byType.booking_confirmation.pending}, dead
                 letter: {stats.notificationOutboxStats.byType.booking_confirmation.deadLetter}, stuck claims:{" "}
                 {stats.notificationOutboxStats.byType.booking_confirmation.stuckClaims}. Final-charge / waiver / discount
@@ -318,7 +423,7 @@ export default function AdminHomePage() {
               </p>
             </div>
           )}
-          {(stats.recentBookingsMissingBoatId ?? 0) > 0 && (
+          {showFinancials && (stats.recentBookingsMissingBoatId ?? 0) > 0 && (
             <div
               className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-red-950 sm:px-5 sm:py-4"
               role="alert"
@@ -342,41 +447,52 @@ export default function AdminHomePage() {
               </p>
             </div>
           )}
-          {/* KPI row */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              href={hasFeature("financials") ? "/admin/financials" : "/admin/bookings"}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {showFinancials && (
+              <>
+            <MetricCard
+              href="/admin/financials"
               label="Revenue (all time)"
               value={formatCents(stats.totalRevenueCents)}
               icon={DollarSign}
+              tone="teal"
             />
-            <StatCard
-              href={hasFeature("financials") ? "/admin/financials" : "/admin/bookings"}
+            <MetricCard
+              href="/admin/financials"
               label="This month"
               value={formatCents(stats.revenueThisMonthCents)}
-              sub={`Last month: ${formatCents(stats.revenueLastMonthCents ?? 0)}`}
-              trend={revenueTrend(stats.revenueThisMonthCents, stats.revenueLastMonthCents ?? 0)}
+              sub={`Last month ${formatCents(stats.revenueLastMonthCents ?? 0)}`}
+              trend={monthTrendInfo(stats.revenueThisMonthCents, stats.revenueLastMonthCents ?? 0)}
               icon={TrendingUp}
+              tone="pink"
             />
-            <StatCard
+              </>
+            )}
+            <MetricCard
               href="/admin/bookings"
-              label="Bookings (slot-taken statuses)"
+              label="Bookings (slot-taken)"
               value={stats.slotTakenBookingsCount}
-              sub={`Statuses: ${stats.slotTakenBookingStatuses.join(", ")}. Summary revenue counter: ${stats.summaryIncrementedBookingCount}.`}
+              sub={
+                showFinancials
+                  ? `Statuses: ${stats.slotTakenBookingStatuses.join(", ")}. Summary counter: ${stats.summaryIncrementedBookingCount}.`
+                  : "Trips currently holding a slot"
+              }
               icon={BookOpen}
+              tone="navy"
             />
-            <StatCard
+            <MetricCard
               href="/admin/customers"
-              label="Recent customers (last 500 bookings, unique by email)"
+              label="Recent customers"
               value={stats.uniqueCustomerCount}
+              sub="Last 500 bookings, unique by email"
               icon={Users}
+              tone="amber"
             />
           </div>
 
-          {/* Upcoming + Recent + Quick actions */}
           <div className="grid gap-6 lg:grid-cols-2">
-            {/* Upcoming trips */}
-            <div className="rounded-2xl border border-brand-dark/10 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-brand-dark/10 px-5 py-4 sm:px-6">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-brand-dark">
                   <Calendar className="h-5 w-5 text-brand-primary" aria-hidden />
@@ -398,17 +514,25 @@ export default function AdminHomePage() {
                           href={`/admin/bookings?highlight=${b.id}`}
                           className="flex flex-wrap items-center gap-3 px-5 py-3.5 transition-colors hover:bg-brand-bg/80 sm:px-6"
                         >
-                          <div className="flex flex-col">
+                          <div className="flex min-w-[4.5rem] flex-col">
                             <span className="text-sm font-medium text-brand-dark">
                               {new Date(b.tripDateStr + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                             </span>
                             <span className="text-xs text-brand-muted">{b.timeLabel}</span>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-brand-dark">{b.experienceName}</p>
+                            <p className="flex min-w-0 items-center gap-2">
+                              <span className="truncate text-sm font-medium text-brand-dark">{b.experienceName}</span>
+                              <MarketplaceSourceBadge
+                                booking={dashboardMarketplaceBooking(b)}
+                                className="px-1.5 py-0.5 text-[8px]"
+                              />
+                            </p>
                             <p className="truncate text-xs text-brand-muted">{b.customerName || b.customerEmail || "—"}</p>
                           </div>
-                          <span className="text-sm font-semibold text-brand-primary">{formatCents(b.totalCents)}</span>
+                          {showFinancials ? (
+                            <span className="text-sm font-bold text-brand-dark">{formatCents(b.totalCents)}</span>
+                          ) : null}
                           <ChevronRight className="h-4 w-4 shrink-0 text-brand-muted" aria-hidden />
                         </Link>
                       </li>
@@ -426,8 +550,7 @@ export default function AdminHomePage() {
               </div>
             </div>
 
-            {/* Recent bookings */}
-            <div className="rounded-2xl border border-brand-dark/10 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-brand-dark/10 px-5 py-4 sm:px-6">
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-brand-dark">
                   <BookOpen className="h-5 w-5 text-brand-primary" aria-hidden />
@@ -453,10 +576,18 @@ export default function AdminHomePage() {
                             {b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "—"}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-brand-dark">{b.experienceName}</p>
+                            <p className="flex min-w-0 items-center gap-2">
+                              <span className="truncate text-sm font-medium text-brand-dark">{b.experienceName}</span>
+                              <MarketplaceSourceBadge
+                                booking={dashboardMarketplaceBooking(b)}
+                                className="px-1.5 py-0.5 text-[8px]"
+                              />
+                            </p>
                             <p className="truncate text-xs text-brand-muted">{b.customerName || b.customerEmail || "—"}</p>
                           </div>
-                          <span className="text-sm font-semibold text-brand-dark">{formatCents(b.totalCents)}</span>
+                          {showFinancials ? (
+                            <span className="text-sm font-bold text-brand-dark">{formatCents(b.totalCents)}</span>
+                          ) : null}
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getAdminBookingStatusBadgeClass(b.status)}`}
                           >
@@ -478,54 +609,52 @@ export default function AdminHomePage() {
             </div>
           </div>
 
-          {/* Quick actions */}
-          <div className="rounded-2xl border border-brand-dark/10 bg-gradient-to-br from-brand-primary/5 to-brand-dark/5 p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-brand-dark">Quick actions</h2>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/admin/experiences/new"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-primary/90 hover:shadow"
-              >
-                <Sparkles className="h-4 w-4" aria-hidden />
-                Create listing
-              </Link>
-              <Link
-                href="/admin/experiences"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-brand-dark/15 bg-white px-5 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:border-brand-primary/30 hover:bg-brand-bg/50"
-              >
-                <List className="h-4 w-4" aria-hidden />
-                Listings ({stats.listingCount})
-              </Link>
-              <Link
-                href="/admin/boats"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-brand-dark/15 bg-white px-5 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:border-brand-primary/30 hover:bg-brand-bg/50"
-              >
-                <Ship className="h-4 w-4" aria-hidden />
-                Boats
-              </Link>
-              <Link
-                href="/admin/bookings"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-brand-dark/15 bg-white px-5 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:border-brand-primary/30 hover:bg-brand-bg/50"
-              >
-                <BookOpen className="h-4 w-4" aria-hidden />
-                Bookings
-              </Link>
-              {hasFeature("financials") ? (
-              <Link
-                href="/admin/financials"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-brand-dark/15 bg-white px-5 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:border-brand-primary/30 hover:bg-brand-bg/50"
-              >
-                <DollarSign className="h-4 w-4" aria-hidden />
-                Financials
-              </Link>
-              ) : null}
-              <Link
-                href="/admin/emails"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-xl border-2 border-brand-dark/15 bg-white px-5 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:border-brand-primary/30 hover:bg-brand-bg/50"
-              >
-                <Mail className="h-4 w-4" aria-hidden />
-                Emails
-              </Link>
+          <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white shadow-sm">
+            <div className="border-b border-brand-dark/10 px-5 py-4 sm:px-6">
+              <h2 className="text-lg font-semibold text-brand-dark">Quick actions</h2>
+              <p className="mt-1 text-xs text-brand-muted">Jump into the pages you use most.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:p-5 xl:grid-cols-6">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                const toneClass =
+                  action.tone === "pink"
+                    ? "bg-brand-secondary/10 text-brand-secondary"
+                    : action.tone === "navy"
+                      ? "bg-brand-dark/10 text-brand-dark"
+                      : action.tone === "amber"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-brand-primary/10 text-brand-primary";
+                return (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className={cn(
+                      "group flex flex-col gap-3 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md",
+                      action.primary
+                        ? "border-brand-primary/30 bg-brand-primary text-white shadow-sm hover:bg-brand-primary/90"
+                        : "border-brand-dark/10 bg-brand-bg/30 hover:border-brand-primary/25 hover:bg-white"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-2xl",
+                        action.primary ? "bg-white/20 text-white" : toneClass
+                      )}
+                    >
+                      <Icon className="h-5 w-5" aria-hidden />
+                    </div>
+                    <div>
+                      <p className={cn("text-sm font-semibold", action.primary ? "text-white" : "text-brand-dark")}>
+                        {action.label}
+                      </p>
+                      <p className={cn("mt-0.5 text-xs", action.primary ? "text-white/75" : "text-brand-muted")}>
+                        {action.sub}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </>

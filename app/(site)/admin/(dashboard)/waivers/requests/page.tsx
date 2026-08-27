@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Send, Copy, ExternalLink, FileText, Search, CheckCircle2, Clock, User, CalendarDays } from "lucide-react";
+import { Send, Copy, ExternalLink, FileText, Search, CheckCircle2, Clock, CalendarDays, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAdminDateTime } from "@/lib/format-firestore-timestamp";
 import { isWalkInWaiverRequest, waiverSigningChannelLabel } from "@/lib/waiver/signing-channel-label";
+import { WaiversSectionTabs } from "../WaiversSectionTabs";
 
 type RequestItem = {
   id: string;
@@ -220,115 +221,77 @@ export default function WaiverRequestsPage() {
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary/10 via-brand-bg to-brand-dark/5 border border-brand-dark/10 px-6 py-6 sm:px-8 sm:py-7">
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-brand-dark sm:text-3xl">
-              Waiver tracking
-            </h1>
-            <p className="mt-1.5 max-w-xl text-sm text-brand-muted sm:text-base">
-              See every waiver sent, who has signed, and send reminders for upcoming trips—all in one place.
+    <div className="space-y-6 sm:space-y-8">
+      <section className="relative overflow-hidden rounded-3xl bg-brand-dark px-5 py-6 text-white shadow-premium sm:px-8 sm:py-8">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-brand-secondary/20 blur-3xl" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-primary">Waivers</h1>
+            <p className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+              {loading ? "—" : list.length.toLocaleString()}
+            </p>
+            <p className="mt-2 text-sm text-white/70">
+              {statusFilter || search.trim() ? "Matching this view" : "Sent, signed, and still outstanding"}
             </p>
           </div>
-          <Link
-            href="/admin/waivers/templates"
-            className="shrink-0"
-          >
-            <Button variant="outline" size="sm" className="gap-2 border-brand-dark/20 bg-white/80 shadow-sm hover:bg-white">
-              <FileText className="h-4 w-4" aria-hidden />
-              Templates
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Stats */}
-      {!loading && !error && list.length > 0 && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div
-            className={cn(
-              "rounded-xl border px-4 py-3.5 transition-colors",
-              statusFilter === "pending"
-                ? "border-brand-primary/40 bg-brand-primary/10"
-                : "border-brand-dark/10 bg-white shadow-sm"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600">
-                <Clock className="h-5 w-5" aria-hidden />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-brand-dark">{pendingCount}</p>
-                <p className="text-xs font-medium uppercase tracking-wide text-brand-muted">Pending</p>
-                {needsAttentionCount > 0 && (
-                  <p className="mt-0.5 text-xs font-medium text-amber-600">
-                    {needsAttentionCount} need attention
-                  </p>
-                )}
-              </div>
+          <div className="flex flex-wrap gap-3 lg:justify-end">
+            <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Pending</p>
+              <p className="mt-1 text-lg font-bold">{loading ? "—" : pendingCount.toLocaleString()}</p>
+              <p className="text-[11px] text-white/60">Still need a signature</p>
             </div>
-          </div>
-          <div
-            className={cn(
-              "rounded-xl border px-4 py-3.5 transition-colors",
-              statusFilter === "signed"
-                ? "border-green-300 bg-green-50"
-                : "border-brand-dark/10 bg-white shadow-sm"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
-                <CheckCircle2 className="h-5 w-5" aria-hidden />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-brand-dark">{signedCount}</p>
-                <p className="text-xs font-medium uppercase tracking-wide text-brand-muted">Signed</p>
-              </div>
+            <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Signed</p>
+              <p className="mt-1 text-lg font-bold">{loading ? "—" : signedCount.toLocaleString()}</p>
+              <p className="text-[11px] text-white/60">On file</p>
             </div>
-          </div>
-          <div className="rounded-xl border border-brand-dark/10 bg-white px-4 py-3.5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary/15 text-brand-primary">
-                <User className="h-5 w-5" aria-hidden />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-brand-dark">{list.length}</p>
-                <p className="text-xs font-medium uppercase tracking-wide text-brand-muted">Total</p>
-              </div>
+            <div className="min-w-[140px] rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/55">Need attention</p>
+              <p className="mt-1 text-lg font-bold">{loading ? "—" : needsAttentionCount.toLocaleString()}</p>
+              <p className="text-[11px] text-white/60">Trip in the next 7 days</p>
             </div>
           </div>
         </div>
-      )}
+        <div className="relative mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5">
+          <WaiversSectionTabs variant="hero" />
+          <button
+            type="button"
+            onClick={() => fetchList()}
+            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} aria-hidden />
+            Refresh
+          </button>
+        </div>
+      </section>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-brand-dark/10 bg-white/80 p-4 shadow-sm backdrop-blur-sm sm:p-5">
+        <div className="inline-flex flex-wrap rounded-full border border-brand-dark/10 bg-white p-1">
           {statusPills.map((pill) => (
             <button
               key={pill.value}
               type="button"
               onClick={() => setStatusFilter(pill.value)}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium transition-all",
+                "rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide transition-all",
                 statusFilter === pill.value
-                  ? "bg-brand-primary text-white shadow-sm"
-                  : "bg-white text-brand-muted border border-brand-dark/15 hover:border-brand-dark/30 hover:text-brand-dark"
+                  ? "bg-brand-dark text-white shadow-sm"
+                  : "text-brand-muted hover:bg-brand-bg hover:text-brand-dark"
               )}
             >
               {pill.label}
             </button>
           ))}
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" aria-hidden />
+        <div className="flex min-w-[220px] flex-1 items-center gap-2">
+          <Search className="h-4 w-4 shrink-0 text-brand-primary" aria-hidden />
           <input
             type="search"
             placeholder="Search guest or booking…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-brand-dark/15 bg-white py-2.5 pl-10 pr-4 text-sm text-brand-dark placeholder:text-brand-muted focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 sm:w-56"
+            className="min-h-[44px] w-full rounded-xl border border-brand-dark/15 bg-brand-bg/40 px-3 py-2 text-sm text-brand-dark placeholder:text-brand-muted focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary sm:min-h-0"
             aria-label="Search guest or booking ID"
           />
         </div>
@@ -336,11 +299,11 @@ export default function WaiverRequestsPage() {
 
       {/* Content */}
       {loading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="rounded-xl border border-brand-dark/10 bg-white p-5 shadow-sm animate-pulse"
+              className="animate-pulse rounded-3xl border border-brand-dark/10 bg-white p-5 shadow-sm"
             >
               <div className="flex gap-3">
                 <div className="h-12 w-12 shrink-0 rounded-full bg-brand-dark/10" />
@@ -357,7 +320,7 @@ export default function WaiverRequestsPage() {
       )}
 
       {error && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
           <p className="font-medium">{error}</p>
           {errorDetail && errorDetail !== error && (
             <p className="mt-2 rounded-lg bg-amber-100/80 px-3 py-2 text-amber-900 text-xs font-mono break-words" title="Actual error from server">
@@ -379,12 +342,10 @@ export default function WaiverRequestsPage() {
       )}
 
       {!loading && !error && list.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-brand-dark/10 bg-white py-16 px-6 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-bg text-brand-muted">
-            <CalendarDays className="h-8 w-8" aria-hidden />
-          </div>
-          <h2 className="mt-4 text-lg font-semibold text-brand-dark">No waivers match</h2>
-          <p className="mt-1 max-w-sm text-sm text-brand-muted">
+        <div className="overflow-hidden rounded-3xl border border-brand-dark/10 bg-white px-6 py-16 text-center shadow-sm">
+          <CalendarDays className="mx-auto h-10 w-10 text-brand-primary/40" aria-hidden />
+          <p className="mt-3 text-sm font-medium text-brand-dark">No waivers match</p>
+          <p className="mx-auto mt-2 max-w-sm text-xs text-brand-muted">
             {statusFilter || search.trim()
               ? "Try changing filters or search. Waivers appear here when guests book and a template is active."
               : "Waivers will appear here when guests book and you have an active template."}
@@ -393,7 +354,7 @@ export default function WaiverRequestsPage() {
       )}
 
       {!loading && !error && list.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {list.map((r) => {
             const days = r.bookingSummary?.tripDate ? daysUntil(r.bookingSummary.tripDate) : null;
             const isUpcoming = days != null && days >= 0 && days <= 7;
@@ -402,11 +363,11 @@ export default function WaiverRequestsPage() {
               <article
                 key={r.id}
                 className={cn(
-                  "flex flex-col rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md",
+                  "flex flex-col overflow-hidden rounded-3xl border bg-white shadow-sm transition-shadow hover:shadow-md",
                   r.status === "signed"
-                    ? "border-green-200/60"
+                    ? "border-green-200/70"
                     : isUpcoming
-                      ? "border-amber-200/60"
+                      ? "border-amber-200/70"
                       : "border-brand-dark/10"
                 )}
               >

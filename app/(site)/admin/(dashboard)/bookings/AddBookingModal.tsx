@@ -8,8 +8,9 @@ import { TAX_RATE } from "@/lib/booking/constants";
 
 const SOURCE_OPTIONS = [
   { value: "", label: "Select source (optional)" },
-  { value: "GetMyBoat", label: "GetMyBoat" },
-  { value: "Viator", label: "Viator" },
+  { value: "boatsetter", label: "Boatsetter" },
+  { value: "getmyboat", label: "Getmyboat" },
+  { value: "viator", label: "Viator" },
   { value: "Phone", label: "Phone" },
   { value: "Email", label: "Email" },
   { value: "Other", label: "Other" },
@@ -59,6 +60,7 @@ export function AddBookingModal({
   const [source, setSource] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [specialNotes, setSpecialNotes] = useState("");
+  const [operatorNotes, setOperatorNotes] = useState("");
   const [boats, setBoats] = useState<BoatOption[]>([]);
   const [boatId, setBoatId] = useState("");
   // Billing & payment (optional)
@@ -168,6 +170,7 @@ export function AddBookingModal({
           source: source || undefined,
           externalReference: referenceNumber.trim() || undefined,
           specialNotes: specialNotes.trim() || undefined,
+          operatorNotes: operatorNotes.trim() || undefined,
           ...(billingLine1.trim() || billingCity.trim() || billingZip.trim()
             ? {
                 billingAddress: {
@@ -205,6 +208,7 @@ export function AddBookingModal({
       setSource("");
       setReferenceNumber("");
       setSpecialNotes("");
+      setOperatorNotes("");
       setBoatId("");
       setBillingLine1("");
       setBillingLine2("");
@@ -225,345 +229,406 @@ export function AddBookingModal({
   };
 
   const inputClass = "w-full rounded-lg border border-brand-dark/20 px-3 py-2.5 min-h-[44px] text-sm text-brand-dark focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:outline-none";
+  const labelClass = "block text-sm font-medium text-brand-dark mb-1";
   const dialogDescription = "Enter booking details from another source (GetMyBoat, Viator, phone, etc.) to keep everything in one place.";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Add booking" description={dialogDescription} fullScreenOnMobile>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Add booking"
+      description={dialogDescription}
+      fullScreenOnMobile
+      className="sm:max-w-4xl sm:max-h-[90vh]"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
             {error}
           </div>
         )}
 
-        <div>
-          <label htmlFor="add-booking-experience" className="block text-sm font-medium text-brand-dark mb-1">Experience *</label>
-          <select
-            id="add-booking-experience"
-            value={experienceId}
-            onChange={(e) => setExperienceId(e.target.value)}
-            className={inputClass}
-            required
-            disabled={loadingExperiences}
-          >
-            {loadingExperiences ? (
-              <option>Loading…</option>
-            ) : (
-              <>
-                <option value="">Select experience</option>
-                {experiences.map((e) => (
-                  <option key={e.id} value={e.id}>{e.title}</option>
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-brand-dark">Trip</h3>
+          <div className={cn("grid grid-cols-1 gap-3", showBoatSelect && "sm:grid-cols-2")}>
+            <div>
+              <label htmlFor="add-booking-experience" className={labelClass}>Experience *</label>
+              <select
+                id="add-booking-experience"
+                value={experienceId}
+                onChange={(e) => setExperienceId(e.target.value)}
+                className={inputClass}
+                required
+                disabled={loadingExperiences}
+              >
+                {loadingExperiences ? (
+                  <option>Loading…</option>
+                ) : (
+                  <>
+                    <option value="">Select experience</option>
+                    {experiences.map((e) => (
+                      <option key={e.id} value={e.id}>{e.title}</option>
+                    ))}
+                  </>
+                )}
+              </select>
+            </div>
+            {showBoatSelect && (
+              <div>
+                <label htmlFor="add-booking-boat" className={labelClass}>Boat *</label>
+                <select
+                  id="add-booking-boat"
+                  value={boatId}
+                  onChange={(e) => setBoatId(e.target.value)}
+                  className={inputClass}
+                  required
+                >
+                  <option value="">Select boat</option>
+                  {boatsForExperience.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label htmlFor="add-booking-date" className={labelClass}>Trip date *</label>
+              <input
+                id="add-booking-date"
+                type="date"
+                value={tripDate}
+                onChange={(e) => setTripDate(e.target.value)}
+                className={inputClass}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="add-booking-time" className={labelClass}>Start time</label>
+              <select
+                id="add-booking-time"
+                value={startHour}
+                onChange={(e) => setStartHour(parseInt(e.target.value, 10))}
+                className={inputClass}
+              >
+                {START_HOURS.map((h) => (
+                  <option key={h} value={h}>
+                    {h === 12 ? "12:00 PM" : h < 12 ? `${h}:00 AM` : `${h - 12}:00 PM`}
+                  </option>
                 ))}
-              </>
-            )}
-          </select>
-        </div>
-
-        {showBoatSelect && (
-          <div>
-            <label htmlFor="add-booking-boat" className="block text-sm font-medium text-brand-dark mb-1">Boat *</label>
-            <select
-              id="add-booking-boat"
-              value={boatId}
-              onChange={(e) => setBoatId(e.target.value)}
-              className={inputClass}
-              required
-            >
-              <option value="">Select boat</option>
-              {boatsForExperience.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="add-booking-duration" className={labelClass}>Duration</label>
+              <select
+                id="add-booking-duration"
+                value={durationHours}
+                onChange={(e) => setDurationHours(parseInt(e.target.value, 10))}
+                className={inputClass}
+              >
+                {DURATION_OPTIONS.map((d) => (
+                  <option key={d} value={d}>{d} hrs</option>
+                ))}
+              </select>
+            </div>
           </div>
-        )}
+        </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="add-booking-date" className="block text-sm font-medium text-brand-dark mb-1">Trip date *</label>
-            <input
-              id="add-booking-date"
-              type="date"
-              value={tripDate}
-              onChange={(e) => setTripDate(e.target.value)}
-              className={inputClass}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="add-booking-time" className="block text-sm font-medium text-brand-dark mb-1">Start time</label>
-            <select
-              id="add-booking-time"
-              value={startHour}
-              onChange={(e) => setStartHour(parseInt(e.target.value, 10))}
-              className={inputClass}
-            >
-              {START_HOURS.map((h) => (
-                <option key={h} value={h}>
-                  {h === 12 ? "12:00 PM" : h < 12 ? `${h}:00 AM` : `${h - 12}:00 PM`}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="add-booking-duration" className="block text-sm font-medium text-brand-dark mb-1">Duration (hours)</label>
-          <select
-            id="add-booking-duration"
-            value={durationHours}
-            onChange={(e) => setDurationHours(parseInt(e.target.value, 10))}
-            className={inputClass}
-          >
-            {DURATION_OPTIONS.map((d) => (
-              <option key={d} value={d}>{d} hrs</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="border-t border-brand-dark/10 pt-4">
-          <p className="text-sm font-medium text-brand-dark mb-2">Customer</p>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Name *"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className={inputClass}
-              required
-            />
-            <input
-              type="email"
-              placeholder="Email *"
-              value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
-              className={inputClass}
-              required
-            />
-            <input
-              type="tel"
-              placeholder="Phone"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="add-booking-party" className="block text-sm font-medium text-brand-dark mb-1">Party size</label>
-            <input
-              id="add-booking-party"
-              type="number"
-              min={1}
-              value={partySize}
-              onChange={(e) => setPartySize(parseInt(e.target.value, 10) || 1)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor="add-booking-total" className="block text-sm font-medium text-brand-dark mb-1">
-              {amountIncludesTax
-                ? `Total collected (USD, includes ${taxPercentLabel} tax) *`
-                : `Subtotal (before ${taxPercentLabel} tax) (USD) *`}
-            </label>
-            <input
-              id="add-booking-total"
-              type="number"
-              min={0}
-              step={0.01}
-              placeholder="0.00"
-              value={totalDollars}
-              onChange={(e) => setTotalDollars(e.target.value)}
-              className={inputClass}
-              required
-              aria-describedby="add-booking-total-hint"
-            />
-            <label className="mt-2 flex items-center gap-2 cursor-pointer text-sm text-brand-dark">
-              <input
-                type="checkbox"
-                checked={amountIncludesTax}
-                onChange={(e) => setAmountIncludesTax(e.target.checked)}
-                className="h-4 w-4 rounded border-brand-dark/30 text-brand-primary"
-              />
-              Amount entered includes sales tax (we&apos;ll back-calculate the pre-tax subtotal)
-            </label>
-            <p id="add-booking-total-hint" className="text-xs text-brand-muted mt-1">
-              {amountIncludesTax
-                ? `We derive the pre-tax subtotal from your total (floor cents) so tax is not applied twice; totals may differ by up to 1¢ from a pure round-trip.`
-                : `Tax (${taxPercentLabel}) is added to this subtotal; the stored booking total includes tax.`}
-            </p>
-            <p className="text-xs font-medium text-brand-dark mt-2">
-              Total stored: ${(pricingPreview.totalCents / 100).toFixed(2)} including tax
-              {!amountIncludesTax && (
-                <span className="block font-normal text-brand-muted mt-0.5">
-                  (subtotal ${(pricingPreview.subtotalCents / 100).toFixed(2)} + tax ${(pricingPreview.taxCents / 100).toFixed(2)})
-                </span>
-              )}
-            </p>
-            {pricingPreview.subtotalCents === 0 && (
-              <label className="mt-3 flex items-start gap-2 cursor-pointer text-sm text-brand-dark">
-                <input
-                  type="checkbox"
-                  checked={confirmZeroDollarBooking}
-                  onChange={(e) => setConfirmZeroDollarBooking(e.target.checked)}
-                  className="h-4 w-4 mt-0.5 rounded border-brand-dark/30 text-brand-primary"
-                />
-                <span>I confirm this is a complimentary or $0 booking</span>
-              </label>
-            )}
-          </div>
-        </div>
-
-        <div>
+        <section className="border-t border-brand-dark/10 pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-brand-dark">Customer</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="add-booking-source" className="block text-sm font-medium text-brand-dark mb-1">Source</label>
-            <select
-              id="add-booking-source"
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              className={inputClass}
-            >
-              {SOURCE_OPTIONS.map((o) => (
-                <option key={o.value || "none"} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="add-booking-reference" className="block text-sm font-medium text-brand-dark mb-1">Confirmation / reference #</label>
-            <input
-              id="add-booking-reference"
-              type="text"
-              placeholder="e.g. GMB-12345"
-              value={referenceNumber}
-              onChange={(e) => setReferenceNumber(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-        </div>
-        </div>
-
-        <div className="border-t border-brand-dark/10 pt-4">
-          <p className="text-sm font-medium text-brand-dark mb-2">Billing & payment</p>
-          <p className="text-xs text-brand-muted mb-3">Optional. For records only. Do not enter full card numbers.</p>
-          <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="Billing address line 1"
-              value={billingLine1}
-              onChange={(e) => setBillingLine1(e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="text"
-              placeholder="Address line 2"
-              value={billingLine2}
-              onChange={(e) => setBillingLine2(e.target.value)}
-              className={inputClass}
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label htmlFor="add-booking-name" className={labelClass}>Name *</label>
               <input
+                id="add-booking-name"
                 type="text"
-                placeholder="City"
-                value={billingCity}
-                onChange={(e) => setBillingCity(e.target.value)}
+                autoComplete="name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
                 className={inputClass}
+                required
               />
+            </div>
+            <div>
+              <label htmlFor="add-booking-email" className={labelClass}>Email *</label>
               <input
-                type="text"
-                placeholder="State"
-                value={billingState}
-                onChange={(e) => setBillingState(e.target.value)}
+                id="add-booking-email"
+                type="email"
+                autoComplete="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
                 className={inputClass}
+                required
               />
+            </div>
+            <div>
+              <label htmlFor="add-booking-phone" className={labelClass}>Phone</label>
               <input
-                type="text"
-                placeholder="ZIP"
-                value={billingZip}
-                onChange={(e) => setBillingZip(e.target.value)}
-                className={inputClass}
-              />
-              <input
-                type="text"
-                placeholder="Country"
-                value={billingCountry}
-                onChange={(e) => setBillingCountry(e.target.value)}
+                id="add-booking-phone"
+                type="tel"
+                autoComplete="tel"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
                 className={inputClass}
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div>
+              <label htmlFor="add-booking-party" className={labelClass}>Party size</label>
+              <input
+                id="add-booking-party"
+                type="number"
+                min={1}
+                value={partySize}
+                onChange={(e) => setPartySize(parseInt(e.target.value, 10) || 1)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t border-brand-dark/10 pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-brand-dark">Amount & source</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="add-booking-total" className={labelClass}>
+                {amountIncludesTax
+                  ? `Total collected (USD, includes ${taxPercentLabel} tax) *`
+                  : `Subtotal (before ${taxPercentLabel} tax) (USD) *`}
+              </label>
+              <input
+                id="add-booking-total"
+                type="number"
+                min={0}
+                step={0.01}
+                placeholder="0.00"
+                value={totalDollars}
+                onChange={(e) => setTotalDollars(e.target.value)}
+                className={inputClass}
+                required
+                aria-describedby="add-booking-total-hint"
+              />
+              <p className="text-xs font-medium text-brand-dark mt-2">
+                Total stored: ${(pricingPreview.totalCents / 100).toFixed(2)} including tax
+                {!amountIncludesTax && (
+                  <span className="block font-normal text-brand-muted mt-0.5">
+                    (subtotal ${(pricingPreview.subtotalCents / 100).toFixed(2)} + tax ${(pricingPreview.taxCents / 100).toFixed(2)})
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="space-y-3">
               <div>
-                <label htmlFor="add-booking-card-last4" className="block text-xs font-medium text-brand-muted mb-1">Card last 4</label>
-                <input
-                  id="add-booking-card-last4"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  placeholder="1234"
-                  value={cardLast4}
-                  onChange={(e) => setCardLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label htmlFor="add-booking-card-brand" className="block text-xs font-medium text-brand-muted mb-1">Card brand</label>
+                <label htmlFor="add-booking-source" className={labelClass}>Source</label>
                 <select
-                  id="add-booking-card-brand"
-                  value={cardBrand}
-                  onChange={(e) => setCardBrand(e.target.value)}
+                  id="add-booking-source"
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
                   className={inputClass}
                 >
-                  {CARD_BRANDS.map((o) => (
+                  {SOURCE_OPTIONS.map((o) => (
                     <option key={o.value || "none"} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label htmlFor="add-booking-card-exp-month" className="block text-xs font-medium text-brand-muted mb-1">Exp month</label>
-                  <input
-                    id="add-booking-card-exp-month"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={2}
-                    placeholder="MM"
-                    value={cardExpMonth}
-                    onChange={(e) => setCardExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="add-booking-card-exp-year" className="block text-xs font-medium text-brand-muted mb-1">Exp year</label>
-                  <input
-                    id="add-booking-card-exp-year"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="YYYY"
-                    value={cardExpYear}
-                    onChange={(e) => setCardExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                    className={inputClass}
-                  />
-                </div>
+              <div>
+                <label htmlFor="add-booking-reference" className={labelClass}>Confirmation / reference #</label>
+                <input
+                  id="add-booking-reference"
+                  type="text"
+                  placeholder="e.g. GMB-12345"
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  className={inputClass}
+                />
               </div>
             </div>
           </div>
-        </div>
+          <label className="flex items-start gap-2 cursor-pointer text-sm text-brand-dark">
+            <input
+              type="checkbox"
+              checked={amountIncludesTax}
+              onChange={(e) => setAmountIncludesTax(e.target.checked)}
+              className="h-4 w-4 mt-0.5 rounded border-brand-dark/30 text-brand-primary"
+            />
+            <span>Amount entered includes sales tax (we&apos;ll back-calculate the pre-tax subtotal)</span>
+          </label>
+          <p id="add-booking-total-hint" className="text-xs text-brand-muted">
+            {amountIncludesTax
+              ? `We derive the pre-tax subtotal from your total (floor cents) so tax is not applied twice; totals may differ by up to 1¢ from a pure round-trip.`
+              : `Tax (${taxPercentLabel}) is added to this subtotal; the stored booking total includes tax.`}
+          </p>
+          {pricingPreview.subtotalCents === 0 && (
+            <label className="flex items-start gap-2 cursor-pointer text-sm text-brand-dark">
+              <input
+                type="checkbox"
+                checked={confirmZeroDollarBooking}
+                onChange={(e) => setConfirmZeroDollarBooking(e.target.checked)}
+                className="h-4 w-4 mt-0.5 rounded border-brand-dark/30 text-brand-primary"
+              />
+              <span>I confirm this is a complimentary or $0 booking</span>
+            </label>
+          )}
+        </section>
 
-        <div>
-          <label htmlFor="add-booking-notes" className="block text-sm font-medium text-brand-dark mb-1">Notes</label>
-          <textarea
-            id="add-booking-notes"
-            rows={2}
-            placeholder="Optional notes"
-            value={specialNotes}
-            onChange={(e) => setSpecialNotes(e.target.value)}
-            className={cn(inputClass, "resize-none")}
-          />
-        </div>
+        <section className="border-t border-brand-dark/10 pt-4 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold text-brand-dark">Billing & payment</h3>
+            <p className="text-xs text-brand-muted mt-0.5">Optional. For records only. Do not enter full card numbers.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
+              <label htmlFor="add-booking-billing-line1" className={labelClass}>Address line 1</label>
+              <input
+                id="add-booking-billing-line1"
+                type="text"
+                autoComplete="address-line1"
+                value={billingLine1}
+                onChange={(e) => setBillingLine1(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="add-booking-billing-line2" className={labelClass}>Address line 2</label>
+              <input
+                id="add-booking-billing-line2"
+                type="text"
+                autoComplete="address-line2"
+                value={billingLine2}
+                onChange={(e) => setBillingLine2(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="add-booking-billing-city" className={labelClass}>City</label>
+              <input
+                id="add-booking-billing-city"
+                type="text"
+                autoComplete="address-level2"
+                value={billingCity}
+                onChange={(e) => setBillingCity(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label htmlFor="add-booking-billing-state" className={labelClass}>State</label>
+                <input
+                  id="add-booking-billing-state"
+                  type="text"
+                  autoComplete="address-level1"
+                  value={billingState}
+                  onChange={(e) => setBillingState(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="add-booking-billing-zip" className={labelClass}>ZIP</label>
+                <input
+                  id="add-booking-billing-zip"
+                  type="text"
+                  autoComplete="postal-code"
+                  value={billingZip}
+                  onChange={(e) => setBillingZip(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor="add-booking-billing-country" className={labelClass}>Country</label>
+                <input
+                  id="add-booking-billing-country"
+                  type="text"
+                  autoComplete="country-name"
+                  value={billingCountry}
+                  onChange={(e) => setBillingCountry(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="add-booking-card-last4" className={labelClass}>Card last 4</label>
+              <input
+                id="add-booking-card-last4"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="1234"
+                value={cardLast4}
+                onChange={(e) => setCardLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="add-booking-card-brand" className={labelClass}>Card brand</label>
+              <select
+                id="add-booking-card-brand"
+                value={cardBrand}
+                onChange={(e) => setCardBrand(e.target.value)}
+                className={inputClass}
+              >
+                {CARD_BRANDS.map((o) => (
+                  <option key={o.value || "none"} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="add-booking-card-exp-month" className={labelClass}>Exp month</label>
+              <input
+                id="add-booking-card-exp-month"
+                type="text"
+                inputMode="numeric"
+                maxLength={2}
+                placeholder="MM"
+                value={cardExpMonth}
+                onChange={(e) => setCardExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="add-booking-card-exp-year" className={labelClass}>Exp year</label>
+              <input
+                id="add-booking-card-exp-year"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="YYYY"
+                value={cardExpYear}
+                onChange={(e) => setCardExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        </section>
 
-        <div className="flex justify-end gap-2 pt-2">
+        <section className="border-t border-brand-dark/10 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="add-booking-notes" className={labelClass}>Notes</label>
+              <textarea
+                id="add-booking-notes"
+                rows={3}
+                placeholder="Optional notes for the booking file"
+                value={specialNotes}
+                onChange={(e) => setSpecialNotes(e.target.value)}
+                className={cn(inputClass, "resize-y min-h-[5.5rem]")}
+              />
+            </div>
+            <div>
+              <label htmlFor="add-booking-operator-notes" className={labelClass}>
+                Note for captain
+              </label>
+              <textarea
+                id="add-booking-operator-notes"
+                rows={3}
+                placeholder="Guests never see this. You can add more updates later."
+                value={operatorNotes}
+                onChange={(e) => setOperatorNotes(e.target.value)}
+                className={cn(inputClass, "resize-y min-h-[5.5rem]")}
+              />
+            </div>
+          </div>
+        </section>
+
+        <div className="sticky bottom-0 -mx-3 sm:-mx-6 mt-1 flex justify-end gap-2 border-t border-brand-dark/10 bg-white px-3 sm:px-6 pt-3 pb-1">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
             Cancel
           </Button>

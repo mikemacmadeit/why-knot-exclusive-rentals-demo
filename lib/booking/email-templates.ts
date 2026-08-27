@@ -584,7 +584,7 @@ export function renderCaptainUnassignedHtml(params: CaptainTripEmailParams): str
 
 export type TeamInviteEmailParams = {
   toName: string;
-  roleLabel: "Captain" | "Operator";
+  roleLabel: "Admin" | "Captain" | "Operator";
   resetLink: string;
   loginUrl?: string;
 };
@@ -603,10 +603,14 @@ export function getCaptainCalendarUrl(): string {
 
 export function renderTeamInviteHtml(params: TeamInviteEmailParams): string {
   const name = params.toName.trim() || "there";
-  const roleLabel = params.roleLabel === "Operator" ? "Operator" : "Captain";
+  const roleLabel =
+    params.roleLabel === "Admin" || params.roleLabel === "Operator" || params.roleLabel === "Captain"
+      ? params.roleLabel
+      : "Operator";
   const resetLink = params.resetLink.trim();
   const loginUrl = (params.loginUrl?.trim() || getAdminLoginUrl()).replace(/\/$/, "");
-  const subtitle = roleLabel === "Captain" ? "Captain invite" : "Operator invite";
+  const subtitle =
+    roleLabel === "Captain" ? "Captain invite" : roleLabel === "Admin" ? "Admin invite" : "Operator invite";
   return `
 <!DOCTYPE html>
 <html lang="en">

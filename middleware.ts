@@ -167,10 +167,11 @@ export async function middleware(request: NextRequest) {
 function buildCsp(nonce: string): string {
   const isDev = process.env.NODE_ENV !== "production";
   // script-src: nonce only for inline scripts (no 'unsafe-inline' in production). Third-party scripts are allowlisted.
+  // Do not use 'strict-dynamic' — it disables host allowlists and blocks Netlify HUD
+  // (/.netlify/scripts/hud) plus other first-party injects that lack our page nonce.
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
-    "'strict-dynamic'",
     "'sha256-mTJ4cJaTm2Gw95GeXEpZdvEEY9ybh6FZu1bwcNE7QlY='",
     "https://js.stripe.com",
     "https://*.stripe.com",

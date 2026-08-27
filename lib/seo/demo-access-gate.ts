@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/admin-auth-constants";
 import { shouldBlockSearchIndexing } from "@/lib/seo/block-search-indexing";
 
 const COOKIE_NAME = "demo_access";
@@ -14,6 +15,7 @@ export function demoAccessPathExcluded(pathname: string): boolean {
   const p = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
   return (
     pathname.startsWith("/_next/") ||
+    pathname.startsWith("/.netlify/") ||
     pathname === "/favicon.ico" ||
     pathname.startsWith("/favicon") ||
     pathname === "/site.webmanifest" ||
@@ -28,6 +30,8 @@ export function demoAccessPathExcluded(pathname: string): boolean {
 
 export function hasValidDemoAccess(request: NextRequest, key: string): boolean {
   if (request.cookies.get(COOKIE_NAME)?.value === key) return true;
+  // Signed-in admins (no public access cookie) must still prefetch/navigate the marketing site.
+  if (request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value) return true;
   return request.nextUrl.searchParams.get("access") === key;
 }
 

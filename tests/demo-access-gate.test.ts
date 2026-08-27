@@ -20,6 +20,7 @@ describe("demoAccessPathExcluded", () => {
     assert.equal(demoAccessPathExcluded("/site.webmanifest"), true);
     assert.equal(demoAccessPathExcluded("/brand/logo.svg"), true);
     assert.equal(demoAccessPathExcluded("/photos/wakebusters/party-barge.jpg"), true);
+    assert.equal(demoAccessPathExcluded("/.netlify/scripts/hud"), true);
   });
 
   it("still gates public marketing pages", () => {

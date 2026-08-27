@@ -207,7 +207,7 @@ export function AdminShell({
           >
             <Menu className="h-6 w-6" aria-hidden />
           </button>
-          <Link href="/" className="flex items-center gap-2 min-w-0">
+          <Link href="/" prefetch={false} className="flex items-center gap-2 min-w-0">
             <Image
               src={brand.logoNavbarPath ?? brand.logoPath}
               alt={brand.logoAlt}
@@ -242,6 +242,7 @@ export function AdminShell({
             <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
               <Link
                 href="/"
+                prefetch={false}
                 className="flex items-center gap-3 min-w-0 rounded-xl overflow-hidden p-1 -m-1 hover:bg-white/5 transition-colors"
                 aria-label={`${brand.logoAlt} home`}
               >

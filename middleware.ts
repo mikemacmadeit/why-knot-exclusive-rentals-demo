@@ -170,6 +170,8 @@ function buildCsp(nonce: string): string {
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
+    "'strict-dynamic'",
+    "'sha256-mTJ4cJaTm2Gw95GeXEpZdvEEY9ybh6FZu1bwcNE7QlY='",
     "https://js.stripe.com",
     "https://*.stripe.com",
     "https://checkout.stripe.com",

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { brand } from "@/content/brand";
 import { locationAggregateRating } from "@/content/location";
 import { SiteChrome } from "@/components/site/SiteChrome";
 import { CommercialPageSchema } from "@/components/site/CommercialPageSchema";
 import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/admin-auth-constants";
+import { isAdminAppPath } from "@/lib/admin-public-paths";
 import { buildLocalBusinessJsonLd } from "@/lib/seo/public-contact";
 import { getSiteBaseUrl, siteConfig } from "@/config/site";
 import { publicRobotsMetadata } from "@/lib/seo/block-search-indexing";
@@ -52,6 +53,12 @@ export default async function SiteLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") ?? "";
+  if (isAdminAppPath(pathname)) {
+    return <>{children}</>;
+  }
+
   const jsonLd = JSON.stringify(localBusinessJsonLd());
   const cookieStore = await cookies();
   const adminSessionCookiePresent = Boolean(cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value);

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Roboto_Slab, Montserrat } from "next/font/google";
 import { headers } from "next/headers";
 import { getGaMeasurementId, isGaClientDebugEnabled } from "@/lib/ga-measurement-id";
@@ -8,6 +9,7 @@ import { getGtagInlineBootstrapJs } from "@/lib/ga-gtag-inline";
 import { isStripeCheckoutReady } from "@/lib/booking/stripe-publishable";
 import { GaPageViewTracker } from "@/components/providers/GaPageViewTracker";
 import { AdsAttributionCapture } from "@/components/providers/AdsAttributionCapture";
+import { isAdminAppPath } from "@/lib/admin-public-paths";
 import "./globals.css";
 import { getSiteBaseUrl, siteConfig, siteThemeCssVars } from "@/config/site";
 
@@ -61,7 +63,9 @@ export default async function RootLayout({
   const gaMeasurementId = getGaMeasurementId();
   const googleAdsId = getGoogleAdsId();
   const gaDebugMode = isGaClientDebugEnabled();
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const headerList = await headers();
+  const nonce = headerList.get("x-nonce") ?? undefined;
+  const isAdminRoute = isAdminAppPath(headerList.get("x-pathname"));
 
   if (!gaMeasurementId && !didLogGaSkip) {
     didLogGaSkip = true;
@@ -85,11 +89,11 @@ export default async function RootLayout({
       style={siteThemeCssVars() as CSSProperties}
     >
       <body className="font-sans">
-        {/* Stripe.js: loaded early in layout; CSP nonce + strict-dynamic. */}
-        {isStripeCheckoutReady ? (
+        {/* Admin console: no Stripe/GA — avoids CSP srcdoc noise and hydration issues on login. */}
+        {!isAdminRoute && isStripeCheckoutReady ? (
           <script src={STRIPE_JS_SRC} async nonce={nonce} suppressHydrationWarning />
         ) : null}
-        {gaMeasurementId ? (
+        {!isAdminRoute && gaMeasurementId ? (
           <>
             {/*
               Native <script> tags (nonce + async) match Google’s snippet and avoid relying on
@@ -112,8 +116,12 @@ export default async function RootLayout({
             />
           </>
         ) : null}
-        <GaPageViewTracker />
-        <AdsAttributionCapture />
+        {!isAdminRoute ? (
+          <Suspense fallback={null}>
+            <GaPageViewTracker />
+          </Suspense>
+        ) : null}
+        {!isAdminRoute ? <AdsAttributionCapture /> : null}
         {children}
       </body>
     </html>

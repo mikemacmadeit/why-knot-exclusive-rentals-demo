@@ -5,7 +5,7 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { ADMIN_PUBLIC_PATHS, isAdminPublicPath } from "../lib/admin-public-paths";
+import { ADMIN_PUBLIC_PATHS, isAdminAppPath, isAdminPublicPath } from "../lib/admin-public-paths";
 
 describe("admin session unauthenticated access", () => {
   it("middleware allows /api/admin/session without auth (GET and POST)", () => {
@@ -36,5 +36,12 @@ describe("admin session unauthenticated access", () => {
     assert.ok(isAdminPublicPath("/api/admin/session/"));
     assert.ok(isAdminPublicPath("/admin/login/"));
     assert.ok(isAdminPublicPath("/api/admin/logout/"));
+  });
+
+  it("isAdminAppPath covers login and dashboard routes", () => {
+    assert.ok(isAdminAppPath("/admin/login"));
+    assert.ok(isAdminAppPath("/admin/bookings"));
+    assert.ok(!isAdminAppPath("/"));
+    assert.ok(!isAdminAppPath("/experiences/pontoon"));
   });
 });

@@ -226,9 +226,7 @@ export function AuthUI({ children, content = {}, className }: AuthUIProps) {
         <div className="relative z-10 flex h-full flex-col items-center justify-end p-8 pb-10">
           <blockquote className="max-w-md space-y-2 text-center text-white">
             <p className="font-display text-lg font-medium leading-snug sm:text-xl">
-              “
-              <Typewriter key={finalContent.quote.text} text={finalContent.quote.text} speed={60} />
-              ”
+              &ldquo;{finalContent.quote.text}&rdquo;
             </p>
             <cite className="block text-sm font-light not-italic text-white/70">
               — {finalContent.quote.author}

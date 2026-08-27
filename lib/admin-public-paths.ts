@@ -14,3 +14,9 @@ export function isAdminPublicPath(pathname: string): boolean {
   const p = normalizePathnameForAdminPublic(pathname);
   return ADMIN_PUBLIC_PATHS.some((pub) => p === pub);
 }
+
+/** Admin dashboard UI (login + authenticated console). */
+export function isAdminAppPath(pathname: string | null | undefined): boolean {
+  const p = normalizePathnameForAdminPublic(pathname ?? "");
+  return p === "/admin" || p.startsWith("/admin/");
+}

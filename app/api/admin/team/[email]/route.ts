@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession, getAdminPrincipalFromSessionCookie } from "@/lib/admin-auth-firebase";
+import { canManageTeamMembers } from "@/lib/admin/roles";
 import { deleteTeamMember, ensureFirebaseUserAndResetLink, getTeamMember, setTeamMemberStatus } from "@/lib/admin/team-store";
 import { emailTeamPasswordSetupLink } from "@/lib/admin/team-invite-email";
 import { writeAdminAuditLog } from "@/lib/booking/admin-audit-log";
@@ -25,7 +26,7 @@ export async function PATCH(request: NextRequest, context: {
   if (unauthorized) return unauthorized;
 
   const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
-  if (!principal || principal.role !== "super_admin") {
+  if (!principal || !canManageTeamMembers(principal.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -45,9 +46,10 @@ export async function PATCH(request: NextRequest, context: {
 
   try {
     const member = await setTeamMemberStatus(email, status);
-    void writeAdminAuditLog("team_operator_status", {
+    void writeAdminAuditLog("team_member_status", {
       email,
       status,
+      role: member.role,
       by: principal.email,
     });
     return NextResponse.json({ member });
@@ -71,7 +73,7 @@ export async function DELETE(request: NextRequest, context: {
   if (unauthorized) return unauthorized;
 
   const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
-  if (!principal || principal.role !== "super_admin") {
+  if (!principal || !canManageTeamMembers(principal.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -107,7 +109,7 @@ export async function POST(request: NextRequest, context: {
   if (unauthorized) return unauthorized;
 
   const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
-  if (!principal || principal.role !== "super_admin") {
+  if (!principal || !canManageTeamMembers(principal.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -130,7 +132,7 @@ export async function POST(request: NextRequest, context: {
         resetLink,
       });
     }
-    void writeAdminAuditLog("team_operator_reset_link", { email, by: principal.email, createdUser, emailSent });
+    void writeAdminAuditLog("team_member_reset_link", { email, by: principal.email, createdUser, emailSent });
     return NextResponse.json({ resetLink, createdUser, emailSent });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

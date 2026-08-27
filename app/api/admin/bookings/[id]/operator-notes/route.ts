@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminPrincipalFromSessionCookie, requireAdminSession } from "@/lib/admin-auth-firebase";
+import { canRunBookingOps } from "@/lib/admin/roles";
 import { getDb, getFirestoreExports } from "@/lib/booking/firebase-admin";
 import type { Booking } from "@/lib/booking/types";
 import { writeAdminAuditLog } from "@/lib/booking/admin-audit-log";
@@ -17,7 +18,7 @@ import {
 
 /**
  * POST /api/admin/bookings/[id]/operator-notes
- * Victoria or an operator appends a note the assigned captain sees on their calendar.
+ * Admin or operator appends a note the assigned captain sees on their calendar.
  * Optional notifyCaptain emails the current captain the new update.
  */
 export async function POST(
@@ -35,7 +36,7 @@ export async function POST(
   if (unauthorized) return unauthorized;
 
   const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
-  if (!principal || (principal.role !== "super_admin" && principal.role !== "operator")) {
+  if (!principal || !canRunBookingOps(principal.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

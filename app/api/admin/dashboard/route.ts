@@ -290,7 +290,7 @@ export async function GET(request: NextRequest) {
       })
     );
     const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
-    const hideFinancials = principal?.role === "operator";
+    const hideFinancials = principal?.role === "operator" || principal?.role === "captain";
     return NextResponse.json({
       hideFinancials,
       totalRevenueCents: hideFinancials ? 0 : totalRevenueCents,

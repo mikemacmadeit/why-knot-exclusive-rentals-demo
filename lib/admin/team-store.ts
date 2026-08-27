@@ -6,7 +6,7 @@ import { isSuperAdminEmail, isTeamInviteRole, normalizeAdminEmail, type AdminRol
 
 export const ADMIN_TEAM_COLLECTION = "adminTeam";
 
-export type TeamInviteRole = Extract<AdminRole, "operator" | "captain">;
+export type TeamInviteRole = Extract<AdminRole, "admin" | "operator" | "captain">;
 
 export type AdminTeamMemberRecord = {
   email: string;
@@ -96,9 +96,10 @@ export async function upsertTeamInvite(opts: {
     });
   }
   if (!isTeamInviteRole(opts.role)) {
-    throw Object.assign(new Error("Role must be operator or captain."), { code: "INVALID_ROLE" });
+    throw Object.assign(new Error("Role must be admin, operator, or captain."), { code: "INVALID_ROLE" });
   }
-  const fallbackName = opts.role === "captain" ? "Captain" : "Operator";
+  const fallbackName =
+    opts.role === "captain" ? "Captain" : opts.role === "admin" ? "Admin" : "Operator";
   const name = opts.name.trim() || email.split("@")[0] || fallbackName;
   const db = getDb();
   const { Timestamp } = getFirestoreExports();

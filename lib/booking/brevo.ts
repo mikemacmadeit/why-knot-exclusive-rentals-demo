@@ -1027,7 +1027,7 @@ export async function sendAdminCrmEmail(params: {
   return { providerMessageId: await parseBrevoProviderMessageId(res) };
 }
 
-/** Password-setup email for an invited operator or captain. */
+/** Password-setup email for an invited admin, operator, or captain. */
 export async function sendTeamInviteEmail(params: {
   to: string;
   toName?: string;
@@ -1037,7 +1037,9 @@ export async function sendTeamInviteEmail(params: {
   const { getTeamInviteSubject, renderTeamInviteHtml } = await import("./email-templates");
   const to = params.to.trim();
   const toName = params.toName?.trim() || undefined;
-  const roleLabel = params.roleLabel === "Operator" ? "Operator" : "Captain";
+  const raw = params.roleLabel.trim();
+  const roleLabel =
+    raw === "Admin" || raw === "Operator" || raw === "Captain" ? raw : "Operator";
   const subject = getTeamInviteSubject(roleLabel);
   const htmlContent = renderTeamInviteHtml({
     toName: toName || "there",

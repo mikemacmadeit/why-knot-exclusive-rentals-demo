@@ -1,7 +1,8 @@
 /**
  * Admin roles for this customer deployment.
- * Super Admin = any email listed in ADMIN_EMAIL (or PLATFORM_ADMIN_EMAIL), comma-separated.
- * Operators and captains live in Firestore `adminTeam`.
+ * Super Admin = Slipstack / platform support — emails in ADMIN_EMAIL (or PLATFORM_ADMIN_EMAIL).
+ * Admin = boat company owner/office manager — full access on this site via Firestore `adminTeam`.
+ * Operators and captains are staff invites in `adminTeam`.
  */
 
 /** Parsed Super Admin allowlist from env (lowercased). */
@@ -29,7 +30,7 @@ export function getSuperAdminDisplayName(): string {
 export const SUPER_ADMIN_EMAIL = ""; // resolved at runtime via getSuperAdminEmail / isSuperAdminEmail
 export const SUPER_ADMIN_DISPLAY_NAME = "Super Admin";
 
-export const ADMIN_ROLES = ["super_admin", "operator", "captain"] as const;
+export const ADMIN_ROLES = ["super_admin", "admin", "operator", "captain"] as const;
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 
 export type AdminPermission =
@@ -58,6 +59,28 @@ export type AdminPrincipal = {
   displayName: string;
 };
 
+/** Customer Admin + platform Super Admin — full control of this site. */
+export function isSiteAdminRole(role: AdminRole | null | undefined): boolean {
+  return role === "super_admin" || role === "admin";
+}
+
+export function canManageTeamMembers(role: AdminRole | null | undefined): boolean {
+  return isSiteAdminRole(role);
+}
+
+/** Roles that can assign captains / write operator notes (not captains themselves). */
+export function canRunBookingOps(role: AdminRole | null | undefined): boolean {
+  return role === "super_admin" || role === "admin" || role === "operator";
+}
+
+export function adminRoleLabel(role: AdminRole | null | undefined): string {
+  if (role === "super_admin") return "Super Admin";
+  if (role === "admin") return "Admin";
+  if (role === "captain") return "Captain";
+  if (role === "operator") return "Operator";
+  return "Admin";
+}
+
 const OPERATOR_PERMISSIONS = new Set<AdminPermission>([
   "dashboard",
   "calendar",
@@ -81,15 +104,15 @@ export function isSuperAdminEmail(email: string | null | undefined): boolean {
 }
 
 export function isAdminRole(value: unknown): value is AdminRole {
-  return value === "super_admin" || value === "operator" || value === "captain";
+  return value === "super_admin" || value === "admin" || value === "operator" || value === "captain";
 }
 
-export function isTeamInviteRole(value: unknown): value is Extract<AdminRole, "operator" | "captain"> {
-  return value === "operator" || value === "captain";
+export function isTeamInviteRole(value: unknown): value is Extract<AdminRole, "admin" | "operator" | "captain"> {
+  return value === "admin" || value === "operator" || value === "captain";
 }
 
 export function roleHasPermission(role: AdminRole, permission: AdminPermission): boolean {
-  if (role === "super_admin") return true;
+  if (role === "super_admin" || role === "admin") return true;
   if (role === "captain") return CAPTAIN_PERMISSIONS.has(permission);
   return OPERATOR_PERMISSIONS.has(permission);
 }

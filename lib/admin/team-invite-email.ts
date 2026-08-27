@@ -10,7 +10,8 @@ export async function emailTeamPasswordSetupLink(opts: {
   role: TeamInviteRole;
   resetLink: string;
 }): Promise<boolean> {
-  const roleLabel = opts.role === "captain" ? "Captain" : "Operator";
+  const roleLabel =
+    opts.role === "admin" ? "Admin" : opts.role === "captain" ? "Captain" : "Operator";
   try {
     await sendTeamInviteEmail({
       to: opts.to,

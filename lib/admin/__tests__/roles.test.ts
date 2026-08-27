@@ -2,7 +2,9 @@
 import assert from "node:assert/strict";
 import {
   canAccessAdminPath,
+  canManageTeamMembers,
   getSuperAdminEmail,
+  isSiteAdminRole,
   isSuperAdminEmail,
   normalizeAdminEmail,
   roleHasPermission,
@@ -27,7 +29,16 @@ describe("admin roles", () => {
     }
   });
 
-  it("captains only get dashboard + calendar", () => {
+  it("site admins get full permissions; operators and captains are limited", () => {
+    assert.equal(isSiteAdminRole("super_admin"), true);
+    assert.equal(isSiteAdminRole("admin"), true);
+    assert.equal(isSiteAdminRole("operator"), false);
+    assert.equal(roleHasPermission("admin", "financials"), true);
+    assert.equal(roleHasPermission("admin", "team"), true);
+    assert.equal(canAccessAdminPath("admin", "/admin/financials"), true);
+    assert.equal(canManageTeamMembers("admin"), true);
+    assert.equal(canManageTeamMembers("operator"), false);
+    assert.equal(roleHasPermission("operator", "financials"), false);
     assert.equal(roleHasPermission("captain", "dashboard"), true);
     assert.equal(roleHasPermission("captain", "calendar"), true);
     assert.equal(roleHasPermission("captain", "financials"), false);

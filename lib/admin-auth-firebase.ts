@@ -4,8 +4,8 @@
  * server creates a session cookie and verifies it on protected routes.
  *
  * Super Admin is any address listed in ADMIN_EMAIL (or PLATFORM_ADMIN_EMAIL), comma-separated.
- * Operators and captains are invited via Firestore `adminTeam` — they are not granted
- * access merely by appearing outside that allowlist / team store.
+ * Customer Admins, operators, and captains are invited via Firestore `adminTeam`.
+ * Customer Admins have full site access; they are not platform Super Admins.
  */
 
 import "server-only";

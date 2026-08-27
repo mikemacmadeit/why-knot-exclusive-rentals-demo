@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminSession, getAdminPrincipalFromSessionCookie } from "@/lib/admin-auth-firebase";
-import { SUPER_ADMIN_DISPLAY_NAME, SUPER_ADMIN_EMAIL, isTeamInviteRole } from "@/lib/admin/roles";
+import {
+  canManageTeamMembers,
+  getSuperAdminDisplayName,
+  getSuperAdminEmails,
+  isTeamInviteRole,
+} from "@/lib/admin/roles";
 import {
   ensureFirebaseUserAndResetLink,
   listTeamMembers,
@@ -22,14 +27,18 @@ export async function GET(request: NextRequest) {
 
   try {
     const members = await listTeamMembers();
+    const superAdmins = getSuperAdminEmails().map((email, index) => ({
+      email,
+      name: index === 0 ? getSuperAdminDisplayName() : "Super Admin",
+      role: "super_admin" as const,
+      status: "active" as const,
+      locked: true as const,
+    }));
     return NextResponse.json({
-      superAdmin: {
-        email: SUPER_ADMIN_EMAIL,
-        name: SUPER_ADMIN_DISPLAY_NAME,
-        role: "super_admin",
-        status: "active",
-        locked: true,
-      },
+      /** @deprecated Prefer `superAdmins` — kept for older clients. */
+      superAdmin: superAdmins[0] ?? null,
+      superAdmins,
+      admins: members.filter((m) => m.role === "admin"),
       operators: members.filter((m) => m.role === "operator"),
       captains: members.filter((m) => m.role === "captain"),
     });
@@ -50,7 +59,7 @@ export async function POST(request: NextRequest) {
   if (unauthorized) return unauthorized;
 
   const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
-  if (!principal || principal.role !== "super_admin") {
+  if (!principal || !canManageTeamMembers(principal.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -80,7 +89,13 @@ export async function POST(request: NextRequest) {
         resetLink,
       });
     }
-    void writeAdminAuditLog(role === "captain" ? "team_captain_invited" : "team_operator_invited", {
+    const auditEvent =
+      role === "admin"
+        ? "team_admin_invited"
+        : role === "captain"
+          ? "team_captain_invited"
+          : "team_operator_invited";
+    void writeAdminAuditLog(auditEvent, {
       email: member.email,
       role,
       invitedBy: principal.email,

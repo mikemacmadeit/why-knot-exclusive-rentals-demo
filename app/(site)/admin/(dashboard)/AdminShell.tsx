@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { notifyAdminAuthChanged } from "@/lib/admin-auth-client";
 import { PlatformDevBanner } from "@/components/site/PlatformDevBanner";
 import { ADMIN_NAV_FEATURE, hasFeature } from "@/lib/plan";
-import { canAccessAdminPath, type AdminRole } from "@/lib/admin/roles";
+import { canAccessAdminPath, adminRoleLabel, type AdminRole } from "@/lib/admin/roles";
 
 type AdminPrincipalContextValue = {
   role: AdminRole | null;
@@ -275,7 +275,7 @@ export function AdminShell({
                 <p className="mb-3 px-3 text-xs text-white/50">
                   <span className="block truncate font-medium text-white/80">{displayName}</span>
                   <span className="block truncate">
-                    {role === "captain" ? "Captain" : role === "operator" ? "Operator" : "Super Admin"}
+                    {adminRoleLabel(role)}
                   </span>
                 </p>
               ) : null}

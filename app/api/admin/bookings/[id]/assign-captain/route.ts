@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminPrincipalFromSessionCookie, requireAdminSession } from "@/lib/admin-auth-firebase";
+import { canRunBookingOps } from "@/lib/admin/roles";
 import { getDb, getFirestoreExports } from "@/lib/booking/firebase-admin";
 import type { Booking } from "@/lib/booking/types";
 import { getActiveTeamMember } from "@/lib/admin/team-store";
@@ -10,7 +11,7 @@ import { requireFeatureResponse } from "@/lib/plan";
 
 /**
  * POST /api/admin/bookings/[id]/assign-captain
- * Victoria or an operator assigns (or clears) a captain. Sends confirmation / unassign email.
+ * Admin or operator assigns (or clears) a captain. Sends confirmation / unassign email.
  */
 export async function POST(
   request: NextRequest,
@@ -27,7 +28,7 @@ export async function POST(
   if (unauthorized) return unauthorized;
 
   const principal = await getAdminPrincipalFromSessionCookie(request.headers.get("cookie"));
-  if (!principal || (principal.role !== "super_admin" && principal.role !== "operator")) {
+  if (!principal || !canRunBookingOps(principal.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

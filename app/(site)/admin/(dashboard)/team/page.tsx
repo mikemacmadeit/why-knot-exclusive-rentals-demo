@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { UserCog } from "lucide-react";
 import { AdminSessionRedirectError, throwIfAdminApiError } from "@/lib/admin-auth-client";
+import { adminRoleLabel } from "@/lib/admin/roles";
+
+type TeamInviteRole = "admin" | "operator" | "captain";
 
 type TeamMemberRow = {
   email: string;
   name: string;
-  role: "operator" | "captain";
+  role: TeamInviteRole;
   status: "active" | "disabled";
   invitedBy: string;
   invitedAt: string | null;
@@ -21,11 +24,19 @@ type SuperAdminRow = {
   locked: true;
 };
 
+function roleBadgeClass(role: TeamInviteRole, status: "active" | "disabled"): string {
+  if (status !== "active") return "bg-brand-dark/5 text-brand-muted";
+  if (role === "admin") return "bg-violet-50 text-violet-900";
+  if (role === "captain") return "bg-sky-50 text-sky-800";
+  return "bg-emerald-50 text-emerald-800";
+}
+
 export default function AdminTeamPage() {
-  const [superAdmin, setSuperAdmin] = useState<SuperAdminRow | null>(null);
+  const [superAdmins, setSuperAdmins] = useState<SuperAdminRow[]>([]);
+  const [admins, setAdmins] = useState<TeamMemberRow[]>([]);
   const [operators, setOperators] = useState<TeamMemberRow[]>([]);
   const [captains, setCaptains] = useState<TeamMemberRow[]>([]);
-  const [inviteRole, setInviteRole] = useState<"operator" | "captain">("operator");
+  const [inviteRole, setInviteRole] = useState<TeamInviteRole>("operator");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
@@ -42,7 +53,14 @@ export default function AdminTeamPage() {
       const res = await fetch("/api/admin/team", { credentials: "include" });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throwIfAdminApiError(res, json);
-      setSuperAdmin(json.superAdmin ?? null);
+      const fromList = Array.isArray(json.superAdmins) ? json.superAdmins : null;
+      setSuperAdmins(
+        fromList ??
+          (json.superAdmin
+            ? [json.superAdmin]
+            : [])
+      );
+      setAdmins(Array.isArray(json.admins) ? json.admins : []);
       setOperators(Array.isArray(json.operators) ? json.operators : []);
       setCaptains(Array.isArray(json.captains) ? json.captains : []);
     } catch (e) {
@@ -75,7 +93,7 @@ export default function AdminTeamPage() {
       setEmail("");
       setName("");
       setResetLink(typeof json.resetLink === "string" ? json.resetLink : null);
-      const roleLabel = inviteRole === "captain" ? "Captain" : "Operator";
+      const roleLabel = adminRoleLabel(inviteRole);
       if (json.emailSent) {
         setNotice(`${roleLabel} invited. An email was sent to them with a password-setup link.`);
       } else if (json.resetLink) {
@@ -114,7 +132,7 @@ export default function AdminTeamPage() {
   }
 
   async function removeMember(member: TeamMemberRow) {
-    const roleLabel = member.role === "captain" ? "captain" : "operator";
+    const roleLabel = adminRoleLabel(member.role).toLowerCase();
     const ok = window.confirm(
       `Delete ${member.name} (${member.email})? They will be removed from the team and will not be able to sign in.`
     );
@@ -172,6 +190,8 @@ export default function AdminTeamPage() {
     }
   }
 
+  const teamMembers = [...admins, ...operators, ...captains];
+
   return (
     <div className="space-y-6">
       <div>
@@ -180,8 +200,8 @@ export default function AdminTeamPage() {
           Team
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-brand-muted">
-          Super Admin is Admin and cannot be changed. Operators can run calendar, bookings, customers, and waivers —
-          not financials, discounts, or this page. Captains only see the calendar for trips assigned to them.
+          Super Admin is Slipstack support and cannot be changed. Admins run this company account with full access.
+          Operators handle calendar, bookings, customers, and waivers. Captains only see trips assigned to them.
         </p>
       </div>
 
@@ -221,16 +241,20 @@ export default function AdminTeamPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl border border-brand-dark/15 bg-brand-bg/40 px-3 py-2 text-sm"
-              placeholder="va@example.com"
+              placeholder="owner@example.com"
             />
           </label>
           <label className="text-sm">
             <span className="mb-1 block text-xs font-medium text-brand-muted">Role</span>
             <select
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value === "captain" ? "captain" : "operator")}
+              onChange={(e) => {
+                const v = e.target.value;
+                setInviteRole(v === "admin" || v === "captain" || v === "operator" ? v : "operator");
+              }}
               className="w-full rounded-xl border border-brand-dark/15 bg-brand-bg/40 px-3 py-2 text-sm"
             >
+              <option value="admin">Admin (full access)</option>
               <option value="operator">Operator</option>
               <option value="captain">Captain</option>
             </select>
@@ -255,18 +279,18 @@ export default function AdminTeamPage() {
           <p className="px-5 py-8 text-sm text-brand-muted">Loading…</p>
         ) : (
           <ul className="divide-y divide-brand-dark/5">
-            {superAdmin && (
-              <li className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+            {superAdmins.map((sa) => (
+              <li key={sa.email} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div>
-                  <p className="font-semibold text-brand-dark">{superAdmin.name}</p>
-                  <p className="text-xs text-brand-muted">{superAdmin.email}</p>
+                  <p className="font-semibold text-brand-dark">{sa.name}</p>
+                  <p className="text-xs text-brand-muted">{sa.email}</p>
                 </div>
                 <span className="rounded-full bg-brand-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-brand-primary">
                   Super Admin
                 </span>
               </li>
-            )}
-            {[...operators, ...captains].map((op) => (
+            ))}
+            {teamMembers.map((op) => (
               <li key={op.email} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div>
                   <p className="font-semibold text-brand-dark">{op.name}</p>
@@ -274,15 +298,9 @@ export default function AdminTeamPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${
-                      op.status === "active"
-                        ? op.role === "captain"
-                          ? "bg-sky-50 text-sky-800"
-                          : "bg-emerald-50 text-emerald-800"
-                        : "bg-brand-dark/5 text-brand-muted"
-                    }`}
+                    className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${roleBadgeClass(op.role, op.status)}`}
                   >
-                    {op.status === "active" ? (op.role === "captain" ? "Captain" : "Operator") : "Disabled"}
+                    {op.status === "active" ? adminRoleLabel(op.role) : "Disabled"}
                   </span>
                   <button
                     type="button"
@@ -311,8 +329,8 @@ export default function AdminTeamPage() {
                 </div>
               </li>
             ))}
-            {!loading && operators.length === 0 && captains.length === 0 && (
-              <li className="px-5 py-6 text-sm text-brand-muted">No operators or captains yet. Invite someone above.</li>
+            {!loading && teamMembers.length === 0 && (
+              <li className="px-5 py-6 text-sm text-brand-muted">No admins, operators, or captains yet. Invite someone above.</li>
             )}
           </ul>
         )}

@@ -6,6 +6,7 @@ import {
   getSuperAdminEmail,
   isSiteAdminRole,
   isSuperAdminEmail,
+  isPitchDemoAdminEmail,
   normalizeAdminEmail,
   roleHasPermission,
 } from "../roles";
@@ -26,6 +27,21 @@ describe("admin roles", () => {
     } finally {
       if (prev == null) delete process.env.ADMIN_EMAIL;
       else process.env.ADMIN_EMAIL = prev;
+    }
+  });
+
+  it("allows @demo.io admins only on pitch demo sites", () => {
+    const prev = process.env.DEMO_PITCH_SITE;
+    try {
+      delete process.env.DEMO_PITCH_SITE;
+      assert.equal(isPitchDemoAdminEmail("ww@demo.io"), false);
+      process.env.DEMO_PITCH_SITE = "1";
+      assert.equal(isPitchDemoAdminEmail("ww@demo.io"), true);
+      assert.equal(isPitchDemoAdminEmail("WW@Demo.io"), true);
+      assert.equal(isPitchDemoAdminEmail("owner@gmail.com"), false);
+    } finally {
+      if (prev == null) delete process.env.DEMO_PITCH_SITE;
+      else process.env.DEMO_PITCH_SITE = prev;
     }
   });
 

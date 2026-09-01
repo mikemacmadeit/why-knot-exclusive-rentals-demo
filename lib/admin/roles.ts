@@ -103,6 +103,16 @@ export function isSuperAdminEmail(email: string | null | undefined): boolean {
   return getSuperAdminEmails().includes(normalized);
 }
 
+/**
+ * Pitch / sales-demo Netlify sites (`DEMO_PITCH_SITE=1`) accept *@demo.io as the
+ * customer admin login so Slipstack can email a working back-office account.
+ */
+export function isPitchDemoAdminEmail(email: string | null | undefined): boolean {
+  if (process.env.DEMO_PITCH_SITE !== "1") return false;
+  const normalized = normalizeAdminEmail(email);
+  return normalized.endsWith("@demo.io");
+}
+
 export function isAdminRole(value: unknown): value is AdminRole {
   return value === "super_admin" || value === "admin" || value === "operator" || value === "captain";
 }

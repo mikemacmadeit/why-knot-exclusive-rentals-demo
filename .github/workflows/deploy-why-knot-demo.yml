@@ -16,35 +16,47 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
-      - name: Resolve Netlify site id
+      - name: Resolve or create Netlify site
         id: site
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -n "${{ vars.NETLIFY_SITE_ID }}" ]; then
-            echo "site_id=${{ vars.NETLIFY_SITE_ID }}" >> "$GITHUB_OUTPUT"
-            exit 0
+          curl -fsS -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            "https://api.netlify.com/api/v1/sites?filter=all&per_page=100" \
+            > /tmp/sites.json
+          node <<'NODE' > /tmp/site-out.txt
+          const fs = require("fs");
+          const sites = JSON.parse(fs.readFileSync("/tmp/sites.json", "utf8"));
+          const hit = sites.find((s) =>
+            (s.name || "").includes("why-knot") ||
+            (s.ssl_url || s.url || "").includes("why-knot")
+          );
+          if (hit) {
+            process.stdout.write(`${hit.id}\n${hit.ssl_url || hit.url || ""}\n`);
+            process.exit(0);
+          }
+          console.error("No why-knot site on this account. Sites:");
+          for (const s of sites) console.error("-", s.name, s.ssl_url || s.url);
+          process.exit(2);
+          NODE
+          if [ $? -eq 2 ]; then
+            echo "Creating why-knot-demo..."
+            curl -fsS -X POST -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{"name":"why-knot-demo"}' \
+              "https://api.netlify.com/api/v1/sites" > /tmp/create.json
+            node -e 'const s=JSON.parse(require("fs").readFileSync("/tmp/create.json","utf8")); process.stdout.write(s.id+"\n"+(s.ssl_url||s.url||"")+"\n")' > /tmp/site-out.txt
           fi
-          RESP=$(curl -fsS -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
-            "https://api.netlify.com/api/v1/sites?filter=all&per_page=100")
-          SITE_ID=$(node -e '
-            const sites = JSON.parse(process.argv[1]);
-            const hit = sites.find((s) =>
-              (s.name || "").includes("why-knot") ||
-              (s.ssl_url || s.url || "").includes("why-knot-exclusive-rentals")
-            );
-            if (!hit) {
-              console.error("No Netlify site matched why-knot-exclusive-rentals");
-              console.error(sites.map((s) => s.name + " " + (s.ssl_url || s.url)).join("\n"));
-              process.exit(1);
-            }
-            process.stdout.write(hit.id);
-          ' "$RESP")
-          echo "Found site id $SITE_ID"
+          SITE_ID=$(sed -n '1p' /tmp/site-out.txt)
+          SITE_URL=$(sed -n '2p' /tmp/site-out.txt)
           echo "site_id=$SITE_ID" >> "$GITHUB_OUTPUT"
+          echo "site_url=$SITE_URL" >> "$GITHUB_OUTPUT"
+          echo "Using $SITE_ID $SITE_URL"
       - name: Deploy to Netlify
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ steps.site.outputs.site_id }}
         run: npx netlify-cli deploy --build --prod --message "why-knot demo ${{ github.sha }}"
+      - name: Print URL
+        run: echo "Deployed ${{ steps.site.outputs.site_url }}"

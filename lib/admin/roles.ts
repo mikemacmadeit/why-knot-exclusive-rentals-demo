@@ -5,6 +5,8 @@
  * Operators and captains are staff invites in `adminTeam`.
  */
 
+import { siteConfig } from "@/config/site";
+
 /** Parsed Super Admin allowlist from env (lowercased). */
 export function getSuperAdminEmails(): string[] {
   const raw = process.env.ADMIN_EMAIL?.trim() || process.env.PLATFORM_ADMIN_EMAIL?.trim() || "";
@@ -103,12 +105,29 @@ export function isSuperAdminEmail(email: string | null | undefined): boolean {
   return getSuperAdminEmails().includes(normalized);
 }
 
+function envFlagTruthy(value: string | undefined): boolean {
+  const t = (value ?? "").trim().toLowerCase();
+  return t === "1" || t === "true" || t === "yes";
+}
+
 /**
- * Pitch / sales-demo Netlify sites (`DEMO_PITCH_SITE=1`) accept *@demo.io as the
- * customer admin login so Slipstack can email a working back-office account.
+ * Sales / pitch demos. Prefer DEMO_PITCH_SITE, but also trust site config because
+ * Netlify sometimes exposes build.environment only at build time — API routes then
+ * miss the flag and reject valid *@demo.io logins with 403.
+ */
+export function isPitchDemoSite(): boolean {
+  if (envFlagTruthy(process.env.DEMO_PITCH_SITE) || envFlagTruthy(process.env.BLOCK_SEARCH_INDEXING)) {
+    return true;
+  }
+  return siteConfig.seo.blockSearchIndexing === true || siteConfig.tenantId.endsWith("-demo");
+}
+
+/**
+ * Pitch / sales-demo sites accept *@demo.io as the customer admin login so
+ * Slipstack can share a working back-office account.
  */
 export function isPitchDemoAdminEmail(email: string | null | undefined): boolean {
-  if (process.env.DEMO_PITCH_SITE !== "1") return false;
+  if (!isPitchDemoSite()) return false;
   const normalized = normalizeAdminEmail(email);
   return normalized.endsWith("@demo.io");
 }

@@ -30,11 +30,14 @@ describe("admin roles", () => {
     }
   });
 
-  it("allows @demo.io admins only on pitch demo sites", () => {
+  it("allows @demo.io admins on pitch demo sites (env or site config)", () => {
     const prev = process.env.DEMO_PITCH_SITE;
+    const prevBlock = process.env.BLOCK_SEARCH_INDEXING;
     try {
       delete process.env.DEMO_PITCH_SITE;
-      assert.equal(isPitchDemoAdminEmail("ww@demo.io"), false);
+      delete process.env.BLOCK_SEARCH_INDEXING;
+      // Why Knot / sales demos set seo.blockSearchIndexing or tenantId *-demo in site config
+      assert.equal(isPitchDemoAdminEmail("whyknot@demo.io"), true);
       process.env.DEMO_PITCH_SITE = "1";
       assert.equal(isPitchDemoAdminEmail("ww@demo.io"), true);
       assert.equal(isPitchDemoAdminEmail("WW@Demo.io"), true);
@@ -42,6 +45,8 @@ describe("admin roles", () => {
     } finally {
       if (prev == null) delete process.env.DEMO_PITCH_SITE;
       else process.env.DEMO_PITCH_SITE = prev;
+      if (prevBlock == null) delete process.env.BLOCK_SEARCH_INDEXING;
+      else process.env.BLOCK_SEARCH_INDEXING = prevBlock;
     }
   });
 

@@ -45,6 +45,7 @@ export default function AdminTeamPage() {
   const [resetLink, setResetLink] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
+  const [demoLogin, setDemoLogin] = useState<{ email: string; password: string; label: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,6 +64,16 @@ export default function AdminTeamPage() {
       setAdmins(Array.isArray(json.admins) ? json.admins : []);
       setOperators(Array.isArray(json.operators) ? json.operators : []);
       setCaptains(Array.isArray(json.captains) ? json.captains : []);
+      const dl = json.demoLogin;
+      setDemoLogin(
+        dl && typeof dl.email === "string" && typeof dl.password === "string"
+          ? {
+              email: dl.email,
+              password: dl.password,
+              label: typeof dl.label === "string" ? dl.label : "Demo admin",
+            }
+          : null
+      );
     } catch (e) {
       if (e instanceof AdminSessionRedirectError) return;
       setError(e instanceof Error ? e.message : "Failed to load team");
@@ -207,6 +218,23 @@ export default function AdminTeamPage() {
 
       {error && (
         <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+      )}
+      {demoLogin && (
+        <div className="rounded-2xl border border-brand-dark/10 bg-brand-bg/50 px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-muted">Prospect demo login</p>
+          <p className="mt-1 text-sm text-brand-dark">{demoLogin.label}</p>
+          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-xs text-brand-muted">Email</dt>
+              <dd className="font-medium text-brand-dark">{demoLogin.email}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-brand-muted">Password</dt>
+              <dd className="font-medium text-brand-dark">{demoLogin.password}</dd>
+            </div>
+          </dl>
+          <p className="mt-3 text-xs text-brand-muted">Share these with the prospect for /admin/login on this demo site.</p>
+        </div>
       )}
       {notice && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{notice}</div>

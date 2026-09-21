@@ -18,6 +18,7 @@ import {
   getSuperAdminDisplayName,
   canAccessAdminPath,
   isSuperAdminEmail,
+  isPitchDemoAdminEmail,
   normalizeAdminEmail,
   type AdminPrincipal,
 } from "@/lib/admin/roles";
@@ -46,6 +47,10 @@ async function resolveAdminPrincipalUncached(email: string): Promise<AdminPrinci
   if (!normalized) return null;
   if (isSuperAdminEmail(normalized)) {
     return { email: normalized, role: "super_admin", displayName: getSuperAdminDisplayName() };
+  }
+  if (isPitchDemoAdminEmail(normalized)) {
+    const local = normalized.split("@")[0] || "Demo";
+    return { email: normalized, role: "admin", displayName: local };
   }
   try {
     const member = await getActiveTeamMember(normalized);

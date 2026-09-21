@@ -4,6 +4,7 @@ import {
   canManageTeamMembers,
   getSuperAdminDisplayName,
   getSuperAdminEmails,
+  isPitchDemoSite,
   isTeamInviteRole,
 } from "@/lib/admin/roles";
 import {
@@ -14,6 +15,7 @@ import {
 import { emailTeamPasswordSetupLink } from "@/lib/admin/team-invite-email";
 import { writeAdminAuditLog } from "@/lib/booking/admin-audit-log";
 import { requireFeatureResponse } from "@/lib/plan";
+import { DEMO_ADMIN_LOGIN } from "@/content/demo-login";
 
 export async function GET(request: NextRequest) {
   // PLAN_FEATURE_GATE
@@ -41,6 +43,15 @@ export async function GET(request: NextRequest) {
       admins: members.filter((m) => m.role === "admin"),
       operators: members.filter((m) => m.role === "operator"),
       captains: members.filter((m) => m.role === "captain"),
+      ...(isPitchDemoSite()
+        ? {
+            demoLogin: {
+              email: DEMO_ADMIN_LOGIN.email,
+              password: DEMO_ADMIN_LOGIN.password,
+              label: DEMO_ADMIN_LOGIN.label,
+            },
+          }
+        : {}),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

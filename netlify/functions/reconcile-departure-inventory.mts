@@ -1,4 +1,5 @@
 import { schedule } from "@netlify/functions";
+import { skipPitchScheduled } from "./_lib/pitch-demo";
 
 const FETCH_TIMEOUT_MS = 50_000;
 
@@ -7,6 +8,9 @@ const FETCH_TIMEOUT_MS = 50_000;
  * POST /api/admin/cron/reconcile-departure-inventory?apply=true
  */
 export const handler = schedule("0 * * * *", async () => {
+  const skip = skipPitchScheduled("reconcile-departure-inventory");
+  if (skip) return skip;
+
   const rawBase = process.env.APP_BASE_URL ?? process.env.URL;
   const cronSecret = process.env.CRON_SECRET;
 

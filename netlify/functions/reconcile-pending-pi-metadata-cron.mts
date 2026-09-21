@@ -1,9 +1,13 @@
 import { schedule } from "@netlify/functions";
+import { skipPitchScheduled } from "./_lib/pitch-demo";
 
 const FETCH_TIMEOUT_MS = 50_000;
 
 /** Every 15 minutes: apply pending PaymentIntent metadata patches from holds (best-effort sync after inline update failures). */
 export const handler = schedule("*/15 * * * *", async () => {
+  const skip = skipPitchScheduled("reconcile-pending-pi-metadata");
+  if (skip) return skip;
+
   const rawBase = process.env.APP_BASE_URL ?? process.env.URL;
   const cronSecret = process.env.CRON_SECRET;
 

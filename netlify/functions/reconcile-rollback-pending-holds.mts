@@ -1,4 +1,5 @@
 import { schedule } from "@netlify/functions";
+import { skipPitchScheduled } from "./_lib/pitch-demo";
 
 const FETCH_TIMEOUT_MS = 50_000; // 10s under 60s function timeout
 
@@ -9,6 +10,9 @@ const FETCH_TIMEOUT_MS = 50_000; // 10s under 60s function timeout
  * function only forwards the cron call with Authorization and X-Cron-Timestamp headers.
  */
 export const handler = schedule("*/10 * * * *", async () => {
+  const skip = skipPitchScheduled("reconcile-rollback-pending-holds");
+  if (skip) return skip;
+
   const rawBase = process.env.APP_BASE_URL ?? process.env.URL;
   const cronSecret = process.env.CRON_SECRET;
 

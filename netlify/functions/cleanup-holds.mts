@@ -1,9 +1,13 @@
 import { schedule } from "@netlify/functions";
+import { skipPitchScheduled } from "./_lib/pitch-demo";
 
 const FETCH_TIMEOUT_MS = 50_000; // 10s under 60s function timeout
 
 /** Every 2 minutes: belt-and-suspenders release of expired holds (slots reopen sooner if tokenized cancel/back is unavailable). */
 export const handler = schedule("*/2 * * * *", async () => {
+  const skip = skipPitchScheduled("cleanup-holds");
+  if (skip) return skip;
+
   const rawBase =
     process.env.APP_BASE_URL ?? process.env.URL;
   const cronSecret = process.env.CRON_SECRET;

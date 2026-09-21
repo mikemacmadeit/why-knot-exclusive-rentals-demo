@@ -4,6 +4,7 @@
 
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { isPitchDemoSite } from "@/lib/demo/pitch-site";
 import { timingSafeStringEqual } from "@/lib/booking/secure-compare";
 import { checkRateLimit } from "@/lib/booking/rate-limit";
 
@@ -23,10 +24,14 @@ export async function checkCronSecretRateLimit(): Promise<{ allowed: boolean; re
 }
 
 /**
- * Verifies Bearer CRON_SECRET, optional rate limit, and X-Cron-Timestamp within ±5 minutes.
+ * Pitch demos skip work (200) before auth. Live sites: Bearer CRON_SECRET + X-Cron-Timestamp ±5 minutes.
  * Returns null if authorized; otherwise a NextResponse to return from the route handler.
  */
 export async function assertCronPostAuthorized(request: NextRequest): Promise<NextResponse | null> {
+  if (isPitchDemoSite()) {
+    return NextResponse.json({ ok: true, skipped: "DEMO_PITCH_SITE" });
+  }
+
   const authHeader = request.headers.get("authorization") ?? "";
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret || !timingSafeStringEqual(authHeader, `Bearer ${cronSecret}`)) {

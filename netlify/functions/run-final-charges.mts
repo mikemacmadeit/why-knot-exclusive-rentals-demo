@@ -1,8 +1,12 @@
 import { schedule } from "@netlify/functions";
+import { skipPitchScheduled } from "./_lib/pitch-demo";
 
 const FETCH_TIMEOUT_MS = 50_000; // 10s under 60s function timeout
 
 export const handler = schedule("*/30 * * * *", async () => {
+  const skip = skipPitchScheduled("run-final-charges");
+  if (skip) return skip;
+
   // Runs every 30 minutes to reduce max charge delay from ~4h to ~30 min past finalChargeAt
   const rawBase =
     process.env.APP_BASE_URL ?? process.env.URL;

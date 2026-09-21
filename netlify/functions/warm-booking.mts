@@ -1,4 +1,5 @@
 import { schedule } from "@netlify/functions";
+import { skipPitchScheduled } from "./_lib/pitch-demo";
 
 async function getUrl(url: string): Promise<void> {
   try {
@@ -26,6 +27,9 @@ function formatYmd(d: Date): string {
 
 /** Warm common booking API routes so cold Netlify starts are less likely during checkout. */
 export const handler = schedule("*/5 * * * *", async () => {
+  const skip = skipPitchScheduled("warm-booking");
+  if (skip) return skip;
+
   const base = process.env.APP_BASE_URL ?? process.env.URL;
   if (!base) return { statusCode: 200 };
   const root = base.replace(/\/$/, "");
